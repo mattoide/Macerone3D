@@ -374,6 +374,82 @@ FILTER_OBJ_NAME_KEYWORDS = (
 )
 
 
+def carve_terrain_mesh_near_road(terrain_obj_path: Path) -> int:
+    """Abbassa i vertex del mesh Terrain Blender che invadono lo spazio
+    sopra la strada. Necessario perche' il mesh Blender Terrain a volte
+    ha zone (tipicamente in curve strette o sulle montagne) dove i vertex
+    sono sopra la road locale.
+
+    Per ogni vertex terrain: trova nearest centerline point, calcola
+    max_z permesso in funzione della distanza:
+    - d < 6m: z <= road_z - 0.3m (sotto strada + banchina)
+    - d < 30m: z <= road_z + 0.3m (appoggio banchina)
+    - d < 80m: z <= road_z + 4m (collina dolce)
+    - oltre: libero
+    """
+    import csv as _csv
+    cl_path = ROOT / "output" / "centerline.csv"
+    if not cl_path.exists():
+        return 0
+    cl = []
+    with cl_path.open(newline="", encoding="utf-8") as f:
+        for r in _csv.DictReader(f):
+            cl.append((float(r["x"]), float(r["y"]), float(r["z"])))
+
+    cell_grid = 30.0
+    buckets: dict[tuple[int, int], list[tuple[float, float, float]]] = {}
+    for (x, y, z) in cl:
+        buckets.setdefault((int(x // cell_grid), int(y // cell_grid)), []).append((x, y, z))
+
+    def nearest_cl(vx: float, vy: float) -> tuple[float, float] | None:
+        ix = int(vx // cell_grid); iy = int(vy // cell_grid)
+        dmin = float("inf"); cz = 0.0
+        for di in (-2, -1, 0, 1, 2):
+            for dj in (-2, -1, 0, 1, 2):
+                for (cx, cy, cz_) in buckets.get((ix + di, iy + dj), []):
+                    d = (cx - vx) ** 2 + (cy - vy) ** 2
+                    if d < dmin:
+                        dmin = d; cz = cz_
+        if dmin == float("inf"):
+            return None
+        return (math.sqrt(dmin), cz)
+
+    def max_z_at_dist(d: float, road_z: float) -> float:
+        if d < 6.0:
+            return road_z - 0.3
+        if d < 30.0:
+            # lerp da road-0.3 a road+0.3 sui 24m
+            t = (d - 6.0) / 24.0
+            return road_z - 0.3 + t * 0.6
+        if d < 80.0:
+            # lerp da road+0.3 a road+4m
+            t = (d - 30.0) / 50.0
+            return road_z + 0.3 + t * 3.7
+        return float("inf")
+
+    lines = terrain_obj_path.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
+    out = []
+    carved = 0
+    for line in lines:
+        if not line.startswith("v "):
+            out.append(line)
+            continue
+        p = line.split()
+        x, y, z = float(p[1]), float(p[2]), float(p[3])
+        nr = nearest_cl(x, y)
+        if nr is None:
+            out.append(line)
+            continue
+        d, road_z = nr
+        mz = max_z_at_dist(d, road_z)
+        if z > mz:
+            z = mz
+            carved += 1
+        out.append(f"v {x:.6f} {y:.6f} {z:.6f}\n")
+    terrain_obj_path.write_text("".join(out), encoding="utf-8")
+    return carved
+
+
 def drop_world_obj_to_terrain_mesh(world_obj_path: Path,
                                       terrain_obj_path: Path) -> int:
     """Drop-to-ground per-ISOLA del world OBJ sul mesh Terrain Blender.
@@ -539,11 +615,11 @@ def drop_world_obj_to_terrain_mesh(world_obj_path: Path,
         if tz is None:
             continue
         delta = tz - base_z
-        # Solo abbassamento conservativo
+        # Solo abbassamento
         if delta > -0.1:
             continue  # base gia' a o sopra terrain, ok
-        if delta < -5.0:
-            continue  # troppo grande, errore sample
+        if delta < -15.0:
+            continue  # troppo grande, probabile errore sample
         for vi in vlist:
             shifts[vi] = delta
         n_shifted_isles += 1
@@ -1721,17 +1797,23 @@ def main() -> None:
     road_dae = convert_to_dae(road_obj)
     road_rel = road_dae.relative_to(LEVEL_DIR).as_posix()
 
+    # PRIMA: carve mesh terrain (poi sara' usato da drop world)
+    terrain_has_content = terrain_obj.exists() and terrain_obj.stat().st_size > 200
+    terrain_rel = None
+    if terrain_has_content:
+        carved_terrain = carve_terrain_mesh_near_road(terrain_obj)
+        print(f"  terrain mesh carve: {carved_terrain} vertex abbassati "
+              f"(invadevano sopra la strada)")
+
     world_has_content = world_obj.exists() and world_obj.stat().st_size > 200
-    terrain_has_content_check = terrain_obj.exists() and terrain_obj.stat().st_size > 200
     world_rel = None
     if world_has_content:
         removed = filter_world_obj_near_road(world_obj, ROAD_CORRIDOR_FILTER_M)
         print(f"  filter corridoio {ROAD_CORRIDOR_FILTER_M}m: "
               f"rimosse {removed} face dal world mesh")
-        # Drop-to-ground usando il mesh Terrain Blender come superficie reale
-        if terrain_has_content_check:
+        # Drop-to-ground usa il terrain mesh CARVATO come riferimento
+        if terrain_has_content:
             drop_world_obj_to_terrain_mesh(world_obj, terrain_obj)
-        # Stats: conto face per ogni oggetto world
         obj_counts = {}
         current = None
         with world_obj.open() as f:
@@ -1752,8 +1834,6 @@ def main() -> None:
         world_dae = convert_to_dae(world_obj)
         world_rel = world_dae.relative_to(LEVEL_DIR).as_posix()
 
-    terrain_has_content = terrain_obj.exists() and terrain_obj.stat().st_size > 200
-    terrain_rel = None
     if terrain_has_content:
         terrain_dae = convert_to_dae(terrain_obj)
         terrain_rel = terrain_dae.relative_to(LEVEL_DIR).as_posix()
