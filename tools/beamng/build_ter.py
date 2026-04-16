@@ -106,6 +106,16 @@ def main() -> None:
             f.write(nb)
     print(f"Scritto {out_ter}  ({out_ter.stat().st_size} bytes)")
 
+    # Copia il depth image map (richiesto da BeamNGCollision::addTerrainBlock
+    # per il water/fluid ground detection). Senza questo file c'e' warning e
+    # potenzialmente collision del terrain rotta.
+    template_depth = Path(__file__).resolve().parent / "templates" / "ter.depth.png"
+    if template_depth.exists():
+        import shutil as _sh
+        depth_dst = MOD_LEVEL_DIR / "theTerrain.ter.depth.png"
+        _sh.copy2(template_depth, depth_dst)
+        print(f"Scritto {depth_dst.name} (da template autotest)")
+
     # --- Scrivi theTerrain.terrain.json ---
     hm_size_cells = TER_SIZE * TER_SIZE
     terrain_json = {
@@ -167,20 +177,23 @@ def main() -> None:
     # Patcha TUTTE le SpawnSphere per metterle sopra l'inizio della SS17.
     # Il primo punto della centerline nel sistema Blender e' circa (3552, -4449)
     # con z=72 (relativa a z_offset=elev_min). World z = elev_min + 72 + buffer.
+    # Spawn position: prendi direttamente elevation reale dalla centerline
+    # in road_data.json (primo punto). Questo matcha la z_world del terrain
+    # BeamNG (uint16 heightmap * maxHeight/65535 = elevation reale in metri).
     cl_csv = ROOT / "output" / "centerline.csv"
-    # Il centerline.csv ha z relative all'elev min del DEM: z_real = csv.z + offset
-    z_offset = float(info.get("z_offset_blender_m", 0.0))
-    spawn_x = 0.0; spawn_y = 0.0; spawn_z = elev_max + 50.0  # fallback
-    if cl_csv.exists():
+    road_data_json = ROOT / "road_data.json"
+    spawn_x = 0.0; spawn_y = 0.0; spawn_z = elev_max + 50.0
+    if cl_csv.exists() and road_data_json.exists():
         import csv as _csv
         with cl_csv.open(newline="", encoding="utf-8") as fcsv:
             row = next(_csv.DictReader(fcsv))
             spawn_x = float(row["x"])
             spawn_y = float(row["y"])
-            # quota world BeamNG = quota reale = csv.z + z_offset_blender + 3m
-            spawn_z = float(row["z"]) + z_offset + 3.0
-    print(f"Spawn point: ({spawn_x:.1f}, {spawn_y:.1f}, {spawn_z:.1f})  "
-          f"[z_offset={z_offset}]")
+        rd = json.loads(road_data_json.read_text(encoding="utf-8"))
+        first_elev = float(rd["centerline"][0]["ele"])
+        spawn_z = first_elev + 5.0  # 5m sopra l'asfalto per avere margine
+    print(f"Spawn point: ({spawn_x:.1f}, {spawn_y:.1f}, {spawn_z:.1f}) "
+          f"(real elevation)")
 
     pos_str = f'"position" : [ {spawn_x}, {spawn_y}, {spawn_z} ]'
 
@@ -225,17 +238,16 @@ def main() -> None:
     # Path: levels/<name>/art/terrain/main.materials.json (singolare, NON terrains).
     terrain_mat_dir = MOD_LEVEL_DIR / "art" / "terrain"
     terrain_mat_dir.mkdir(parents=True, exist_ok=True)
+    # TerrainMaterial: solo diffuseMap (la texture satellite). Niente detailMap
+    # per evitare texture mancanti. groundmodelName=ASPHALT fornisce la fisica
+    # standard da BeamNG.
     terrain_materials = {
         f"{MATERIAL_NAME}-{MATERIAL_UUID}": {
             "internalName": MATERIAL_NAME,
             "class": "TerrainMaterial",
             "persistentId": MATERIAL_UUID,
             "diffuseMap": "levels/macerone/art/terrains/satellite_diffuse",
-            "diffuseSize": 12288,   # spazio coperto in metri dalla singola texture
-            "detailMap": "levels/macerone/art/terrain/asphalt_base",
-            "detailSize": 4,
-            "detailStrength": 0.3,
-            "detailDistance": 80,
+            "diffuseSize": 12288,
             "groundmodelName": "ASPHALT",
         }
     }

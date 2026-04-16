@@ -5,10 +5,6 @@
     "persistentId": "a1b2c3d4-9999-0000-0000-000000000099",
     "diffuseMap": "levels/macerone/art/terrains/satellite_diffuse",
     "diffuseSize": 12288,
-    "detailMap": "levels/macerone/art/terrain/asphalt_base",
-    "detailSize": 4,
-    "detailStrength": 0.3,
-    "detailDistance": 80,
     "groundmodelName": "ASPHALT"
   }
 }
