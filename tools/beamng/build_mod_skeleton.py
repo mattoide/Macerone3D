@@ -375,16 +375,18 @@ def main() -> None:
             mtl_src = obj_src.with_suffix(".mtl")
             if mtl_src.exists():
                 copy_if_exists(mtl_src, dst_dir / f"{basename}.mtl")
-    # Satellite diffuse: preferisci la versione ottimizzata (JPEG 4096x4096,
-    # ~2-4 MB) generata da optimize_satellite.py. Fallback al PNG gigante se
-    # la versione ottimizzata non esiste.
-    satellite_opt = BEAMNG_OUT / "satellite_diffuse.jpg"
-    if satellite_opt.exists():
-        copy_if_exists(satellite_opt,
-                        level_dir / "art" / "terrains" / "satellite_diffuse.jpg")
-    else:
+    # Satellite diffuse: preferisco PNG (BeamNG TerrainMaterial vuole PNG/DDS).
+    # Se manca, JPEG in fallback.
+    satellite_png = BEAMNG_OUT / "satellite_diffuse.png"
+    satellite_jpg = BEAMNG_OUT / "satellite_diffuse.jpg"
+    terr_dir = level_dir / "art" / "terrains"
+    if satellite_png.exists():
+        copy_if_exists(satellite_png, terr_dir / "satellite_diffuse.png")
+    if satellite_jpg.exists():
+        copy_if_exists(satellite_jpg, terr_dir / "satellite_diffuse.jpg")
+    if not (satellite_png.exists() or satellite_jpg.exists()):
         copy_if_exists(ROOT / "output" / "satellite.png",
-                        level_dir / "art" / "terrains" / "satellite_diffuse.png")
+                        terr_dir / "satellite_diffuse.png")
 
     # Preview per il menu BeamNG. v0.38+ cerca 'main_preview.png', le vecchie
     # guide online riferiscono 'preview.jpg'. Creiamo entrambi per sicurezza.

@@ -118,6 +118,14 @@ def main() -> None:
     size_mb = OUT_JPG.stat().st_size / 1024 / 1024
     print(f"Scritto {OUT_JPG} ({size_mb:.2f} MB)")
 
+    # Salva anche PNG 2048x2048: il TerrainMaterial di BeamNG preferisce PNG/DDS
+    # al JPEG. 2048 va bene come dimensione di texture per terrain.
+    out_png = OUT_JPG.with_suffix(".png")
+    resized_small = resized.resize((2048, 2048), Image.BICUBIC)
+    resized_small.save(out_png, "PNG", optimize=True)
+    size_mb_png = out_png.stat().st_size / 1024 / 1024
+    print(f"Scritto {out_png} ({size_mb_png:.2f} MB)")
+
 
 if __name__ == "__main__":
     main()

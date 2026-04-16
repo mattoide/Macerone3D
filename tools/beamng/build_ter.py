@@ -106,15 +106,13 @@ def main() -> None:
             f.write(nb)
     print(f"Scritto {out_ter}  ({out_ter.stat().st_size} bytes)")
 
-    # Copia il depth image map (richiesto da BeamNGCollision::addTerrainBlock
-    # per il water/fluid ground detection). Senza questo file c'e' warning e
-    # potenzialmente collision del terrain rotta.
-    template_depth = Path(__file__).resolve().parent / "templates" / "ter.depth.png"
-    if template_depth.exists():
-        import shutil as _sh
-        depth_dst = MOD_LEVEL_DIR / "theTerrain.ter.depth.png"
-        _sh.copy2(template_depth, depth_dst)
-        print(f"Scritto {depth_dst.name} (da template autotest)")
+    # Depth image map alla STESSA risoluzione del terrain (1024x1024 uint8).
+    # BeamNG lo richiede per il calcolo fluids: pixel = "profondita' ground
+    # type" (acqua/fango). 0 = asciutto. Per ora tutto 0 (niente fluidi).
+    depth_arr = np.zeros((TER_SIZE, TER_SIZE), dtype=np.uint8)
+    depth_dst = MOD_LEVEL_DIR / "theTerrain.ter.depth.png"
+    Image.fromarray(depth_arr, mode="L").save(depth_dst, optimize=True)
+    print(f"Scritto {depth_dst.name} ({TER_SIZE}x{TER_SIZE} zeros)")
 
     # --- Scrivi theTerrain.terrain.json ---
     hm_size_cells = TER_SIZE * TER_SIZE
