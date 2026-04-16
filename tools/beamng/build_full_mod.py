@@ -49,6 +49,12 @@ TER_SIZE = 1024
 TER_SQUARESIZE = 12.0
 TER_EXTENT = TER_SIZE * TER_SQUARESIZE
 
+# --- Spawn tuning -----------------------------------------------------------
+# Offset rispetto al primo punto centerline. "Forward" = direzione del muso.
+SPAWN_FORWARD_M = 5.0      # metri avanti lungo la direzione dell'auto
+SPAWN_UP_M = 1.0            # metri in alto (oltre ai 0.10 sopra asfalto)
+SPAWN_TURN_RIGHT_DEG = 20.0  # gradi di rotazione a destra (CW dall'alto)
+
 # Collezioni Blender da esportare come "world" (tutto tranne Road e roba troppo
 # pesante tipo Grass/Bushes). Se una non esiste, viene saltata.
 WORLD_COLLECTIONS = [
@@ -721,13 +727,22 @@ def main() -> None:
     write_materials(LEVEL_DIR)
     copy_satellite_texture(LEVEL_DIR)
 
-    # 6. Spawn (10cm sopra top asfalto, coord Blender native come il minimal)
+    # 6. Spawn con tuning offset (forward/up/turn_right dai parametri globali)
     sx, sy, _sz = read_first_centerline_point()
     top_z = road_top_z_at(road_obj, sx, sy, radius=3.0)
-    spawn = (sx, sy, top_z + 0.10)
     heading = read_spawn_heading()
-    print(f"road top z (Blender): {top_z:.3f}  ->  spawn z: {spawn[2]:.3f}")
-    print(f"spawn heading: {math.degrees(heading):.1f} deg")
+    # Applica tuning: avanti lungo il muso, su lungo Z, ruota a dx
+    heading -= math.radians(SPAWN_TURN_RIGHT_DEG)
+    # Forward dell'auto in world coord (muso = -Y locale ruotato di heading)
+    fwd_x = math.sin(heading)
+    fwd_y = -math.cos(heading)
+    sx2 = sx + SPAWN_FORWARD_M * fwd_x
+    sy2 = sy + SPAWN_FORWARD_M * fwd_y
+    sz2 = top_z + 0.10 + SPAWN_UP_M
+    spawn = (sx2, sy2, sz2)
+    print(f"road top z (Blender): {top_z:.3f}  spawn: ({sx2:.2f}, {sy2:.2f}, {sz2:.3f})")
+    print(f"spawn heading (tuned): {math.degrees(heading):.1f} deg "
+          f"(forward={SPAWN_FORWARD_M}m up={SPAWN_UP_M}m turn_right={SPAWN_TURN_RIGHT_DEG}deg)")
 
     # 7. main.level.json + info.json
     write_level_json(LEVEL_DIR, road_rel, world_rel, spawn, heading,
