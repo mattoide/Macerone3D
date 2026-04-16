@@ -671,7 +671,8 @@ def write_dem_terrain(level_dir: Path, info: dict,
 # Step 4: materiali (terrain con texture satellite + road/world generic)
 # ---------------------------------------------------------------------------
 def write_materials(level_dir: Path, asphalt_rgb: tuple[float, float, float],
-                     asphalt_color_map: str | None = None) -> None:
+                     asphalt_color_map: str | None = None,
+                     terrain_color_map: str | None = None) -> None:
     # TerrainMaterial con:
     # - diffuseMap = texture satellite (colore macro su scala del tile 12288m)
     # - detailMap = texture erba/terriccio procedurale che ripete ogni 10m
@@ -748,6 +749,9 @@ def write_materials(level_dir: Path, asphalt_rgb: tuple[float, float, float],
         if asphalt_color_map and name in ("Asphalt", "AsphaltPatch_Dark",
                                              "AsphaltPatch_Light"):
             stage0["colorMap"] = asphalt_color_map
+        # Terrain mesh Blender: applica texture erba variata con fiori
+        if terrain_color_map and name in ("Terrain", "TerrainMat", "Ground"):
+            stage0["colorMap"] = terrain_color_map
         mats[name] = {
             "name": name,
             "mapTo": name,
@@ -767,82 +771,75 @@ def write_materials(level_dir: Path, asphalt_rgb: tuple[float, float, float],
 # ---------------------------------------------------------------------------
 # Step 5: copia satellite texture nel mod
 # ---------------------------------------------------------------------------
+def _fbm_noise(size: int, octaves: int, seed: int,
+                 start_freq: int = 8) -> np.ndarray:
+    """Fractal Brownian Motion noise: somma di ottave di Perlin-like noise.
+    Risultato continuo, organic, senza pattern riconoscibili quando tiled."""
+    g = np.random.default_rng(seed)
+    out = np.zeros((size, size), np.float32)
+    amp = 1.0
+    freq = start_freq
+    for _ in range(octaves):
+        base = g.normal(0, 1, (freq, freq)).astype(np.float32)
+        layer_img = Image.fromarray(base, mode="F").resize(
+            (size, size), Image.BICUBIC
+        )
+        out += np.array(layer_img, dtype=np.float32) * amp
+        amp *= 0.5
+        freq *= 2
+    out = (out - out.mean()) / (out.std() + 1e-6)
+    return out
+
+
 def generate_asphalt_texture(level_dir: Path,
                                base_rgb: tuple[float, float, float]) -> str:
-    """Genera PNG 1024x1024 procedurale per l'asfalto piu' realistica:
-    grana fine, crepe a ragnatela, giunti trasversali (espansione), chiazze
-    di usura chiare/scure, niente striature longitudinali artificiali.
-    Base color piu' scuro del satellite (che e' sovraesposto in full sun).
-    """
+    """Asfalto realistico 1024x1024: fBm multi-scala (grana organica senza
+    pattern), granelli pietra salt&pepper, crepe sottili orientate, macchie
+    scure irregolari da fBm low-freq, subtle cold/warm variation."""
     size = 1024
     rng = np.random.default_rng(42)
 
-    # --- base: grana tri-scale (grande, media, fine) ---
-    # noise grande (macchie a 64px = zone di finitura)
-    big = rng.normal(0.0, 1.0, (size // 16, size // 16)).astype(np.float32)
-    big_img = Image.fromarray(big, mode="F").resize((size, size), Image.BICUBIC)
-    big = np.array(big_img, dtype=np.float32) * 0.05
-    # noise medio (32px)
-    med = rng.normal(0.0, 1.0, (size // 8, size // 8)).astype(np.float32)
-    med_img = Image.fromarray(med, mode="F").resize((size, size), Image.BICUBIC)
-    med = np.array(med_img, dtype=np.float32) * 0.04
-    # grana fine
-    fine = rng.normal(0.0, 0.035, (size, size)).astype(np.float32)
+    # Grana base organica via fBm 5 ottave
+    grain = _fbm_noise(size, octaves=5, seed=42, start_freq=8) * 0.055
 
-    # Granelli pietra nel bitume (salt & pepper)
+    # Granelli pietra (salt & pepper)
     spk = rng.random((size, size), dtype=np.float32)
-    dark_grit = np.where(spk > 0.985, -0.15, 0.0)
-    light_grit = np.where(spk < 0.010, 0.10, 0.0)
+    dark_grit = np.where(spk > 0.992, -0.13, 0.0)
+    light_grit = np.where(spk < 0.008, 0.08, 0.0)
 
-    # Crepe a ragnatela: linee sottili random
+    # Crepe random orientate (no pattern regolare)
     cracks = np.zeros((size, size), dtype=np.float32)
-    for _ in range(60):
-        y = rng.integers(0, size)
-        x0 = rng.integers(0, size - 40)
-        length = rng.integers(20, 200)
-        drift = rng.integers(-2, 3)
+    for _ in range(40):
+        y0 = rng.integers(50, size - 50)
+        x0 = rng.integers(0, size - 50)
+        angle = rng.uniform(-math.pi / 4, math.pi / 4)  # quasi orizzontale
+        length = rng.integers(40, 180)
         for i in range(length):
-            xi = x0 + i
-            yi = y + i * drift // 30
+            xi = x0 + int(i * math.cos(angle))
+            yi = y0 + int(i * math.sin(angle))
             if 0 <= xi < size and 0 <= yi < size:
-                cracks[yi, xi] = -0.18
-        # Alcune verticali
-        if rng.random() < 0.4:
-            x = rng.integers(0, size)
-            y0 = rng.integers(0, size - 40)
-            length = rng.integers(20, 150)
-            for i in range(length):
-                yi = y0 + i
-                if 0 <= yi < size:
-                    cracks[yi, x] = -0.16
+                cracks[yi, xi] = -0.13
+                # leggero feather
+                if xi + 1 < size:
+                    cracks[yi, xi + 1] += -0.04
 
-    # Niente giunti trasversali regolari (creano pattern "piastrelle" quando
-    # la texture si tile sulla road mesh). La grana + crepe random bastano.
-    joints = 0.0
+    # Macchie scure da fBm low-freq (patches di ombra/usura irregolari)
+    shadow_fbm = _fbm_noise(size, octaves=3, seed=7, start_freq=4)
+    # tieni solo valori bassi come macchie scure
+    dark_blobs = np.where(shadow_fbm < -0.7, (shadow_fbm + 0.7) * 0.12, 0.0)
 
-    # Macchia d'olio scura occasionale (grandi pozze)
-    oil = np.zeros((size, size), dtype=np.float32)
-    for _ in range(4):
-        cx = rng.integers(size // 8, size - size // 8)
-        cy = rng.integers(size // 8, size - size // 8)
-        r = rng.integers(20, 60)
-        yy, xx = np.ogrid[:size, :size]
-        d2 = (yy - cy) ** 2 + (xx - cx) ** 2
-        oil += np.where(d2 < r * r, -0.08 * (1.0 - d2 / (r * r)), 0.0).astype(np.float32)
+    # Variazione cold/warm sottile
+    tone = _fbm_noise(size, octaves=2, seed=99, start_freq=3) * 0.015
 
-    delta = big + med + fine + dark_grit + light_grit + cracks + joints + oil
+    delta = grain + dark_grit + light_grit + cracks + dark_blobs
 
-    # Base color: il satellite ha RGB ~0.60 (sovraesposto). Un asfalto reale
-    # di una SS italiana e' grigio medio (circa 0.45-0.50).
     r, g, b = base_rgb
-    base_scale = 0.80  # asfalto grigio medio (non troppo scuro)
-    r = r * base_scale
-    g = g * base_scale
-    b = b * base_scale
+    scale = 0.78  # asfalto medio (non nero, non chiaro sovraesposto)
+    r, g, b = r * scale, g * scale, b * scale
 
-    R = np.clip(r + delta, 0.02, 1.0)
-    G = np.clip(g + delta, 0.02, 1.0)
-    B = np.clip(b + delta * 1.02, 0.02, 1.0)
+    R = np.clip(r + delta - tone, 0.04, 1.0)
+    G = np.clip(g + delta, 0.04, 1.0)
+    B = np.clip(b + delta + tone, 0.04, 1.0)
     img = np.stack([R, G, B], axis=-1)
     img_u8 = (img * 255.0).astype(np.uint8)
 
@@ -851,7 +848,55 @@ def generate_asphalt_texture(level_dir: Path,
     out = tex_dir / "asphalt_base.png"
     Image.fromarray(img_u8).save(out, optimize=True)
     rel = f"levels/{LEVEL_NAME}/art/road/asphalt_base.png"
-    print(f"Asfalto texture {size}x{size}: {out.relative_to(MOD_DIR)}")
+    print(f"Asfalto texture {size}x{size} (fBm organic): {out.relative_to(MOD_DIR)}")
+    return rel
+
+
+def generate_terrain_grass_texture(level_dir: Path) -> str:
+    """Texture erba 1024x1024 per il material Terrain (mesh Blender):
+    base verde variata + chiazze terriccio + fiori gialli/bianchi rari.
+    Applicata come colorMap al material Terrain sul mesh Blender carvato."""
+    size = 1024
+    rng = np.random.default_rng(17)
+
+    # Base verde variata (fBm multi-scala, colore dominante)
+    green_var = _fbm_noise(size, octaves=4, seed=17, start_freq=4)
+    brown_var = _fbm_noise(size, octaves=3, seed=23, start_freq=3)
+
+    # Macchie di terriccio/terra nuda (low-freq)
+    soil_mask = _fbm_noise(size, octaves=3, seed=31, start_freq=5)
+    soil_factor = np.clip((soil_mask - 0.5) * 0.8, 0.0, 0.4)  # 0..0.4
+
+    # Fiori gialli sparsi (rari, spot)
+    spk = rng.random((size, size), dtype=np.float32)
+    yellow_flowers = spk > 0.996
+    white_flowers = spk < 0.002
+
+    # Base colore: verde erba naturale + variazione
+    R = 0.32 + green_var * 0.08 + brown_var * 0.04 + soil_factor * 0.25
+    G = 0.42 + green_var * 0.10 - soil_factor * 0.10
+    B = 0.22 + green_var * 0.04 + brown_var * 0.02 - soil_factor * 0.05
+
+    # Sovrapponi fiori
+    R = np.where(yellow_flowers, 0.92, R)
+    G = np.where(yellow_flowers, 0.80, G)
+    B = np.where(yellow_flowers, 0.15, B)
+    R = np.where(white_flowers, 0.95, R)
+    G = np.where(white_flowers, 0.93, G)
+    B = np.where(white_flowers, 0.88, B)
+
+    R = np.clip(R, 0.10, 0.95)
+    G = np.clip(G, 0.15, 0.95)
+    B = np.clip(B, 0.08, 0.90)
+    img = np.stack([R, G, B], axis=-1)
+    img_u8 = (img * 255.0).astype(np.uint8)
+
+    tex_dir = level_dir / "art" / "terrains"
+    tex_dir.mkdir(parents=True, exist_ok=True)
+    out = tex_dir / "terrain_grass.png"
+    Image.fromarray(img_u8).save(out, optimize=True)
+    rel = f"levels/{LEVEL_NAME}/art/terrains/terrain_grass.png"
+    print(f"Terrain grass texture {size}x{size}: {out.relative_to(MOD_DIR)}")
     return rel
 
 
@@ -1077,8 +1122,8 @@ def generate_roadside_clutter(level_dir: Path) -> Path | None:
             faces.append(([a, b, c], "BollardMat"))
             faces.append(([a, c, d], "BollardMat"))
 
-    # Cammina lungo la centerline con step ~18m per clutter naturale
-    step_m = 18.0
+    # Cammina lungo la centerline con step ~12m per clutter piu' denso
+    step_m = 12.0
     acc = 0.0
     last_x, last_y = cl[0][0], cl[0][1]
     side = 1
@@ -1514,15 +1559,16 @@ def main() -> None:
     # Blender (BeamNG richiede sempre un TerrainBlock). Mesh Blender sopra.
     max_height, elev_min, z_offset_blender = write_flat_fallback_terrain(LEVEL_DIR)
 
-    # 5. Materiali + satellite texture + asfalto procedurale + detail grass
+    # 5. Materiali + texture asfalto/erba procedurali
     asphalt_rgb = sample_asphalt_color_from_satellite()
     print(f"asfalto RGB campionato: "
           f"({asphalt_rgb[0]:.3f}, {asphalt_rgb[1]:.3f}, {asphalt_rgb[2]:.3f})")
     generate_asphalt_texture(LEVEL_DIR, asphalt_rgb)
-    generate_terrain_detail_texture(LEVEL_DIR)
-    # Material colorMap BeamNG: path relativo senza leading / e CON estensione.
+    grass_map = generate_terrain_grass_texture(LEVEL_DIR)
     asphalt_map = f"levels/{LEVEL_NAME}/art/road/asphalt_base.png"
-    write_materials(LEVEL_DIR, asphalt_rgb, asphalt_color_map=asphalt_map)
+    write_materials(LEVEL_DIR, asphalt_rgb,
+                     asphalt_color_map=asphalt_map,
+                     terrain_color_map=grass_map)
     copy_satellite_texture(LEVEL_DIR)
 
     # 5b. Roadside clutter procedurale (sassi + ciuffi ai bordi strada)
