@@ -277,12 +277,16 @@ def main() -> None:
     copy_if_exists(ROOT / "output" / "satellite.png",
                     level_dir / "art" / "terrains" / "satellite_diffuse.png")
 
-    # preview.jpg placeholder: 1x1 pixel grigio (da sostituire manualmente)
-    placeholder = level_dir / "preview.jpg"
-    if not placeholder.exists():
+    # preview.jpg: prova a usare quella renderizzata da blender_export.py,
+    # altrimenti placeholder grigio.
+    preview_dst = level_dir / "preview.jpg"
+    preview_src = BEAMNG_OUT / "preview.jpg"
+    if preview_src.exists():
+        copy_if_exists(preview_src, preview_dst)
+    else:
         from PIL import Image
-        Image.new("RGB", (512, 512), (120, 120, 120)).save(placeholder, "JPEG")
-        print(f"  creato placeholder {placeholder.relative_to(MOD_DIR)}")
+        Image.new("RGB", (512, 512), (120, 120, 120)).save(preview_dst, "JPEG")
+        print(f"  creato placeholder {preview_dst.relative_to(MOD_DIR)}")
 
     print(f"Mod skeleton pronta in {MOD_DIR}")
 

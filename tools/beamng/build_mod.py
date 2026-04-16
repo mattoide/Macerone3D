@@ -65,6 +65,29 @@ def main() -> None:
 
     run("mod_skeleton", [py, str(TOOLS / "build_mod_skeleton.py")])
 
+    # Texture PBR asfalto (dopo mod_skeleton, scrivono in mod/levels/.../art/road/)
+    run("textures", [py, str(TOOLS / "build_textures.py")])
+
+    # Convert OBJ -> DAE per i mesh dentro la mod (preferito da BeamNG)
+    mod_shapes = (ROOT / "output" / "beamng" / "mod" / "levels" / "macerone"
+                   / "art" / "shapes")
+    objs = list(mod_shapes.glob("*.obj"))
+    if objs:
+        run("obj_to_dae",
+            [py, str(TOOLS / "obj_to_dae.py")] + [str(o) for o in objs])
+
+    # Rigenera lo zip con le aggiunte (texture + .dae)
+    import zipfile
+    mod_dir = ROOT / "output" / "beamng" / "mod"
+    zip_path = ROOT / "output" / "beamng" / "macerone3d.zip"
+    if zip_path.exists():
+        zip_path.unlink()
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
+        for p in mod_dir.rglob("*"):
+            if p.is_file():
+                z.write(p, p.relative_to(mod_dir))
+    print(f"\nZip rigenerato: {zip_path} ({zip_path.stat().st_size // 1024} KB)")
+
     print("\n=== BUILD MOD OK ===")
     print(f"Mod pronta in: {ROOT / 'output' / 'beamng' / 'mod'}")
     print("Leggi output/beamng/mod/README_install.md per installarla in BeamNG.drive.")

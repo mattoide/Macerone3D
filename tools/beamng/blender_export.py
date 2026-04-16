@@ -176,6 +176,63 @@ def tree_type_for(name: str) -> str:
     return DEFAULT_TREE_TYPE
 
 
+def extract_islands_from_mesh(obj, terrain_size_m: float) -> list[dict]:
+    """
+    I mesh 'foresta' sono mergiati: ogni albero e' una componente connessa
+    dentro il mesh. Qui estraiamo una lista di istanze {x,y,z,size} facendo
+    union-find sugli edge del mesh.
+
+    Ritorna un elenco di istanze nel sistema WORLD di Blender.
+    """
+    me = obj.data
+    n = len(me.vertices)
+    if n == 0:
+        return []
+    parent = list(range(n))
+
+    def find(x):
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    for e in me.edges:
+        a, b = e.vertices[0], e.vertices[1]
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            parent[ra] = rb
+
+    # raggruppa i vertici per root
+    groups: dict[int, list[int]] = {}
+    for i in range(n):
+        groups.setdefault(find(i), []).append(i)
+
+    mw = obj.matrix_world
+    verts = me.vertices
+    instances = []
+    for vids in groups.values():
+        if len(vids) < 3:
+            continue
+        # centroide dell'isola + altezza (z max - z min) come "size"
+        xs = [verts[i].co.x for i in vids]
+        ys = [verts[i].co.y for i in vids]
+        zs = [verts[i].co.z for i in vids]
+        cx = sum(xs) / len(xs)
+        cy = sum(ys) / len(ys)
+        # z base = quota del vertice piu' basso (la base dell'albero tocca terra)
+        z_base = min(zs)
+        height = max(zs) - z_base
+        wp = mw @ Vector((cx, cy, z_base))
+        instances.append({
+            "x": round(wp.x, 2),
+            "y": round(wp.y, 2),
+            "z": round(wp.z, 2),
+            "size": round(height, 2),
+            "verts": len(vids),
+        })
+    return instances
+
+
 def export_forest_json(corridor: Corridor, dx: float, dy: float,
                         out_path: Path) -> int:
     trees_col = bpy.data.collections.get("Trees")
@@ -184,27 +241,40 @@ def export_forest_json(corridor: Corridor, dx: float, dy: float,
         out_path.write_text(json.dumps({"instances": []}, indent=2),
                               encoding="utf-8")
         return 0
+
     instances = []
     for obj in trees_col.all_objects:
-        if obj.type not in {"MESH", "EMPTY"}:
+        if obj.type != "MESH" or obj.data is None:
             continue
-        wx, wy, wz = obj.matrix_world.translation
-        # scarta alberi fuori dal terrain BeamNG
-        bx = wx + dx
-        by = wy + dy
-        if bx < 0 or by < 0:
+        # Il blend ha trunk + canopy come mesh separati per lo stesso albero;
+        # processiamo SOLO i trunk (piu' fedeli alla base) per evitare doppioni.
+        low = obj.name.lower()
+        if "canopy" in low or "canopi" in low or "chioma" in low:
+            print(f"  {obj.name}: skip (canopy, conta gia' col trunk)")
             continue
-        rot_z = obj.rotation_euler.z if hasattr(obj, "rotation_euler") else 0.0
-        sx, sy, sz = obj.scale
-        avg_scale = (sx + sy + sz) / 3.0
-        instances.append({
-            "x": round(bx, 2),
-            "y": round(by, 2),
-            "z": round(wz, 2),  # elevation locale (verra' proiettato sul terrain)
-            "rot_z": round(rot_z, 3),
-            "scale": round(avg_scale, 3),
-            "type": tree_type_for(obj.name),
-        })
+        obj_type = tree_type_for(obj.name)
+        islands = extract_islands_from_mesh(obj, 0.0)
+        kept = 0
+        for inst in islands:
+            bx = inst["x"] + dx
+            by = inst["y"] + dy
+            if bx < 0 or by < 0:
+                continue
+            size = inst["size"]
+            # scale relativa: assumiamo un albero "tipico" alto 8 m
+            avg_scale = size / 8.0 if size > 0.5 else 1.0
+            instances.append({
+                "x": round(bx, 2),
+                "y": round(by, 2),
+                "z": round(inst["z"], 2),
+                "rot_z": round(hash((bx, by)) % 628 / 100.0, 3),
+                "scale": round(max(0.3, min(2.5, avg_scale)), 3),
+                "type": obj_type,
+            })
+            kept += 1
+        print(f"  {obj.name}: {len(islands)} isole -> {kept} istanze "
+              f"(tipo={obj_type})")
+
     payload = {
         "format": "macerone_beamng_forest_v1",
         "coordinate_space": "terrain_local (origin=SW corner, X=east, Y=north)",
@@ -214,8 +284,45 @@ def export_forest_json(corridor: Corridor, dx: float, dy: float,
         "instances": instances,
     }
     out_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-    print(f"forest.json: {len(instances)} istanze scritte in {out_path}")
+    print(f"forest.json: {len(instances)} istanze totali scritte in {out_path}")
     return len(instances)
+
+
+def render_preview(out_path: Path, size: int = 512) -> bool:
+    """Render 512x512 JPG della scena. Preferisce OverviewCam se c'e'."""
+    scene = bpy.context.scene
+    cam = None
+    for obj in bpy.data.objects:
+        if obj.type == "CAMERA" and "overview" in obj.name.lower():
+            cam = obj
+            break
+    if cam is None:
+        # fallback: qualunque camera
+        for obj in bpy.data.objects:
+            if obj.type == "CAMERA":
+                cam = obj
+                break
+    if cam is None:
+        print("Nessuna camera trovata, preview skipped")
+        return False
+    scene.camera = cam
+    scene.render.resolution_x = size
+    scene.render.resolution_y = size
+    scene.render.resolution_percentage = 100
+    scene.render.image_settings.file_format = "JPEG"
+    scene.render.image_settings.quality = 85
+    scene.render.filepath = str(out_path)
+    scene.render.engine = "BLENDER_EEVEE_NEXT" if "BLENDER_EEVEE_NEXT" in {
+        e.identifier for e in bpy.types.RenderSettings.bl_rna.properties["engine"].enum_items
+    } else "BLENDER_EEVEE"
+    print(f"Rendering preview con camera '{cam.name}' engine={scene.render.engine} ...")
+    try:
+        bpy.ops.render.render(write_still=True)
+        print(f"  -> scritto {out_path}")
+        return True
+    except Exception as e:
+        print(f"  !! render fallito: {e}")
+        return False
 
 
 def main() -> None:
@@ -257,6 +364,9 @@ def main() -> None:
 
     # Forest instances (alberi)
     export_forest_json(corridor, dx, dy, out_dir / "forest.json")
+
+    # Preview render 512x512 da OverviewCam
+    render_preview(out_dir / "preview.jpg", size=512)
 
     print("blender_export.py OK")
 
