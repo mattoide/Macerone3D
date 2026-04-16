@@ -59,7 +59,7 @@ SPAWN_TURN_RIGHT_DEG = -25.0  # gradi di rotazione a destra (negativo = sx)
 # Triangoli del world mesh con centroide entro questa distanza dalla
 # centerline vengono rimossi: alberi procedurali, bushes, rocce che sono
 # finiti casualmente sull'asfalto.
-ROAD_CORRIDOR_FILTER_M = 3.5
+ROAD_CORRIDOR_FILTER_M = 4.5
 
 # Collezioni Blender da esportare come "world" (tutto tranne Road e roba troppo
 # pesante tipo Grass/Bushes). Se una non esiste, viene saltata.
@@ -457,15 +457,19 @@ def carve_heightmap_under_road(arr: np.ndarray, elev_min: float,
 
             sub = arr_f[r0c:r1c, c0c:c1c]
             a = alpha[kr0:kr1, kc0:kc1]
-            # Upper bound: al centro (a=1) strict [road-0.1]; al bordo (a=0)
-            # rilassato di soli +3m (evita che il DEM naturale alto "copra"
-            # la strada). Lower bound: largo (il terreno puo' scendere
-            # liberamente nelle valli lontane dalla strada).
-            relax_upper_u16 = (1.0 - a) * (3.0 / max_height * 65535.0)
+            # Upper bound HARD: road+0.4m per TUTTO il corridoio 100m, no
+            # falloff. Evita che il DEM naturale passi sopra la strada in
+            # qualsiasi punto entro vista. Al di fuori del kernel (a<=0)
+            # il terreno rimane invariato.
+            upper_hard_u16 = upper_u16 + (0.5 / max_height * 65535.0)
+            # Lower bound: falloff normale (il terreno puo' scendere in valli
+            # lontane con transizione smooth).
             relax_lower_u16 = (1.0 - a) * 30000.0
-            upper_bound = upper_u16 + relax_upper_u16
             lower_bound = np.maximum(0.0, lower_u16 - relax_lower_u16)
-            new = np.clip(sub, lower_bound, upper_bound)
+            in_kernel = a > 0
+            new = np.where(in_kernel,
+                             np.clip(sub, lower_bound, upper_hard_u16),
+                             sub)
             changed = int((np.abs(new - sub) > 0.5).sum())
             carved += changed
             arr_f[r0c:r1c, c0c:c1c] = new
