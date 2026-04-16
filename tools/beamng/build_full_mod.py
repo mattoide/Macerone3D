@@ -615,11 +615,19 @@ def drop_world_obj_to_terrain_mesh(world_obj_path: Path,
         if tz is None:
             continue
         delta = tz - base_z
-        # Solo abbassamento
+        # Abbassamento normale + upshift moderato per edifici compatti che
+        # sono sotto il terrain mesh coarse (es. base a 70m, terrain mesh
+        # a 72m perche' il mesh ha vertici interpolati al ribasso).
+        extent = max(x_range, y_range)
         if delta > -0.1:
-            continue  # base gia' a o sopra terrain, ok
-        if delta < -15.0:
-            continue  # troppo grande, probabile errore sample
+            # delta positivo = terrain sopra base. Accetto solo per oggetti
+            # compatti (edifici/alberi singoli) con delta piccolo.
+            if extent < 15.0 and 0.1 < delta < 3.0:
+                pass  # upshift OK
+            else:
+                continue
+        elif delta < -15.0:
+            continue  # downshift troppo grande, probabile errore sample
         for vi in vlist:
             shifts[vi] = delta
         n_shifted_isles += 1
@@ -1892,6 +1900,10 @@ def main() -> None:
         [sys.executable, str(TOOLS / "generate_extra_buildings.py")])
     extra_buildings_obj = LEVEL_DIR / "art" / "shapes" / "macerone_extra_buildings.obj"
     if extra_buildings_obj.exists() and extra_buildings_obj.stat().st_size > 200:
+        # Drop-to-ground anche sugli extra buildings (il generate usa
+        # heightmap DEM ma il terrain visibile e' il mesh Blender coarse)
+        if terrain_has_content:
+            drop_world_obj_to_terrain_mesh(extra_buildings_obj, terrain_obj)
         extra_buildings_dae = convert_to_dae(extra_buildings_obj)
         extra_buildings_rel = extra_buildings_dae.relative_to(LEVEL_DIR).as_posix()
 
