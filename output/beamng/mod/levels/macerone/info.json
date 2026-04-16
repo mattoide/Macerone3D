@@ -2,43 +2,18 @@
   "title": "SS17 Valico del Macerone",
   "description": "Ricostruzione 3D del tratto di SS17 sul Valico del Macerone (Molise), circa 16.6 km. Strada, elevazione, edifici e foreste generati da OSM + EU-DEM 25m + satellite ESRI.",
   "authors": "mattoide",
-  "country": "IT",
+  "previews": [
+    "main_preview.png"
+  ],
   "size": [
     12288,
     12288
   ],
-  "defaultSpawnPointName": "spawn_start",
-  "previews": [
-    "preview.jpg"
-  ],
-  "spawnPoints": [
-    {
-      "name": "spawn_start",
-      "translation": [
-        3600.0,
-        1800.0,
-        500.0
-      ],
-      "rotation": [
-        0.0,
-        0.0,
-        0.0,
-        1.0
-      ]
-    },
-    {
-      "name": "spawn_summit",
-      "translation": [
-        6144.0,
-        6144.0,
-        900.0
-      ],
-      "rotation": [
-        0.0,
-        0.0,
-        0.0,
-        1.0
-      ]
-    }
-  ]
+  "biome": "temperate",
+  "roads": "few",
+  "suitablefor": "Freeroam",
+  "features": "hills",
+  "isAuxiliary": false,
+  "supportsTraffic": false,
+  "supportsTimeOfDay": true
 }

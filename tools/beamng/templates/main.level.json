@@ -1,0 +1,595 @@
+{
+  "class" : "SimGroup",
+  "name" : "MissionGroup",
+  "enabled" : "1",
+  "childs" : [
+    {
+      "class" : "SimGroup",
+      "name" : "Level_objects",
+      "childs" : [
+        {
+          "class" : "TimeOfDay",
+          "name" : "tod",
+          "position" : [ 36.62279891967773, -62.50979995727539, 15.32040023803711 ],
+          "axisTilt" : 0,
+          "azimuthOverride" : 0.5,
+          "play" : false,
+          "startTime" : 0.4000000059604645,
+          "time" : 0.4000000059604645
+        },
+        {
+          "class" : "LevelInfo",
+          "name" : "theLevelInfo",
+          "canvasClearColor" : [ 1, 1, 1, 255 ],
+          "enabled" : "1",
+          "fogAtmosphereHeight" : 800,
+          "fogColor" : [ 0.7411760091781616, 0.8156859874725342, 0.9254900217056274, 1 ],
+          "fogDensity" : 0.0006000000284984708,
+          "globalEnviromentMap" : "BNG_Sky_02_cubemap",
+          "gravity" : -9.810000419616699,
+          "soundAmbience" : "AudioAmbienceDefault",
+          "visibleDistance" : 4500
+        },
+        {
+          "class" : "ScatterSky",
+          "name" : "sunsky",
+          "position" : [ 70.39710235595703, 4.539209842681885, 73.99230194091797 ],
+          "ambientScale" : [ 0.5450980067253113, 0.5450980067253113, 0.549019992351532, 1 ],
+          "azimuth" : 28.64789962768555,
+          "colorize" : [ 0.4235289990901947, 0.6078429818153381, 0.8666669726371765, 1 ],
+          "colorizeAmount" : 2,
+          "elevation" : 144,
+          "exposure" : 15,
+          "fadeStartDistance" : 1000,
+          "flareScale" : 5,
+          "flareType" : "BNG_Sunflare_3",
+          "fogScale" : [ 0.6941180229187012, 0.8549020290374756, 0.992156982421875, 1 ],
+          "lastSplitTerrainOnly" : true,
+          "logWeight" : 0.9900000095367432,
+          "mieScattering" : 0.0004299999854993075,
+          "moonLightColor" : [ 0.1960780024528503, 0.1960780024528503, 0.1960780024528503, 1 ],
+          "moonMat" : "Moon_Glow_Mat",
+          "moonScale" : 0.02999999932944775,
+          "nightColor" : [ 0.02352939918637276, 0.02352939918637276, 0.02352939918637276, 1 ],
+          "nightCubemap" : "BNG_Sky_Space",
+          "nightFogColor" : [ 0.003921569790691137, 0.003921569790691137, 0.003921569790691137, 1 ],
+          "overDarkFactor" : [ 40000, 8000, 1800, 650 ],
+          "rayleighScattering" : 0.009999999776482582,
+          "shadowDarkenColor" : [ 0, 0, 0, 0 ],
+          "shadowDistance" : 1600,
+          "shadowSoftness" : 0.2000000029802322,
+          "skyBrightness" : 11,
+          "sunScale" : [ 0.9960780143737793, 0.9019610285758972, 0.8313729763031006, 1 ],
+          "texSize" : 1024,
+          "useNightCubemap" : true
+        },
+        {
+          "class" : "CloudLayer",
+          "name" : "clouds",
+          "position" : [ 547.2169799804688, -452.9719848632813, 609.7449951171875 ],
+          "Textures" : [
+            {
+              "texScale" : 1.5,
+              "texSpeed" : 0.002000000094994903
+            },
+            {
+              "texDirection" : [ 0.800000011920929, 0.2000000029802322 ],
+              "texScale" : 3,
+              "texSpeed" : 0.02500000037252903
+            },
+            {
+              "texDirection" : [ 0.2000000029802322, 0.5 ],
+              "texScale" : 4,
+              "texSpeed" : 0.03500000014901161
+            }
+          ],
+          "baseColor" : [
+            0.9960780143737793,
+            0.9960780143737793,
+            0.9960780143737793,
+            0.9960780143737793
+          ],
+          "coverage" : 0.07999999821186066,
+          "exposure" : 1.299999952316284,
+          "height" : 3,
+          "texture" : "levels/jungle_rock_island/art/skies/SkyNormals_05.dds",
+          "windSpeed" : 0.2000000029802322
+        },
+        {
+          "class" : "CloudLayer",
+          "name" : "clouds1",
+          "position" : [ -1278.56005859375, -1211.329956054688, -186.7310028076172 ],
+          "Textures" : [
+            {
+              "texSpeed" : 0.002000000094994903
+            },
+            {
+              "texDirection" : [ 0.800000011920929, 0.2000000029802322 ],
+              "texScale" : 2,
+              "texSpeed" : 0.02500000037252903
+            },
+            {
+              "texDirection" : [ 0.2000000029802322, 0.5 ],
+              "texScale" : 0.5,
+              "texSpeed" : 0.03500000014901161
+            }
+          ],
+          "baseColor" : [
+            0.9960780143737793,
+            0.9960780143737793,
+            0.9960780143737793,
+            0.9960780143737793
+          ],
+          "cloneOrigin" : "clouds",
+          "coverage" : 0.2000000029802322,
+          "exposure" : 1.299999952316284,
+          "height" : 7,
+          "texture" : "levels/jungle_rock_island/art/skies/SkyNormals_05.dds",
+          "windSpeed" : 0.2000000029802322
+        },
+        {
+          "class" : "SimGroup",
+          "name" : "Water",
+          "childs" : [
+            {
+              "class" : "River",
+              "position" : [ -0.6790030002593994, -272.656005859375, 0.1389580070972443 ],
+              "Foam" : [ {}, {} ],
+              "Ripples (texture animation)" : [
+                {
+                  "rippleDir" : [ 0, 1 ],
+                  "rippleSpeed" : -0.02999999932944775,
+                  "rippleTexScale" : [ 7.139999866485596, 7.139999866485596 ]
+                },
+                {
+                  "rippleDir" : [ 0.7070000171661377, 0.7070000171661377 ],
+                  "rippleSpeed" : 0.03999999910593033,
+                  "rippleTexScale" : [ 6.25, 12.5 ]
+                },
+                {
+                  "rippleDir" : [ 0.5, 0.8600000143051147 ],
+                  "rippleSpeed" : 0.01999999955296516,
+                  "rippleTexScale" : [ 50, 50 ]
+                }
+              ],
+              "Waves (vertex undulation)" : [
+                {
+                  "waveDir" : [ 0, 1 ],
+                  "waveMagnitude" : 0.2000000029802322,
+                  "waveSpeed" : 1
+                },
+                {
+                  "waveDir" : [ 0.7070000171661377, 0.7070000171661377 ],
+                  "waveMagnitude" : 0.2000000029802322,
+                  "waveSpeed" : 1
+                },
+                {
+                  "waveDir" : [ 0.5, 0.8600000143051147 ],
+                  "waveMagnitude" : 0.2000000029802322,
+                  "waveSpeed" : 1
+                }
+              ],
+              "baseColor" : [ 97, 78, 67, 255 ],
+              "cubemap" : "DefaultSkyCubemap",
+              "density" : 5000,
+              "depthGradientTex" : "core/art/water/depthcolor_ramp.png",
+              "foamTex" : "core/art/water/foam.dds",
+              "fullReflect" : false,
+              "nodes" : [
+                [
+                  -0.6790030002593994,
+                  -272.656494140625,
+                  0.1389580070972443,
+                  13,
+                  5,
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  0.6100450158119202,
+                  -284.4979858398438,
+                  0.1082120016217232,
+                  13,
+                  5,
+                  0,
+                  0,
+                  1
+                ]
+              ],
+              "overallRippleMagnitude" : 0.5,
+              "overallWaveMagnitude" : 0.5,
+              "rippleTex" : "core/art/water/ripple.dds",
+              "specularPower" : 100,
+              "waterFogDensity" : 0.5,
+              "waterFogDensityOffset" : 0,
+              "wetDarkening" : 0.6000000238418579
+            },
+            {
+              "class" : "River",
+              "position" : [ 0.3878409862518311, -175.3480072021484, -0.1083759963512421 ],
+              "Foam" : [ {}, {} ],
+              "Ripples (texture animation)" : [
+                {
+                  "rippleDir" : [ 0, 1 ],
+                  "rippleSpeed" : -0.02999999932944775,
+                  "rippleTexScale" : [ 7.139999866485596, 7.139999866485596 ]
+                },
+                {
+                  "rippleDir" : [ 0.7070000171661377, 0.7070000171661377 ],
+                  "rippleSpeed" : 0.02999999932944775,
+                  "rippleTexScale" : [ 6.25, 12.5 ]
+                },
+                {
+                  "rippleDir" : [ 0.5, 0.8600000143051147 ],
+                  "rippleSpeed" : 0.01999999955296516,
+                  "rippleTexScale" : [ 50, 50 ]
+                }
+              ],
+              "Waves (vertex undulation)" : [
+                {
+                  "waveDir" : [ 0, 1 ],
+                  "waveMagnitude" : 0.2000000029802322,
+                  "waveSpeed" : 1
+                },
+                {
+                  "waveDir" : [ 0.7070000171661377, 0.7070000171661377 ],
+                  "waveMagnitude" : 0.2000000029802322,
+                  "waveSpeed" : 1
+                },
+                {
+                  "waveDir" : [ 0.5, 0.8600000143051147 ],
+                  "waveMagnitude" : 0.2000000029802322,
+                  "waveSpeed" : 1
+                }
+              ],
+              "baseColor" : [ 109, 83, 46, 255 ],
+              "clarity" : 0.1000000014901161,
+              "cubemap" : "DefaultSkyCubemap",
+              "density" : 5000,
+              "depthGradientTex" : "core/art/water/depthcolor_ramp.png",
+              "foamMaxDepth" : 3,
+              "foamTex" : "core/art/water/foam.dds",
+              "nodes" : [
+                [
+                  0.3878409862518311,
+                  -175.3477325439453,
+                  -0.1083759963512421,
+                  12,
+                  5,
+                  0,
+                  0,
+                  1
+                ],
+                [
+                  0.5663130283355713,
+                  -187.0945434570313,
+                  -0.08374200016260147,
+                  12,
+                  5,
+                  0,
+                  0,
+                  1
+                ]
+              ],
+              "overallFoamOpacity" : 2,
+              "overallRippleMagnitude" : 0.6000000238418579,
+              "overallWaveMagnitude" : 0.5,
+              "rippleTex" : "core/art/water/ripple.dds",
+              "underwaterColor" : [ 155, 124, 92, 240 ],
+              "waterFogDensity" : 0.5,
+              "waterFogDensityOffset" : 0,
+              "wetDarkening" : 0.6000000238418579
+            },
+            {
+              "class" : "WaterPlane",
+              "name" : "Ocean",
+              "position" : [ 0, 0, -20 ],
+              "Foam" : [
+                {
+                  "foamDir" : [ 0, 1 ],
+                  "foamSpeed" : 0.009999999776482582
+                },
+                {
+                  "foamDir" : [ 0, -1 ],
+                  "foamOpacity" : 5,
+                  "foamSpeed" : 0.009999999776482582,
+                  "foamTexScale" : [ 4, 4 ]
+                }
+              ],
+              "Ripples (texture animation)" : [
+                {
+                  "rippleDir" : [ 0, -1 ],
+                  "rippleMagnitude" : 0.5,
+                  "rippleSpeed" : 0.00800000037997961,
+                  "rippleTexScale" : [ 12, 12 ]
+                },
+                {
+                  "rippleDir" : [ 0.7070000171661377, 0.7070000171661377 ],
+                  "rippleMagnitude" : 0.5,
+                  "rippleSpeed" : 0.05000000074505806,
+                  "rippleTexScale" : [ 2, 2 ]
+                },
+                {
+                  "rippleDir" : [ -0.5, 0.8600000143051147 ],
+                  "rippleMagnitude" : 0.3499999940395355,
+                  "rippleSpeed" : 0.003000000026077032,
+                  "rippleTexScale" : [ 120, 120 ]
+                }
+              ],
+              "Waves (vertex undulation)" : [
+                {
+                  "waveDir" : [ 0, -1 ],
+                  "waveMagnitude" : 0.5,
+                  "waveSpeed" : 1
+                },
+                {
+                  "waveDir" : [ 0.25, 0.2000000029802322 ],
+                  "waveMagnitude" : 0.2000000029802322,
+                  "waveSpeed" : 2
+                },
+                {
+                  "waveDir" : [ 0.1000000014901161, -0.699999988079071 ],
+                  "waveMagnitude" : 0.2000000029802322,
+                  "waveSpeed" : 3
+                }
+              ],
+              "baseColor" : [ 253, 254, 254, 0 ],
+              "clarity" : 0.25,
+              "cubemap" : "BlueSkyCubemap",
+              "depthGradientMax" : 70,
+              "depthGradientTex" : "levels/jungle_rock_island/art/water/depthcolor_ramp_tropical.png",
+              "distortEndDist" : 10,
+              "distortFullDepth" : 5.5,
+              "distortStartDist" : 0,
+              "foamAmbientLerp" : 1,
+              "foamMaxDepth" : 0.3499999940395355,
+              "foamRippleInfluence" : 0.004999999888241291,
+              "foamTex" : "core/art/water/foam.dds",
+              "fresnelBias" : -0.1000000014901161,
+              "fresnelPower" : 0.800000011920929,
+              "fullReflect" : true,
+              "gridSize" : 100,
+              "overallFoamOpacity" : 3.5,
+              "overallRippleMagnitude" : 1,
+              "overallWaveMagnitude" : 0.1500000059604645,
+              "reflectDetailAdjust" : 0,
+              "reflectMaxRateMs" : 20,
+              "reflectivity" : 0.2000000029802322,
+              "rippleTex" : "levels/jungle_rock_island/art/water/ripple4.png",
+              "specularPower" : 210,
+              "underwaterColor" : [ 60, 223, 254, 253 ],
+              "viscosity" : 0.001000000047497451,
+              "waterFogDensity" : 0.800000011920929,
+              "waterFogDensityOffset" : 0.1000000014901161,
+              "wetDarkening" : 0.1500000059604645,
+              "wetDepth" : 0.5
+            }
+          ]
+        },
+        {
+          "class" : "SimGroup",
+          "name" : "vegetation",
+          "childs" : [
+            {
+              "class" : "Forest",
+              "name" : "theForest",
+              "dataFile" : "levels/autotest/autotest.forest.json",
+              "mode" : "Ignore"
+            }
+          ]
+        },
+        {
+          "class" : "TerrainBlock",
+          "name" : "theTerrain",
+          "position" : [ -540.197021484375, -800, -1.399999976158142 ],
+          "maxHeight" : 4,
+          "terrainFile" : "levels/autotest/theTerrain.ter"
+        }
+      ]
+    },
+    {
+      "class" : "SimGroup",
+      "name" : "CameraBookmarks",
+      "childs" : [
+        {
+          "class" : "CameraBookmark",
+          "name" : "overviewbookmark",
+          "position" : [ 17.95940017700195, -19.97909927368164, 8.283820152282715 ],
+          "rotation" : [
+            0.4368439912796021,
+            0.1854469925165176,
+            -0.8802140355110168,
+            51.49481964111328
+          ],
+          "dataBlock" : "CameraBookmarkMarker",
+          "internalName" : "NewCamera_0",
+          "isAIControlled" : "0",
+          "mode" : "Override"
+        }
+      ]
+    },
+    {
+      "class" : "SimGroup",
+      "name" : "PlayerDropPoints",
+      "enabled" : "1",
+      "childs" : [
+        {
+          "class" : "SpawnSphere",
+          "autoplaceOnSpawn" : "0",
+          "dataBlock" : "SpawnSphereMarker",
+          "enabled" : "1",
+          "homingCount" : "0",
+          "indoorWeight" : "1",
+          "isAIControlled" : "0",
+          "lockCount" : "0",
+          "mode" : "Ignore",
+          "outdoorWeight" : "1",
+          "radius" : 1,
+          "sphereWeight" : "1"
+        }
+      ]
+    },
+    {
+      "class" : "SimGroup",
+      "name" : "Statics",
+      "childs" : [
+        {
+          "class" : "TSStatic",
+          "position" : [ -28.80900001525879, -191.3150024414063, 0 ],
+          "allowPlayerStep" : "1",
+          "shapeName" : "levels/autotest/art/shapes/roads/retainingwall.dae"
+        },
+        {
+          "class" : "TSStatic",
+          "position" : [ 20, -320, 0 ],
+          "rotation" : [ 0, 0, 1, 180 ],
+          "allowPlayerStep" : "1",
+          "mode" : "Ignore",
+          "shapeName" : "levels/autotest/art/shapes/roads/dragTest.dae"
+        }
+      ]
+    },
+    {
+      "class" : "SimGroup",
+      "name" : "roads",
+      "childs" : [
+        {
+          "class" : "DecalRoad",
+          "position" : [ -1.723150014877319, -262.614990234375, 1.109380006790161 ],
+          "Material" : "road_dirt_damp",
+          "nodes" : [
+            [ -1.723147988319397, -262.6145324707031, 1.109375, 11 ],
+            [ -0.7717750072479248, -275.6372375488281, -0.234375, 11 ],
+            [ -1.566723942756653, -289.7561340332031, 1.2734375, 11 ],
+            [ -1.698042035102844, -296.5050354003906, 1.03515625, 11 ]
+          ],
+          "renderPriority" : 7,
+          "startEndFade" : [ 10, 10 ]
+        },
+        {
+          "class" : "DecalRoad",
+          "position" : [ -0.4012880027294159, -168.2209930419922, 0.1328130066394806 ],
+          "Material" : "road_dirt_damp",
+          "nodes" : [
+            [ -0.4012880027294159, -168.2212524414063, 0.1328125, 11 ],
+            [ -1.139081954956055, -182.8281402587891, -0.28125, 11 ],
+            [ -0.5203679800033569, -199.5012512207031, 0.25, 11 ]
+          ],
+          "renderPriority" : 8,
+          "startEndFade" : [ 10, 10 ],
+          "textureLength" : 11
+        },
+        {
+          "class" : "DecalRoad",
+          "position" : [ 2.470329999923706, 9.535249710083008, -0.2265630066394806 ],
+          "Material" : "BNG_Road_Dirt",
+          "nodes" : [
+            [ 2.470326900482178, 9.535247802734375, -0.2265625, 6 ],
+            [ 2.607901096343994, -83.21778106689453, 0.09375, 6 ],
+            [ 1.082329034805298, -134.9351806640625, 0.25, 6 ]
+          ],
+          "renderPriority" : 9,
+          "startEndFade" : [ 40, 40 ],
+          "textureLength" : 6
+        },
+        {
+          "class" : "DecalRoad",
+          "position" : [ 0.1325909942388535, 25.04409980773926, -1.398440003395081 ],
+          "Material" : "road_dirt",
+          "mode" : "Ignore",
+          "nodes" : [
+            [ 0.1325909942388535, 25.04414176940918, -1.3984375, 15 ],
+            [ 1.202301025390625, -496.9200439453125, -1.3984375, 15 ]
+          ],
+          "renderPriority" : 11,
+          "textureLength" : 15
+        },
+        {
+          "class" : "DecalRoad",
+          "position" : [ -3.120260000228882, 22.6072998046875, -1.398440003395081 ],
+          "Material" : "DirtRoad_variation_01",
+          "nodes" : [
+            [ -3.120261907577515, 22.6072998046875, -1.3984375, 10 ],
+            [ 1.769927978515625, -30.32707405090332, -0.171875, 10 ],
+            [ 2.000053882598877, -67.12112426757813, 0.203125, 10 ],
+            [ -0.07445099949836731, -116.5314788818359, 0.1640625, 10 ],
+            [ 0.5747730135917664, -141.6291351318359, 0.625, 10 ],
+            [ -0.6992809772491455, -168.8633728027344, 0.44140625, 10 ],
+            [ 0.639756977558136, -210.6735534667969, 0.890625, 10 ],
+            [ 0.06150899827480316, -245.1775512695313, 0.8203125, 10 ],
+            [ -3.494673013687134, -272.9361572265625, 0.2890625, 10 ],
+            [ -1.891664028167725, -308.0564575195313, -0.2265625, 10 ],
+            [ 2.755048990249634, -323.3777465820313, 1.2578125, 10 ],
+            [ 3.246215105056763, -357.8055725097656, 0.953125, 10 ],
+            [ -1.368352055549622, -406.83154296875, 1.4375, 10 ],
+            [ -0.6338449716567993, -434.0255126953125, 1.421875, 10 ],
+            [ -1.181687951087952, -475.6644287109375, 0.11328125, 10 ]
+          ],
+          "renderPriority" : 7,
+          "startEndFade" : [ 100, 30 ],
+          "textureLength" : 60
+        },
+        {
+          "class" : "DecalRoad",
+          "position" : [ -3.582819938659668, -211.4400024414063, 0.515625 ],
+          "Material" : "road_dirt_damp",
+          "nodes" : [
+            [ -3.582823038101196, -211.4397583007813, 0.515625, 10 ],
+            [ 2.210045099258423, -269.2680969238281, -0.1484375, 10 ],
+            [ 1.5017169713974, -322.6855773925781, 0.734375, 10 ],
+            [ 0.6310629844665527, -363.5526428222656, 1.1640625, 10 ],
+            [ 1.692738056182861, -430.58984375, -0.2578125, 10 ],
+            [ -2.081778049468994, -475.9312133789063, -0.0703125, 10 ]
+          ],
+          "renderPriority" : 9,
+          "startEndFade" : [ 40, 40 ]
+        },
+        {
+          "class" : "DecalRoad",
+          "position" : [ -2.812390089035034, -43.64490127563477, -0.1875 ],
+          "Material" : "dirt_road_tread_ruts",
+          "nodes" : [
+            [ -2.812392950057983, -43.64491271972656, -0.1875, 10 ],
+            [ 0.2232249975204468, -89.51359558105469, -0.26171875, 10 ],
+            [ -0.1325590014457703, -138.6190795898438, 0.203125, 10 ],
+            [ 1.598953008651733, -162.4988861083984, -0.140625, 10 ],
+            [ -2.634932994842529, -220.69287109375, 0.8359375, 10 ]
+          ],
+          "renderPriority" : 9,
+          "startEndFade" : [ 100, 100 ]
+        },
+        {
+          "class" : "DecalRoad",
+          "position" : [ 1.760929942131042, -240.1300048828125, 1.046880006790161 ],
+          "Material" : "dirt_road_tread_ruts",
+          "nodes" : [
+            [ 1.760929942131042, -240.1296997070313, 1.046875, 8 ],
+            [ -0.529865026473999, -288.8192443847656, 1.390625, 8 ],
+            [ -1.992311000823975, -328.3915405273438, 1.234375, 8 ],
+            [ 0.8814380168914795, -375.6867065429688, 1.5, 8 ]
+          ],
+          "renderPriority" : 8,
+          "startEndFade" : [ 100, 100 ],
+          "textureLength" : 10
+        },
+        {
+          "class" : "DecalRoad",
+          "position" : [ -3.326169967651367, 11.10169982910156, -0.3671880066394806 ],
+          "Material" : "BNG_Road_Dirt",
+          "nodes" : [
+            [ -3.326167106628418, 11.10165977478027, -0.3671875, 6 ],
+            [ -2.905736923217773, -43.5975341796875, -0.18359375, 6 ],
+            [ -1.442067980766296, -121.4289016723633, -0.140625, 6 ]
+          ],
+          "startEndFade" : [ 40, 40 ],
+          "textureLength" : 6
+        }
+      ]
+    },
+    {
+      "class" : "SimGroup",
+      "name" : "AIDecalWaypointsGroup"
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "m_asphalt_road_damaged": {
+    "name": "m_asphalt_road_damaged",
+    "mapTo": "m_asphalt_road_damaged",
+    "class": "Material",
+    "persistentId": "a1b2c3d4-0001-0000-0000-000000000001",
+    "Stages": [
+      {
+        "colorMap": "/levels/macerone/art/road/asphalt_base"
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "m_terrain_diffuse": {
+    "name": "m_terrain_diffuse",
+    "mapTo": "m_terrain_diffuse",
+    "class": "Material",
+    "persistentId": "a1b2c3d4-0002-0000-0000-000000000002",
+    "Stages": [
+      {
+        "colorMap": "/levels/macerone/art/terrains/satellite_diffuse"
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "m_building_generic": {
+    "name": "m_building_generic",
+    "mapTo": "m_building_generic",
+    "class": "Material",
+    "persistentId": "a1b2c3d4-0003-0000-0000-000000000003",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.7,
+          0.65,
+          0.55,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "m_guardrail_steel": {
+    "name": "m_guardrail_steel",
+    "mapTo": "m_guardrail_steel",
+    "class": "Material",
+    "persistentId": "a1b2c3d4-0004-0000-0000-000000000004",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.7,
+          0.72,
+          0.75,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "m_wall_drystone": {
+    "name": "m_wall_drystone",
+    "mapTo": "m_wall_drystone",
+    "class": "Material",
+    "persistentId": "a1b2c3d4-0005-0000-0000-000000000005",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.55,
+          0.5,
+          0.45,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  }
+}

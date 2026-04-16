@@ -1,0 +1,16 @@
+
+{
+    "title": "levels.autotest.info.title",
+    "description": "levels.autotest.info.description",
+    "previews": ["autotest_preview.jpg"],
+    "size": [1024,1024],
+    "biome": "empty",
+    "roads": "empty",
+    "suitablefor": "Debug",
+    "features": "empty",
+    "authors": "BeamNG",
+    "isAuxiliary":true,
+    "supportsTraffic": false,
+    "supportsTimeOfDay": false
+
+}

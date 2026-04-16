@@ -58,92 +58,87 @@ def mod_info() -> dict:
 
 
 def level_info() -> dict:
+    # Formato identico a levels/autotest/info.json per massima compatibilita'
+    # BeamNG 0.38. Lo spawnPoint si definisce dentro main.level.json con classe
+    # SpawnSphere (non qui).
     return {
         "title": LEVEL_TITLE,
         "description": DESCRIPTION,
         "authors": AUTHOR,
-        "country": "IT",
+        "previews": ["main_preview.png"],
         "size": [12288, 12288],
-        "defaultSpawnPointName": "spawn_start",
-        "previews": ["preview.jpg"],
-        "spawnPoints": [
-            {
-                "name": "spawn_start",
-                "translation": [3600.0, 1800.0, 500.0],
-                "rotation": [0.0, 0.0, 0.0, 1.0],
-            },
-            {
-                "name": "spawn_summit",
-                "translation": [6144.0, 6144.0, 900.0],
-                "rotation": [0.0, 0.0, 0.0, 1.0],
-            },
-        ],
-    }
-
-
-def main_level_json() -> dict:
-    return {
-        "name": LEVEL_NAME,
-        "sun": {
-            "azimuth": 0.9,
-            "elevation": 0.75,
-            "color": [1.0, 0.95, 0.85, 1.0],
-            "brightness": 2.0,
-        },
-        "sky": {
-            "ambientColor": [0.35, 0.4, 0.5, 1.0],
-            "fogDensity": 0.0001,
-            "fogColor": [0.65, 0.7, 0.75, 1.0],
-        },
-        "physics": {"gravity": -9.81},
-        "time_of_day": 0.32,
+        "biome": "temperate",
+        "roads": "few",
+        "suitablefor": "Freeroam",
+        "features": "hills",
+        "isAuxiliary": False,
+        "supportsTraffic": False,
+        "supportsTimeOfDay": True,
     }
 
 
 def materials_json() -> dict:
+    # Formato BeamNG 0.38: ogni materiale DEVE avere "class": "Material" e
+    # "Stages" (4 stages dove di solito solo [0] e' popolato).
+    def mat(name: str, map_to: str, color_map_rel: str | None = None,
+            base_color_rgb: tuple[float, float, float] = (0.6, 0.6, 0.6),
+            pid: str = "00000000-0000-0000-0000-000000000000") -> dict:
+        stage0: dict = {}
+        if color_map_rel:
+            stage0["colorMap"] = f"/levels/{LEVEL_NAME}/{color_map_rel}"
+        else:
+            stage0["diffuseColor"] = [*base_color_rgb, 1.0]
+        return {
+            "name": name,
+            "mapTo": map_to,
+            "class": "Material",
+            "persistentId": pid,
+            "Stages": [stage0, {}, {}, {}],
+            "materialTag0": "Miscellaneous",
+        }
+
     return {
-        "m_asphalt_road_damaged": {
-            "mapTo": "m_asphalt_road_damaged",
-            "baseColorMap": "levels/macerone/art/road/asphalt_base.png",
-            "normalMap": "levels/macerone/art/road/asphalt_normal.png",
-            "roughnessMap": "levels/macerone/art/road/asphalt_roughness.png",
-            "roughnessFactor": 0.9,
-            "metalnessFactor": 0.0,
-            "uvScale": [0.2, 0.2],
-            "__note": "texture da fornire o riferire con .link al pacchetto 'art_common'.",
-        },
-        "m_asphalt_road_damaged_small": {
-            "mapTo": "m_asphalt_road_damaged_small",
-            "baseColor": [0.35, 0.35, 0.35, 1.0],
-            "roughnessFactor": 0.95,
-            "metalnessFactor": 0.0,
-        },
-        "m_terrain_diffuse": {
-            "mapTo": "m_terrain_diffuse",
-            "baseColorMap": "levels/macerone/art/terrains/satellite_diffuse.jpg",
-            "roughnessFactor": 1.0,
-            "metalnessFactor": 0.0,
-            "uvScale": [1.0, 1.0],
-        },
-        "m_building_generic": {
-            "mapTo": "m_building_generic",
-            "baseColor": [0.7, 0.65, 0.55, 1.0],
-            "roughnessFactor": 0.85,
-            "metalnessFactor": 0.0,
-        },
-        "m_guardrail_steel": {
-            "mapTo": "m_guardrail_steel",
-            "baseColor": [0.7, 0.72, 0.75, 1.0],
-            "roughnessFactor": 0.4,
-            "metalnessFactor": 0.9,
-        },
-        "m_wall_drystone": {
-            "mapTo": "m_wall_drystone",
-            "baseColor": [0.55, 0.5, 0.45, 1.0],
-            "roughnessFactor": 0.95,
-            "metalnessFactor": 0.0,
-        },
+        "m_asphalt_road_damaged": mat(
+            "m_asphalt_road_damaged", "m_asphalt_road_damaged",
+            "art/road/asphalt_base",
+            pid="a1b2c3d4-0001-0000-0000-000000000001",
+        ),
+        "m_terrain_diffuse": mat(
+            "m_terrain_diffuse", "m_terrain_diffuse",
+            "art/terrains/satellite_diffuse",
+            pid="a1b2c3d4-0002-0000-0000-000000000002",
+        ),
+        "m_building_generic": mat(
+            "m_building_generic", "m_building_generic",
+            None, (0.70, 0.65, 0.55),
+            pid="a1b2c3d4-0003-0000-0000-000000000003",
+        ),
+        "m_guardrail_steel": mat(
+            "m_guardrail_steel", "m_guardrail_steel",
+            None, (0.70, 0.72, 0.75),
+            pid="a1b2c3d4-0004-0000-0000-000000000004",
+        ),
+        "m_wall_drystone": mat(
+            "m_wall_drystone", "m_wall_drystone",
+            None, (0.55, 0.50, 0.45),
+            pid="a1b2c3d4-0005-0000-0000-000000000005",
+        ),
     }
+
+
+def decals_json() -> dict:
+    return {
+        "header": {
+            "name": "DecalData File",
+            "comments": "// generato da Macerone3D",
+            "version": 1,
+        },
+        "instances": {},
+    }
+
+
+def map_json() -> dict:
+    return {"segments": {}}
 
 
 def install_readme() -> str:
@@ -330,21 +325,42 @@ def main() -> None:
     (level_dir / "info.json").write_text(
         json.dumps(level_info(), indent=2), encoding="utf-8"
     )
-    (level_dir / "main.level.json").write_text(
-        json.dumps(main_level_json(), indent=2), encoding="utf-8"
-    )
-    (level_dir / "art" / "materials.json").write_text(
+
+    # main.level.json: usiamo il template estratto da levels/autotest (BeamNG
+    # stock). Il file contiene la scena minima valida (SimGroup/LevelInfo/
+    # ScatterSky/CloudLayer/...). Modifichiamo solo pochi campi se serve.
+    template_level = Path(__file__).resolve().parent / "templates" / "main.level.json"
+    if template_level.exists():
+        (level_dir / "main.level.json").write_text(
+            template_level.read_text(encoding="utf-8"), encoding="utf-8"
+        )
+        print(f"  main.level.json: template autotest copiato")
+    else:
+        print(f"  ATTENZIONE: manca {template_level}, livello senza scena")
+
+    # main.materials.json nella root del livello (formato BeamNG 0.38)
+    (level_dir / "main.materials.json").write_text(
         json.dumps(materials_json(), indent=2), encoding="utf-8"
     )
+    (level_dir / "main.decals.json").write_text(
+        json.dumps(decals_json(), indent=2), encoding="utf-8"
+    )
+    (level_dir / "map.json").write_text(
+        json.dumps(map_json(), indent=2), encoding="utf-8"
+    )
 
-    # Copy artifacts prodotti dagli altri script
+    # Copy artifacts prodotti dagli altri script. Heightmap/roads/forest vanno
+    # in 'import_data/' (file custom nostri che BeamNG non deve cercare di
+    # interpretare al load del livello -- saranno usati solo dal Terrain and
+    # Road Importer, lanciato manualmente via F11).
     print("Copio artifacts...")
-    copy_if_exists(BEAMNG_OUT / "heightmap.png",
-                    level_dir / "terrain" / "heightmap.png")
+    import_dir = level_dir / "import_data"
+    import_dir.mkdir(exist_ok=True)
+    copy_if_exists(BEAMNG_OUT / "heightmap.png", import_dir / "heightmap.png")
     copy_if_exists(BEAMNG_OUT / "terrain_info.json",
-                    level_dir / "terrain" / "terrain_info.json")
-    copy_if_exists(BEAMNG_OUT / "roads.json", level_dir / "roads.json")
-    copy_if_exists(BEAMNG_OUT / "forest.json", level_dir / "forest.json")
+                    import_dir / "terrain_info.json")
+    copy_if_exists(BEAMNG_OUT / "roads.json", import_dir / "roads.json")
+    copy_if_exists(BEAMNG_OUT / "forest.json", import_dir / "forest.json")
     for basename in ("buildings", "guardrails", "walls", "props"):
         # Prova .dae (preferito da BeamNG); fallback a .obj se il Collada
         # exporter non era disponibile (Blender 5.x).
