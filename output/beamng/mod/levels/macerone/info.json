@@ -15,5 +15,22 @@
   "features": "hills",
   "isAuxiliary": false,
   "supportsTraffic": false,
-  "supportsTimeOfDay": true
+  "supportsTimeOfDay": true,
+  "spawnPoints": [
+    {
+      "translation": [
+        3552.641,
+        -4449.504,
+        411.52085034179686
+      ],
+      "rot": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "objectname": "spawn_start"
+    }
+  ],
+  "defaultSpawnPointName": "spawn_start"
 }

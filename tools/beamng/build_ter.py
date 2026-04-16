@@ -44,7 +44,8 @@ MOD_LEVEL_DIR = BEAMNG_OUT / "mod" / "levels" / "macerone"
 # leggermente piu' bassa (da 3 m/pixel a 12 m/pixel) -> strada comunque ok.
 TER_SIZE = 1024
 
-MATERIAL_NAME = "macerone_satellite"
+MATERIAL_NAME = "macerone_ground"
+MATERIAL_UUID = "a1b2c3d4-9999-0000-0000-000000000099"
 
 
 def main() -> None:
@@ -181,11 +182,18 @@ def main() -> None:
     print(f"Spawn point: ({spawn_x:.1f}, {spawn_y:.1f}, {spawn_z:.1f})  "
           f"[z_offset={z_offset}]")
 
+    pos_str = f'"position" : [ {spawn_x}, {spawn_y}, {spawn_z} ]'
+
     def patch_spawnsphere(m):
         block = m.group(0)
-        block = re.sub(r'"position"\s*:\s*\[[^\]]+\]',
-                        f'"position" : [ {spawn_x}, {spawn_y}, {spawn_z} ]',
-                        block)
+        if '"position"' in block:
+            block = re.sub(r'"position"\s*:\s*\[[^\]]+\]', pos_str, block)
+        else:
+            # AGGIUNGI position dopo "class":"SpawnSphere"
+            block = block.replace(
+                '"class" : "SpawnSphere"',
+                f'"class" : "SpawnSphere",\n          "name" : "spawn_start",\n          {pos_str}',
+            )
         return block
 
     text = re.sub(
@@ -193,32 +201,59 @@ def main() -> None:
         patch_spawnsphere, text, flags=re.S,
     )
     mlj.write_text(text, encoding="utf-8")
-    print(f"Patched SpawnSphere(s) in main.level.json")
+    print(f"Patched SpawnSphere(s) in main.level.json: pos=({spawn_x:.0f}, "
+          f"{spawn_y:.0f}, {spawn_z:.1f})")
 
-    # --- Aggiorna main.materials.json con il nostro material custom ---
-    materials_file = MOD_LEVEL_DIR / "main.materials.json"
-    materials = {}
-    if materials_file.exists():
-        materials = json.loads(materials_file.read_text(encoding="utf-8"))
-    materials[MATERIAL_NAME] = {
-        "name": MATERIAL_NAME,
-        "mapTo": MATERIAL_NAME,
-        "class": "Material",
-        "persistentId": "a1b2c3d4-9999-0000-0000-000000000099",
-        "Stages": [
+    # Aggiungi spawnPoints al info.json livello come fallback extra
+    info_file = MOD_LEVEL_DIR / "info.json"
+    if info_file.exists():
+        lvl_info = json.loads(info_file.read_text(encoding="utf-8"))
+        lvl_info["spawnPoints"] = [
             {
-                "colorMap": "/levels/macerone/art/terrains/satellite_diffuse.jpg",
-                "detailScale": [1, 1],
-            },
-            {}, {}, {},
-        ],
-        "detailDistance": "2000",
-        "detailSize": "1",
-        "diffuseSize": "1",
-        "materialTag0": "Miscellaneous",
+                "translation": [spawn_x, spawn_y, spawn_z],
+                "rot": [0, 0, 0, 1],
+                "objectname": "spawn_start",
+            }
+        ]
+        lvl_info["defaultSpawnPointName"] = "spawn_start"
+        info_file.write_text(json.dumps(lvl_info, indent=2), encoding="utf-8")
+        print(f"Aggiornato info.json con spawnPoints")
+
+    # --- Crea art/terrain/main.materials.json con TerrainMaterial custom ---
+    # Il material del TERRAIN deve avere class=TerrainMaterial (non Material),
+    # internalName matching il nome nel .ter, e groundmodelName per la fisica.
+    # Path: levels/<name>/art/terrain/main.materials.json (singolare, NON terrains).
+    terrain_mat_dir = MOD_LEVEL_DIR / "art" / "terrain"
+    terrain_mat_dir.mkdir(parents=True, exist_ok=True)
+    terrain_materials = {
+        f"{MATERIAL_NAME}-{MATERIAL_UUID}": {
+            "internalName": MATERIAL_NAME,
+            "class": "TerrainMaterial",
+            "persistentId": MATERIAL_UUID,
+            "diffuseMap": "levels/macerone/art/terrains/satellite_diffuse",
+            "diffuseSize": 12288,   # spazio coperto in metri dalla singola texture
+            "detailMap": "levels/macerone/art/terrain/asphalt_base",
+            "detailSize": 4,
+            "detailStrength": 0.3,
+            "detailDistance": 80,
+            "groundmodelName": "ASPHALT",
+        }
     }
-    materials_file.write_text(json.dumps(materials, indent=2), encoding="utf-8")
-    print(f"Aggiornato main.materials.json con '{MATERIAL_NAME}'")
+    (terrain_mat_dir / "main.materials.json").write_text(
+        json.dumps(terrain_materials, indent=2), encoding="utf-8"
+    )
+    print(f"Scritto art/terrain/main.materials.json con TerrainMaterial "
+          f"'{MATERIAL_NAME}' (groundmodel=ASPHALT)")
+
+    # Rimuovi l'eventuale material omonimo obsoleto dalla root main.materials.json
+    root_materials_file = MOD_LEVEL_DIR / "main.materials.json"
+    if root_materials_file.exists():
+        root_mats = json.loads(root_materials_file.read_text(encoding="utf-8"))
+        for k in ("macerone_satellite", MATERIAL_NAME):
+            root_mats.pop(k, None)
+        root_materials_file.write_text(
+            json.dumps(root_mats, indent=2), encoding="utf-8"
+        )
 
 
 if __name__ == "__main__":
