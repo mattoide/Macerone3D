@@ -42,13 +42,10 @@ OTHER_ROAD_WIDTH_DEFAULT = 5.0
 MAIN_MATERIAL = "m_asphalt_road_damaged"
 SIDE_MATERIAL = "m_asphalt_road_damaged_small"
 
-# Se la centerline e' troppo densa (ogni 15 m), sfoltiamo un po' per non avere
-# decine di migliaia di nodi.
-DECIMATE_MAIN_STEP_M = 8.0
-DECIMATE_OTHER_STEP_M = 15.0
-
-# Filtro: scarta other_roads esterne al terrain BeamNG
-OTHER_ROAD_MIN_POINTS = 4
+# L'utente vuole SOLO la SS17. Niente altre strade per massima velocita' di
+# caricamento (il Terrain Importer terraforma il terreno sotto ogni strada).
+DECIMATE_MAIN_STEP_M = 10.0
+INCLUDE_OTHER_ROADS = False
 
 
 def project_factory(lat0: float, lon0: float):
@@ -116,37 +113,8 @@ def main() -> None:
     })
     print(f"SS17: {len(main_pts)} nodi  width={road_width} m")
 
-    # Other roads (strade secondarie da OSM)
-    keep = 0
-    skip_outside = 0
-    skip_short = 0
-    for idx, way in enumerate(data.get("other_roads", [])):
-        coords = way.get("coords") or []
-        if len(coords) < OTHER_ROAD_MIN_POINTS:
-            skip_short += 1
-            continue
-        pts: list[tuple[float, float]] = []
-        for lat, lon in coords:
-            lx, ly = project(lat, lon)
-            pts.append((lx - x_min, ly - y_min))
-        pts = [(x, y) for (x, y) in pts if in_terrain(x, y, 0, 0, size_m)]
-        if len(pts) < OTHER_ROAD_MIN_POINTS:
-            skip_outside += 1
-            continue
-        pts = decimate_by_distance(pts, DECIMATE_OTHER_STEP_M)
-        width = way.get("width_m") or OTHER_ROAD_WIDTH_DEFAULT
-        roads.append({
-            "name": way.get("name") or f"secondary_{idx}",
-            "material": SIDE_MATERIAL,
-            "nodes": [
-                {"x": round(x, 3), "y": round(y, 3), "z": 0.0,
-                 "width": round(float(width), 2)}
-                for (x, y) in pts
-            ],
-        })
-        keep += 1
-    print(f"other_roads: {keep} tenute, {skip_short} scartate (troppo corte), "
-          f"{skip_outside} fuori terrain")
+    if not INCLUDE_OTHER_ROADS:
+        print("other_roads: ESCLUSE (build solo SS17 per load veloce)")
 
     payload = {
         "format": "beamng_terrain_road_importer_v1",

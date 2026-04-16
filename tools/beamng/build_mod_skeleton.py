@@ -120,7 +120,7 @@ def materials_json() -> dict:
         },
         "m_terrain_diffuse": {
             "mapTo": "m_terrain_diffuse",
-            "baseColorMap": "levels/macerone/art/terrains/satellite_diffuse.png",
+            "baseColorMap": "levels/macerone/art/terrains/satellite_diffuse.jpg",
             "roughnessFactor": 1.0,
             "metalnessFactor": 0.0,
             "uvScale": [1.0, 1.0],
@@ -356,8 +356,16 @@ def main() -> None:
             mtl_src = obj_src.with_suffix(".mtl")
             if mtl_src.exists():
                 copy_if_exists(mtl_src, dst_dir / f"{basename}.mtl")
-    copy_if_exists(ROOT / "output" / "satellite.png",
-                    level_dir / "art" / "terrains" / "satellite_diffuse.png")
+    # Satellite diffuse: preferisci la versione ottimizzata (JPEG 4096x4096,
+    # ~2-4 MB) generata da optimize_satellite.py. Fallback al PNG gigante se
+    # la versione ottimizzata non esiste.
+    satellite_opt = BEAMNG_OUT / "satellite_diffuse.jpg"
+    if satellite_opt.exists():
+        copy_if_exists(satellite_opt,
+                        level_dir / "art" / "terrains" / "satellite_diffuse.jpg")
+    else:
+        copy_if_exists(ROOT / "output" / "satellite.png",
+                        level_dir / "art" / "terrains" / "satellite_diffuse.png")
 
     # preview.jpg: genera dalla satellite.png (mappa del tratto reale).
     preview_dst = level_dir / "preview.jpg"

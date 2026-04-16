@@ -45,6 +45,7 @@ def main() -> None:
 
     run("heightmap", [py, str(TOOLS / "build_heightmap.py")])
     run("roads", [py, str(TOOLS / "build_roads.py")])
+    run("optimize_satellite", [py, str(TOOLS / "optimize_satellite.py")])
 
     if args.skip_blender:
         print("\n(skip-blender) DAE e forest.json NON rigenerati: uso quelli "

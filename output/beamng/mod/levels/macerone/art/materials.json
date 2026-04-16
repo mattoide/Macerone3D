@@ -25,7 +25,7 @@
   },
   "m_terrain_diffuse": {
     "mapTo": "m_terrain_diffuse",
-    "baseColorMap": "levels/macerone/art/terrains/satellite_diffuse.png",
+    "baseColorMap": "levels/macerone/art/terrains/satellite_diffuse.jpg",
     "roughnessFactor": 1.0,
     "metalnessFactor": 0.0,
     "uvScale": [
