@@ -182,15 +182,14 @@ def convert_to_dae(obj_path: Path) -> Path:
 # ---------------------------------------------------------------------------
 def carve_heightmap_under_road(arr: np.ndarray, elev_min: float,
                                  max_height: float, z_offset_blender: float) -> int:
-    """Abbassa il heightmap sotto il corridoio strada di 2m, cosi' il DEM
-    non crea muri invisibili dove la road passa in trincea. Opera in-place
-    sul `arr` uint16 (gia' flipato: row 0 = sud).
+    """Abbassa dolcemente il heightmap DEM verso la quota strada, cosi' il
+    terreno non fa muro invisibile dove la SS17 passa in trincea (il DEM a
+    12m/cell media tra pareti e fondo). Opera in-place su `arr` uint16.
 
-    Per ogni punto della centerline.csv (coord Blender locali):
-      real_z = z_blender + z_offset_blender
-      target_z_uint16 = (real_z - elev_min - 2.0) / max_height * 65535
-    Abbassa la cella del centerline + 2 celle di raggio attorno (36m diametro,
-    copre la strada + scarpata).
+    Strategy: per ogni centerline point calcolo target = real_road_z - 2m.
+    Raggio 8 celle (~100m) con falloff LINEARE: al centro full carve, al
+    bordo nessun carve. Evita cosi' discontinuita' ripide (picchi assurdi)
+    che si avevano con carve a raggio fisso 2.
     """
     import csv as _csv
     cl_path = ROOT / "output" / "centerline.csv"
@@ -199,8 +198,19 @@ def carve_heightmap_under_road(arr: np.ndarray, elev_min: float,
     H, W = arr.shape
     half = TER_EXTENT / 2.0
     cell = TER_SQUARESIZE
+
+    # Precompute kernel: distanza normalizzata da (0,0)
+    R = 8  # raggio in celle, ~96m
+    drs, dcs = np.meshgrid(np.arange(-R, R + 1), np.arange(-R, R + 1), indexing="ij")
+    dist = np.sqrt(drs * drs + dcs * dcs)
+    mask_in = dist <= R
+    # alpha: 1 al centro, 0 al bordo (falloff lineare)
+    alpha = np.where(mask_in, 1.0 - dist / R, 0.0).astype(np.float32)
+
+    # Lavoriamo in float32 per il blend
+    arr_f = arr.astype(np.float32)
     carved = 0
-    radius_cells = 2  # 2 cell = 24m raggio ~= carreggiata + scarpata
+
     with cl_path.open(newline="", encoding="utf-8") as f:
         for row in _csv.DictReader(f):
             x = float(row["x"])
@@ -210,16 +220,30 @@ def carve_heightmap_under_road(arr: np.ndarray, elev_min: float,
             target = real_z - elev_min - 2.0
             if target < 0:
                 target = 0.0
-            tgt_u16 = int(min(65535.0, target / max_height * 65535.0))
+            tgt_u16 = min(65535.0, target / max_height * 65535.0)
+
             col = int((x + half) / cell)
-            ry = int((y + half) / cell)  # arr gia' flipped -> row 0 = sud
-            for dr in range(-radius_cells, radius_cells + 1):
-                for dc in range(-radius_cells, radius_cells + 1):
-                    rr, cc = ry + dr, col + dc
-                    if 0 <= rr < H and 0 <= cc < W:
-                        if arr[rr, cc] > tgt_u16:
-                            arr[rr, cc] = tgt_u16
-                            carved += 1
+            ry = int((y + half) / cell)
+            r0, r1 = ry - R, ry + R + 1
+            c0, c1 = col - R, col + R + 1
+            # clip ai bordi
+            kr0 = max(0, -r0); r0c = max(0, r0); r1c = min(H, r1)
+            kc0 = max(0, -c0); c0c = max(0, c0); c1c = min(W, c1)
+            if r0c >= r1c or c0c >= c1c:
+                continue
+            kr1 = kr0 + (r1c - r0c)
+            kc1 = kc0 + (c1c - c0c)
+
+            sub = arr_f[r0c:r1c, c0c:c1c]
+            a = alpha[kr0:kr1, kc0:kc1]
+            # blended = sub*(1-a) + target*a; carve solo se < sub
+            blended = sub * (1.0 - a) + tgt_u16 * a
+            new = np.minimum(sub, blended)
+            changed = int((new < sub).sum())
+            carved += changed
+            arr_f[r0c:r1c, c0c:c1c] = new
+
+    arr[:] = np.clip(arr_f, 0, 65535).astype(np.uint16)
     return carved
 
 
