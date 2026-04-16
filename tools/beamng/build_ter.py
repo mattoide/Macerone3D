@@ -189,7 +189,7 @@ def main() -> None:
             spawn_y = float(row["y"])
         rd = json.loads(road_data_json.read_text(encoding="utf-8"))
         first_elev = float(rd["centerline"][0]["ele"])
-        spawn_z = first_elev + 5.0  # 5m sopra l'asfalto per avere margine
+        spawn_z = first_elev + 1.5  # 1.5m sopra l'asfalto (evita rotolamento)
     print(f"Spawn point: ({spawn_x:.1f}, {spawn_y:.1f}, {spawn_z:.1f}) "
           f"(real elevation)")
 
@@ -239,12 +239,17 @@ def main() -> None:
     # TerrainMaterial: solo diffuseMap (la texture satellite). Niente detailMap
     # per evitare texture mancanti. groundmodelName=ASPHALT fornisce la fisica
     # standard da BeamNG.
+    # Il TerrainMaterial di BeamNG cerca la texture provando estensioni .dds,
+    # .png, .jpg in ordine; pero' se la risoluzione della texture non e'
+    # power-of-2 o non matcha la cell size attesa del terrain, fallisce
+    # silently con "missing texture". Path ESPLICITO con estensione evita
+    # confusione e ci dice subito se il file e' trovato o no.
     terrain_materials = {
         f"{MATERIAL_NAME}-{MATERIAL_UUID}": {
             "internalName": MATERIAL_NAME,
             "class": "TerrainMaterial",
             "persistentId": MATERIAL_UUID,
-            "diffuseMap": "levels/macerone/art/terrains/satellite_diffuse",
+            "diffuseMap": "levels/macerone/art/terrains/satellite_diffuse.png",
             "diffuseSize": 12288,
             "groundmodelName": "ASPHALT",
         }

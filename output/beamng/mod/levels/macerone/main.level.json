@@ -835,7 +835,7 @@
 
           "class" : "SpawnSphere",
           "name" : "spawn_start",
-          "position" : [ 3552.641, -4449.504, 497.6595153808594 ],
+          "position" : [ 3552.641, -4449.504, 494.1595153808594 ],
 
           "autoplaceOnSpawn" : "0",
 
