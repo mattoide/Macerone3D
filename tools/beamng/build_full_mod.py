@@ -457,12 +457,14 @@ def carve_heightmap_under_road(arr: np.ndarray, elev_min: float,
 
             sub = arr_f[r0c:r1c, c0c:c1c]
             a = alpha[kr0:kr1, kc0:kc1]
-            # Bounds che si rilassano al bordo: al centro (a=1) upper/lower
-            # stretti, al bordo (a=0) infinitamente rilassati → no effect.
-            # +30000 u16 ~= +550m, sufficiente per neutralizzare.
-            relax = (1.0 - a) * 30000.0
-            upper_bound = upper_u16 + relax
-            lower_bound = np.maximum(0.0, lower_u16 - relax)
+            # Upper bound: al centro (a=1) strict [road-0.1]; al bordo (a=0)
+            # rilassato di soli +3m (evita che il DEM naturale alto "copra"
+            # la strada). Lower bound: largo (il terreno puo' scendere
+            # liberamente nelle valli lontane dalla strada).
+            relax_upper_u16 = (1.0 - a) * (3.0 / max_height * 65535.0)
+            relax_lower_u16 = (1.0 - a) * 30000.0
+            upper_bound = upper_u16 + relax_upper_u16
+            lower_bound = np.maximum(0.0, lower_u16 - relax_lower_u16)
             new = np.clip(sub, lower_bound, upper_bound)
             changed = int((np.abs(new - sub) > 0.5).sum())
             carved += changed
