@@ -325,6 +325,44 @@
     ],
     "materialTag0": "Miscellaneous"
   },
+  "Parapet": {
+    "name": "Parapet",
+    "mapTo": "Parapet",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.62,
+          0.58,
+          0.52,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "BollardMat": {
+    "name": "BollardMat",
+    "mapTo": "BollardMat",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.82,
+          0.82,
+          0.8,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
   "default": {
     "name": "default",
     "mapTo": "default",

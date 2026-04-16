@@ -610,6 +610,8 @@ def write_materials(level_dir: Path, asphalt_rgb: tuple[float, float, float],
         # Roadside procedural clutter
         ("Rock", [0.55, 0.52, 0.46]),
         ("BushGreen", [0.26, 0.40, 0.20]),
+        ("Parapet", [0.62, 0.58, 0.52]),       # cemento parapetti ponte
+        ("BollardMat", [0.82, 0.82, 0.80]),    # paletto bianco-grigio
         # Fallback generici
         ("default", [0.55, 0.55, 0.55]),
         ("DefaultMat", [0.55, 0.55, 0.55]),
@@ -761,19 +763,85 @@ def generate_terrain_detail_texture(level_dir: Path) -> str:
     return f"levels/{LEVEL_NAME}/art/terrains/detail_grass.png"
 
 
+def _project_factory_from_road_data():
+    """Ritorna (project(lat,lon)->(x,y), road_data_dict, bridges_flags) usando
+    lat0/lon0 dal centroide centerline (come blender_build.py)."""
+    rd = json.loads((ROOT / "road_data.json").read_text(encoding="utf-8"))
+    cl = rd["centerline"]
+    lat0 = sum(p["lat"] for p in cl) / len(cl)
+    lon0 = sum(p["lon"] for p in cl) / len(cl)
+    R = 6378137.0
+    kx = math.cos(math.radians(lat0)) * R
+    ky = R
+    def project(lat, lon):
+        return (math.radians(lon - lon0) * kx, math.radians(lat - lat0) * ky)
+    return project, rd
+
+
 def generate_roadside_clutter(level_dir: Path) -> Path | None:
-    """Genera un OBJ con pietre e ciuffi sparsi al bordo strada, ogni ~18m
-    alternando lato sx/dx, offset laterale 3.5-6m dal centerline. Serve a
-    "riempire" i bordi che nella realta' non sono mai vuoti.
-    Ritorna path del DAE (dopo conversione)."""
+    """Genera OBJ con sassi/cespugli al bordo strada, condizionato su tag
+    OSM del road_data.json:
+    - bridge=true: skip clutter (parapetti aggiunti separati)
+    - dist building < 60m: zona abitata, densita' alta cespugli (siepi)
+    - punto dentro foresta OSM: aggiunge ciuffi bassi extra
+    Oltre al clutter naturale ogni 18m alternato sx/dx.
+
+    Aggiunge inoltre parapetti semplici sui segmenti di ponte e paletti
+    singoli nei 6 node_barriers OSM.
+    """
     import csv as _csv
     cl_path = ROOT / "output" / "centerline.csv"
     if not cl_path.exists():
         return None
     with cl_path.open(newline="", encoding="utf-8") as f:
-        cl = [(float(r["x"]), float(r["y"]), float(r["z"])) for r in _csv.DictReader(f)]
+        cl = [(float(r["x"]), float(r["y"]), float(r["z"]),
+                 int(r.get("bridge", "0") or 0), int(r.get("tunnel", "0") or 0))
+                for r in _csv.DictReader(f)]
     if len(cl) < 10:
         return None
+
+    project, rd = _project_factory_from_road_data()
+
+    # Proietto buildings a coord Blender + spatial grid per distance-to-building
+    b_cell = 50.0
+    b_buckets: dict[tuple[int, int], list[tuple[float, float]]] = {}
+    for b in rd.get("buildings", []):
+        coords = b.get("coords", [])
+        if not coords:
+            continue
+        # centroide del poligono
+        xs_ys = [project(c[0], c[1]) for c in coords]
+        cx = sum(p[0] for p in xs_ys) / len(xs_ys)
+        cy = sum(p[1] for p in xs_ys) / len(xs_ys)
+        b_buckets.setdefault((int(cx // b_cell), int(cy // b_cell)), []).append((cx, cy))
+
+    def dist_to_nearest_building(x: float, y: float) -> float:
+        ix = int(x // b_cell); iy = int(y // b_cell)
+        dmin2 = float("inf")
+        for di in (-2, -1, 0, 1, 2):
+            for dj in (-2, -1, 0, 1, 2):
+                for (bx, by) in b_buckets.get((ix + di, iy + dj), []):
+                    d2 = (bx - x) ** 2 + (by - y) ** 2
+                    if d2 < dmin2:
+                        dmin2 = d2
+        return math.sqrt(dmin2) if dmin2 != float("inf") else 1e9
+
+    # Proietto forests polygons (solo bbox per check rapido "dentro o vicino")
+    forests_bbox: list[tuple[float, float, float, float]] = []
+    for f in rd.get("forests", []):
+        coords = f.get("coords", [])
+        if not coords:
+            continue
+        xs_ys = [project(c[0], c[1]) for c in coords]
+        xs = [p[0] for p in xs_ys]
+        ys = [p[1] for p in xs_ys]
+        forests_bbox.append((min(xs), min(ys), max(xs), max(ys)))
+
+    def in_forest(x: float, y: float, margin: float = 5.0) -> bool:
+        for (x0, y0, x1, y1) in forests_bbox:
+            if x0 - margin <= x <= x1 + margin and y0 - margin <= y <= y1 + margin:
+                return True
+        return False
 
     rng = np.random.default_rng(1234)
     shapes_dir = level_dir / "art" / "shapes"
@@ -834,14 +902,85 @@ def generate_roadside_clutter(level_dir: Path) -> Path | None:
         faces.append(([base + 0, base + 2, base + 1], "BushGreen"))
         faces.append(([base + 0, base + 3, base + 2], "BushGreen"))
 
-    # Cammina lungo la centerline con step ~18m
+    def add_parapet_segment(x0, y0, z0, x1, y1, z1, side_normal):
+        """Muretto basso 80cm lungo il bordo, da (x0,y0,z0) a (x1,y1,z1)
+        con offset side_normal (3.5m dal centerline)."""
+        nx, ny = side_normal
+        off = 3.5
+        h = 0.8
+        thick = 0.15
+        # 4 vertici base + 4 top
+        base = len(verts) + 1
+        for (xa, ya, za) in ((x0, y0, z0), (x1, y1, z1)):
+            ox = xa + nx * off
+            oy = ya + ny * off
+            # outer edge
+            verts.append((ox + nx * thick, oy + ny * thick, za))
+            # inner edge
+            verts.append((ox - nx * thick, oy - ny * thick, za))
+        # top
+        for (xa, ya, za) in ((x0, y0, z0), (x1, y1, z1)):
+            ox = xa + nx * off
+            oy = ya + ny * off
+            verts.append((ox + nx * thick, oy + ny * thick, za + h))
+            verts.append((ox - nx * thick, oy - ny * thick, za + h))
+        # 8 verts: base[0..3], top[4..7]
+        # outer side (quad 0,2,6,4)
+        faces.append(([base + 0, base + 2, base + 6], "Parapet"))
+        faces.append(([base + 0, base + 6, base + 4], "Parapet"))
+        # inner side (1,5,7,3)
+        faces.append(([base + 1, base + 5, base + 7], "Parapet"))
+        faces.append(([base + 1, base + 7, base + 3], "Parapet"))
+        # top (4,5,7,6)
+        faces.append(([base + 4, base + 5, base + 7], "Parapet"))
+        faces.append(([base + 4, base + 7, base + 6], "Parapet"))
+        # ends (0,1,5,4)
+        faces.append(([base + 0, base + 1, base + 5], "Parapet"))
+        faces.append(([base + 0, base + 5, base + 4], "Parapet"))
+        faces.append(([base + 2, base + 3, base + 7], "Parapet"))
+        faces.append(([base + 2, base + 7, base + 6], "Parapet"))
+
+    def add_bollard(cx: float, cy: float, cz: float, height: float = 1.0):
+        """Paletto cilindrico stilizzato: ottagono."""
+        r = 0.08
+        n = 8
+        base = len(verts) + 1
+        for k in range(n):
+            ang = 2 * math.pi * k / n
+            verts.append((cx + r * math.cos(ang), cy + r * math.sin(ang), cz))
+        for k in range(n):
+            ang = 2 * math.pi * k / n
+            verts.append((cx + r * math.cos(ang), cy + r * math.sin(ang), cz + height))
+        for k in range(n):
+            a = base + k
+            b = base + (k + 1) % n
+            c = base + n + (k + 1) % n
+            d = base + n + k
+            faces.append(([a, b, c], "BollardMat"))
+            faces.append(([a, c, d], "BollardMat"))
+
+    # Cammina lungo la centerline con step ~18m per clutter naturale
     step_m = 18.0
     acc = 0.0
     last_x, last_y = cl[0][0], cl[0][1]
-    side = 1  # alterna
+    side = 1
     count_rock = 0
     count_bush = 0
-    for (x, y, z) in cl[1:]:
+    count_skipped_bridge = 0
+
+    # Raccogli range di punti ponte per parapetti
+    bridge_segments: list[tuple[int, int]] = []
+    i_start = None
+    for i, (_, _, _, br, _) in enumerate(cl):
+        if br and i_start is None:
+            i_start = i
+        elif not br and i_start is not None:
+            bridge_segments.append((i_start, i - 1))
+            i_start = None
+    if i_start is not None:
+        bridge_segments.append((i_start, len(cl) - 1))
+
+    for (x, y, z, br, tu) in cl[1:]:
         dx = x - last_x; dy = y - last_y
         d = math.hypot(dx, dy)
         acc += d
@@ -849,22 +988,90 @@ def generate_roadside_clutter(level_dir: Path) -> Path | None:
         if acc < step_m:
             continue
         acc = 0.0
-        # Vettore perpendicolare normalizzato
+        if br or tu:
+            count_skipped_bridge += 1
+            continue
         if d < 0.01:
             continue
         nx, ny = -dy / d, dx / d
-        for _ in range(2):  # un oggetto per lato
-            offset = rng.uniform(3.5, 6.0) * side
-            ox = x + nx * offset + rng.normal(0, 0.3)
-            oy = y + ny * offset + rng.normal(0, 0.3)
-            oz = z - 0.1  # leggermente sotto road level
-            if rng.random() < 0.55:
-                add_rock(ox, oy, oz, rng.uniform(0.25, 0.55))
-                count_rock += 1
-            else:
-                add_bush(ox, oy, oz, rng.uniform(0.30, 0.60))
+
+        # Condizionamento su vicinanza building/foresta
+        dist_b = dist_to_nearest_building(x, y)
+        is_forested = in_forest(x, y)
+        if dist_b < 30.0:
+            # Zona abitata: siepi/cespugli regolari (no sassi selvaggi)
+            density = 4  # quattro oggetti per step
+            for _ in range(density):
+                offset = rng.uniform(3.5, 5.0) * side
+                ox = x + nx * offset + rng.normal(0, 0.2)
+                oy = y + ny * offset + rng.normal(0, 0.2)
+                oz = z - 0.05
+                add_bush(ox, oy, oz, rng.uniform(0.35, 0.60))
                 count_bush += 1
-            side *= -1
+                side *= -1
+        elif is_forested:
+            # Zona foresta: piu' cespugli, pietre grandi
+            density = 3
+            for _ in range(density):
+                offset = rng.uniform(3.5, 6.5) * side
+                ox = x + nx * offset + rng.normal(0, 0.3)
+                oy = y + ny * offset + rng.normal(0, 0.3)
+                oz = z - 0.1
+                if rng.random() < 0.7:
+                    add_bush(ox, oy, oz, rng.uniform(0.40, 0.75))
+                    count_bush += 1
+                else:
+                    add_rock(ox, oy, oz, rng.uniform(0.30, 0.60))
+                    count_rock += 1
+                side *= -1
+        else:
+            # Zona aperta: clutter leggero originale
+            for _ in range(2):
+                offset = rng.uniform(3.5, 6.0) * side
+                ox = x + nx * offset + rng.normal(0, 0.3)
+                oy = y + ny * offset + rng.normal(0, 0.3)
+                oz = z - 0.1
+                if rng.random() < 0.55:
+                    add_rock(ox, oy, oz, rng.uniform(0.25, 0.55))
+                    count_rock += 1
+                else:
+                    add_bush(ox, oy, oz, rng.uniform(0.30, 0.60))
+                    count_bush += 1
+                side *= -1
+
+    # Parapetti sui ponti: una striscia per lato
+    count_parapet = 0
+    for (a, b) in bridge_segments:
+        if b - a < 1:
+            continue
+        x0, y0, z0 = cl[a][0], cl[a][1], cl[a][2]
+        x1, y1, z1 = cl[b][0], cl[b][1], cl[b][2]
+        dx = x1 - x0; dy = y1 - y0
+        d = math.hypot(dx, dy)
+        if d < 1.0:
+            continue
+        nx, ny = -dy / d, dx / d
+        add_parapet_segment(x0, y0, z0, x1, y1, z1, (nx, ny))
+        add_parapet_segment(x0, y0, z0, x1, y1, z1, (-nx, -ny))
+        count_parapet += 2
+
+    # Node barriers (bollard/gate) OSM
+    count_bollard = 0
+    for nb in rd.get("node_barriers", []):
+        try:
+            bx, by = project(nb["lat"], nb["lon"])
+        except Exception:
+            continue
+        # Prendi z dalla centerline piu' vicina
+        dmin = float("inf"); bz = 0.0
+        for (cx, cy, cz, _, _) in cl:
+            d2 = (cx - bx) ** 2 + (cy - by) ** 2
+            if d2 < dmin:
+                dmin = d2; bz = cz
+        if dmin > 50 * 50:
+            continue
+        add_bollard(bx, by, bz - 0.05, height=1.0)
+        count_bollard += 1
 
     if not verts:
         return None
@@ -888,10 +1095,13 @@ def generate_roadside_clutter(level_dir: Path) -> Path | None:
     mtl_lines = [
         "newmtl Rock\nKd 0.52 0.50 0.45\n",
         "newmtl BushGreen\nKd 0.28 0.40 0.22\n",
+        "newmtl Parapet\nKd 0.62 0.58 0.52\n",
+        "newmtl BollardMat\nKd 0.80 0.80 0.78\n",
     ]
     mtl_path.write_text("".join(mtl_lines), encoding="utf-8")
-    print(f"Roadside clutter: {count_rock} pietre + {count_bush} cespugli -> "
-          f"{obj_path.relative_to(MOD_DIR)}")
+    print(f"Roadside clutter: {count_rock} pietre + {count_bush} cespugli "
+          f"(skip su {count_skipped_bridge} ponti), {count_parapet} parapetti, "
+          f"{count_bollard} bollard -> {obj_path.relative_to(MOD_DIR)}")
     return obj_path
 
 
