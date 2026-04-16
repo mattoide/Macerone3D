@@ -827,6 +827,15 @@
   "collisionType" : "Visible Mesh Final",
   "decalType" : "Visible Mesh Final",
   "shapeName" : "levels/macerone/art/shapes/macerone_road_details.dae"
+},
+        {
+  "class" : "TSStatic",
+  "name" : "macerone_embankments_mesh",
+  "position" : [ 0, 0, 0 ],
+  "allowPlayerStep" : "1",
+  "collisionType" : "Visible Mesh Final",
+  "decalType" : "Visible Mesh Final",
+  "shapeName" : "levels/macerone/art/shapes/macerone_embankments.dae"
 }
 
       ]

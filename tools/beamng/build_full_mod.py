@@ -1016,6 +1016,9 @@ def write_materials(level_dir: Path, asphalt_rgb: tuple[float, float, float],
         ("BushGreen", [0.26, 0.40, 0.20]),
         ("Parapet", [0.62, 0.58, 0.52]),       # cemento parapetti ponte
         ("BollardMat", [0.82, 0.82, 0.80]),    # paletto bianco-grigio
+        ("TreeBark", [0.30, 0.21, 0.13]),      # corteccia marrone
+        ("TreeFoliage", [0.18, 0.32, 0.14]),   # chioma verde scuro
+        ("Embankment", [0.40, 0.45, 0.28]),    # scarpata verde-terriccio
         # Road details (generate_road_details)
         ("AsphaltPatchDarkNew", [0.06, 0.06, 0.07]),  # bitume nuovo nero
         ("AsphaltPatchLightNew", [0.35, 0.34, 0.32]),  # asfalto scolorito
@@ -1342,6 +1345,54 @@ def generate_roadside_clutter(level_dir: Path) -> Path | None:
         faces.append(([base + 0, base + 2, base + 1], "BushGreen"))
         faces.append(([base + 0, base + 3, base + 2], "BushGreen"))
 
+    def add_tree(cx: float, cy: float, cz: float, height: float = 5.0):
+        """Albero procedurale: tronco cilindrico marrone + canopy conica verde."""
+        trunk_h = height * 0.35
+        canopy_h = height * 0.65
+        trunk_r = height * 0.05
+        canopy_r = height * 0.30
+        base = len(verts) + 1
+        # Trunk: esagono base + esagono top
+        for k in range(6):
+            ang = 2 * math.pi * k / 6 + rng.uniform(0, 0.2)
+            verts.append((cx + trunk_r * math.cos(ang),
+                          cy + trunk_r * math.sin(ang), cz))
+        for k in range(6):
+            ang = 2 * math.pi * k / 6 + rng.uniform(0, 0.2)
+            verts.append((cx + trunk_r * math.cos(ang),
+                          cy + trunk_r * math.sin(ang), cz + trunk_h))
+        for k in range(6):
+            a = base + k
+            b = base + (k + 1) % 6
+            c = base + 6 + (k + 1) % 6
+            d_ = base + 6 + k
+            faces.append(([a, b, c], "TreeBark"))
+            faces.append(([a, c, d_], "TreeBark"))
+        # Canopy: conica (hexagon base al top trunk + apex sopra)
+        canopy_base = base + 6
+        apex_idx = len(verts) + 1
+        verts.append((cx + rng.normal(0, 0.2), cy + rng.normal(0, 0.2),
+                      cz + trunk_h + canopy_h))
+        # Alza anche hexagon base del canopy (piu' ampio del trunk)
+        canopy_ring = len(verts) + 1
+        for k in range(6):
+            ang = 2 * math.pi * k / 6 + rng.uniform(0, 0.2)
+            verts.append((cx + canopy_r * math.cos(ang),
+                          cy + canopy_r * math.sin(ang),
+                          cz + trunk_h + canopy_h * 0.15))
+        for k in range(6):
+            a = canopy_ring + k
+            b = canopy_ring + (k + 1) % 6
+            faces.append(([a, b, apex_idx], "TreeFoliage"))
+        # Base canopy: connette trunk top al canopy ring
+        for k in range(6):
+            a = canopy_base + k
+            b = canopy_base + (k + 1) % 6
+            c = canopy_ring + (k + 1) % 6
+            d_ = canopy_ring + k
+            faces.append(([a, b, c], "TreeFoliage"))
+            faces.append(([a, c, d_], "TreeFoliage"))
+
     def add_parapet_segment(x0, y0, z0, x1, y1, z1, side_normal):
         """Muretto basso 80cm lungo il bordo, da (x0,y0,z0) a (x1,y1,z1)
         con offset side_normal (3.5m dal centerline)."""
@@ -1476,14 +1527,24 @@ def generate_roadside_clutter(level_dir: Path) -> Path | None:
                     add_bush(ox, oy, oz, rng.uniform(0.30, 0.60))
                     count_bush += 1
 
-        # Densita': 2 oggetti per side in zone normali, 3 in foresta/tree, 1 in paved skip
         for _ in range(2):
             place_for_side(+1, sat_left)
             place_for_side(-1, sat_right)
+        # Zone tree (bosco): +2 alberi veri tronco+chioma per lato
         if sat_left == "tree" or is_forested:
-            place_for_side(+1, sat_left)
+            for _ in range(2):
+                offset = rng.uniform(5.0, 9.0)
+                ox = x + nx * offset + rng.normal(0, 0.6)
+                oy = y + ny * offset + rng.normal(0, 0.6)
+                oz = z - 0.15
+                add_tree(ox, oy, oz, height=rng.uniform(4.5, 7.5))
         if sat_right == "tree" or is_forested:
-            place_for_side(-1, sat_right)
+            for _ in range(2):
+                offset = rng.uniform(-9.0, -5.0)
+                ox = x + nx * offset + rng.normal(0, 0.6)
+                oy = y + ny * offset + rng.normal(0, 0.6)
+                oz = z - 0.15
+                add_tree(ox, oy, oz, height=rng.uniform(4.5, 7.5))
 
     # Parapetti sui ponti: segui la centerline punto per punto (evita
     # muri dritti che tagliano la strada nei ponti in curva).
@@ -1624,6 +1685,7 @@ def write_level_json(level_dir: Path,
                       terrain_shape_rel: str | None,
                       extra_buildings_shape_rel: str | None,
                       road_details_shape_rel: str | None,
+                      embankments_shape_rel: str | None,
                       spawn_xyz: tuple[float, float, float],
                       spawn_heading: float,
                       max_height: float,
@@ -1749,6 +1811,13 @@ def write_level_json(level_dir: Path,
             (
                 "macerone_road_details_mesh",
                 f"levels/{LEVEL_NAME}/{road_details_shape_rel}",
+            )
+        )
+    if embankments_shape_rel is not None:
+        tsstatics.append(
+            (
+                "macerone_embankments_mesh",
+                f"levels/{LEVEL_NAME}/{embankments_shape_rel}",
             )
         )
 
@@ -1927,6 +1996,17 @@ def main() -> None:
         road_details_dae = convert_to_dae(road_details_obj)
         road_details_rel = road_details_dae.relative_to(LEVEL_DIR).as_posix()
 
+    # 5e. Scarpate procedurali (riempiono il gap strada-terreno rialzato)
+    embankments_rel = None
+    run("generate_embankments",
+        [sys.executable, str(TOOLS / "generate_embankments.py")])
+    embankments_obj = LEVEL_DIR / "art" / "shapes" / "macerone_embankments.obj"
+    if embankments_obj.exists() and embankments_obj.stat().st_size > 200:
+        if terrain_has_content:
+            drop_world_obj_to_terrain_mesh(embankments_obj, terrain_obj)
+        embankments_dae = convert_to_dae(embankments_obj)
+        embankments_rel = embankments_dae.relative_to(LEVEL_DIR).as_posix()
+
     # 6. Spawn con tuning offset (forward/up/turn_right dai parametri globali)
     sx, sy, _sz = read_first_centerline_point()
     top_z = road_top_z_at(road_obj, sx, sy, radius=3.0)
@@ -1947,7 +2027,7 @@ def main() -> None:
     # 7. main.level.json + info.json
     write_level_json(LEVEL_DIR, road_rel, world_rel, roadside_rel,
                       terrain_rel, extra_buildings_rel, road_details_rel,
-                      spawn, heading,
+                      embankments_rel, spawn, heading,
                       max_height, elev_min, z_offset_blender)
     write_empty_jsons(LEVEL_DIR)
     write_preview(LEVEL_DIR)

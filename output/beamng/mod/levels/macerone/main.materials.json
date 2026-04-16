@@ -466,6 +466,66 @@
     ],
     "materialTag0": "Miscellaneous"
   },
+  "TreeBark": {
+    "name": "TreeBark",
+    "mapTo": "TreeBark",
+    "class": "Material",
+    "persistentId": "cb837ad8-a23f-7de4-f8bf-490964df79f0",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.3,
+          0.21,
+          0.13,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "TreeFoliage": {
+    "name": "TreeFoliage",
+    "mapTo": "TreeFoliage",
+    "class": "Material",
+    "persistentId": "4cf06c8a-1ee1-72ce-7e10-486123382e64",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.18,
+          0.32,
+          0.14,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "Embankment": {
+    "name": "Embankment",
+    "mapTo": "Embankment",
+    "class": "Material",
+    "persistentId": "bc79989c-a18e-6173-3dad-968ebd4cfd12",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.4,
+          0.45,
+          0.28,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
   "AsphaltPatchDarkNew": {
     "name": "AsphaltPatchDarkNew",
     "mapTo": "AsphaltPatchDarkNew",
