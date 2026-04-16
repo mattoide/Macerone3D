@@ -230,6 +230,31 @@ def read_first_centerline_point() -> tuple[float, float, float]:
         return float(row["x"]), float(row["y"]), float(row["z"])
 
 
+def road_top_z_at(obj_path: Path, cx: float, cy: float,
+                    radius: float = 3.0) -> float:
+    """Scanna l'OBJ e ritorna la z max dei vertici entro `radius` m da (cx,cy).
+    La road e' Z-up, quindi questa e' la superficie superiore dell'asfalto al
+    punto di spawn.
+    """
+    r2 = radius * radius
+    best = None
+    with obj_path.open("r", encoding="utf-8", errors="replace") as f:
+        for line in f:
+            if not line.startswith("v "):
+                continue
+            parts = line.split()
+            x, y, z = float(parts[1]), float(parts[2]), float(parts[3])
+            if (x - cx) * (x - cx) + (y - cy) * (y - cy) > r2:
+                continue
+            if best is None or z > best:
+                best = z
+    if best is None:
+        raise RuntimeError(
+            f"Nessun vertice road entro {radius}m da ({cx},{cy})"
+        )
+    return best
+
+
 def read_spawn_heading() -> float:
     """Heading (rad) dalla direzione P1->P_lookahead della centerline.
 
@@ -428,11 +453,14 @@ def main() -> None:
     write_materials(LEVEL_DIR)
 
     # 5. spawn from centerline
-    sx, sy, sz = read_first_centerline_point()
-    # spawn 2m sopra il primo punto della strada
-    spawn = (sx, sy, sz + 2.0)
+    sx, sy, _sz = read_first_centerline_point()
+    # Prendo la z REALE del top asfalto dall'OBJ esportato (post-Solidify),
+    # cosi' lo spawn sta esattamente 10 cm sopra la superficie.
+    top_z = road_top_z_at(road_obj, sx, sy, radius=3.0)
+    spawn = (sx, sy, top_z + 0.10)
     heading = read_spawn_heading()
     import math
+    print(f"road top z @ spawn: {top_z:.3f}  ->  spawn z: {spawn[2]:.3f}")
     print(f"spawn heading: {math.degrees(heading):.1f} deg")
 
     # 6. level.json
