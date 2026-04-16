@@ -74,6 +74,21 @@ if road_col is None:
     print("!! Collezione 'Road' non trovata")
     sys.exit(2)
 objs = [o for o in road_col.all_objects if o.type == "MESH"]
+
+# Solidify su TUTTI gli oggetti della Road: 0.4m verso il basso,
+# cosi' BeamNG ha volume di collisione non zero-thickness e le ruote
+# non penetrano l'asfalto. Offset -1 = estrude dal lato opposto alle normali.
+for o in objs:
+    has_solidify = any(m.type == "SOLIDIFY" for m in o.modifiers)
+    if has_solidify:
+        continue
+    mod = o.modifiers.new(name="RoadSolidify", type="SOLIDIFY")
+    mod.thickness = 0.4
+    mod.offset = -1.0
+    mod.use_even_offset = True
+    mod.use_quality_normals = True
+    print(f"  + Solidify su {o.name}")
+
 for o in objs:
     o.select_set(True)
 print(f"Selezionati {len(objs)} oggetti della collezione Road")
@@ -215,8 +230,40 @@ def read_first_centerline_point() -> tuple[float, float, float]:
         return float(row["x"]), float(row["y"]), float(row["z"])
 
 
+def read_spawn_heading() -> float:
+    """Heading (rad) dalla direzione P1->P_lookahead della centerline.
+
+    Prende un punto ~15 m avanti per mediare curvature iniziali.
+    Convenzione BeamNG: heading 0 = +Y, ruota attorno +Z in senso antiorario.
+    heading = atan2(-dx, dy) per orientare il veicolo verso (dx, dy).
+    """
+    import csv as _csv
+    import math
+    cl = ROOT / "output" / "centerline.csv"
+    with cl.open(newline="", encoding="utf-8") as f:
+        rows = list(_csv.DictReader(f))
+    p1 = (float(rows[0]["x"]), float(rows[0]["y"]))
+    target = p1
+    for r in rows[1:]:
+        px, py = float(r["x"]), float(r["y"])
+        if math.hypot(px - p1[0], py - p1[1]) >= 15.0:
+            target = (px, py)
+            break
+    dx = target[0] - p1[0]
+    dy = target[1] - p1[1]
+    return math.atan2(-dx, dy)
+
+
+def heading_to_quat(h: float) -> tuple[float, float, float, float]:
+    """Rotazione yaw (Z-axis) in quaternion BeamNG (qx, qy, qz, qw)."""
+    import math
+    return (0.0, 0.0, math.sin(h / 2.0), math.cos(h / 2.0))
+
+
 def write_level_json(level_dir: Path, road_shape_rel: str,
-                     spawn_xyz: tuple[float, float, float]) -> None:
+                     spawn_xyz: tuple[float, float, float],
+                     spawn_heading: float) -> None:
+    qx, qy, qz, qw = heading_to_quat(spawn_heading)
     info = {
         "title": LEVEL_TITLE,
         "description": "Tracciato SS17 Valico del Macerone (Molise), mesh + terrain flat",
@@ -234,7 +281,7 @@ def write_level_json(level_dir: Path, road_shape_rel: str,
         "spawnPoints": [
             {
                 "translation": list(spawn_xyz),
-                "rot": [0, 0, 0, 1],
+                "rot": [qx, qy, qz, qw],
                 "objectname": "spawn_start",
             }
         ],
@@ -266,8 +313,11 @@ def write_level_json(level_dir: Path, road_shape_rel: str,
     tpl = re.sub(r'\{\s*"class"\s*:\s*"TerrainBlock".*?\}', patch_tb, tpl,
                    count=1, flags=re.S)
 
-    # Patch SpawnSphere: aggiungi position+name
+    # Patch SpawnSphere: aggiungi position+name+rotation (axis-angle, Z-axis)
     sx, sy, sz = spawn_xyz
+    import math
+    heading_deg = math.degrees(spawn_heading)
+    rot_str = f'[ 0, 0, 1, {heading_deg} ]'
     def patch_ss(m):
         block = m.group(0)
         if '"position"' in block:
@@ -278,6 +328,14 @@ def write_level_json(level_dir: Path, road_shape_rel: str,
                 '"class" : "SpawnSphere"',
                 f'"class" : "SpawnSphere",\n          "name" : "spawn_start",\n'
                 f'          "position" : [ {sx}, {sy}, {sz} ]',
+            )
+        if '"rotation"' in block:
+            block = re.sub(r'"rotation"\s*:\s*\[[^\]]+\]',
+                            f'"rotation" : {rot_str}', block)
+        else:
+            block = block.replace(
+                '"class" : "SpawnSphere"',
+                f'"class" : "SpawnSphere",\n          "rotation" : {rot_str}',
             )
         if '"name"' not in block:
             block = block.replace('"class" : "SpawnSphere"',
@@ -373,9 +431,12 @@ def main() -> None:
     sx, sy, sz = read_first_centerline_point()
     # spawn 2m sopra il primo punto della strada
     spawn = (sx, sy, sz + 2.0)
+    heading = read_spawn_heading()
+    import math
+    print(f"spawn heading: {math.degrees(heading):.1f} deg")
 
     # 6. level.json
-    write_level_json(LEVEL_DIR, road_rel, spawn)
+    write_level_json(LEVEL_DIR, road_rel, spawn, heading)
     write_empty_jsons(LEVEL_DIR)
     write_preview(LEVEL_DIR)
 

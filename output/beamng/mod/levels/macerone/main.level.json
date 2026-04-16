@@ -843,6 +843,7 @@
         {
 
           "class" : "SpawnSphere",
+          "rotation" : [ 0, 0, 1, 35.306045149267845 ],
           "name" : "spawn_start",
           "position" : [ 3552.641, -4449.504, 74.443 ],
 
