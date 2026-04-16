@@ -288,34 +288,69 @@ def export_forest_json(corridor: Corridor, dx: float, dy: float,
     return len(instances)
 
 
-def render_preview(out_path: Path, size: int = 512) -> bool:
-    """Render 512x512 JPG della scena. Preferisce OverviewCam se c'e'."""
+def render_preview(out_path: Path, cl_pts: list[tuple[float, float]],
+                   size: int = 512) -> bool:
+    """Render 512x512 JPG bird-eye inclinato sul bbox della centerline."""
     scene = bpy.context.scene
-    cam = None
-    for obj in bpy.data.objects:
-        if obj.type == "CAMERA" and "overview" in obj.name.lower():
-            cam = obj
-            break
-    if cam is None:
-        # fallback: qualunque camera
-        for obj in bpy.data.objects:
-            if obj.type == "CAMERA":
-                cam = obj
-                break
-    if cam is None:
-        print("Nessuna camera trovata, preview skipped")
-        return False
-    scene.camera = cam
+
+    # bbox centerline
+    xs = [p[0] for p in cl_pts]
+    ys = [p[1] for p in cl_pts]
+    cx = (min(xs) + max(xs)) / 2.0
+    cy = (min(ys) + max(ys)) / 2.0
+    span = max(max(xs) - min(xs), max(ys) - min(ys))
+
+    # Orthographic top-down sul bbox centerline (mappa satellitare-like)
+    cam_data = bpy.data.cameras.new("PreviewCam")
+    cam_data.type = "ORTHO"
+    cam_data.ortho_scale = span * 1.15
+    cam_data.clip_start = 0.1
+    cam_data.clip_end = 20000.0
+    cam_obj = bpy.data.objects.new("PreviewCam", cam_data)
+    scene.collection.objects.link(cam_obj)
+
+    cam_obj.location = (cx, cy, 3000.0)
+    cam_obj.rotation_euler = (0.0, 0.0, 0.0)  # guarda verso -Z (basso)
+    scene.camera = cam_obj
+    import math as _m
+
+    # Assicurati che ci sia un sole
+    has_sun = any(o.type == "LIGHT" and o.data.type == "SUN"
+                   for o in bpy.data.objects)
+    if not has_sun:
+        sun_data = bpy.data.lights.new("PreviewSun", type="SUN")
+        sun_data.energy = 3.0
+        sun_obj = bpy.data.objects.new("PreviewSun", sun_data)
+        sun_obj.rotation_euler = (_m.radians(40), _m.radians(15), 0)
+        scene.collection.objects.link(sun_obj)
+
     scene.render.resolution_x = size
     scene.render.resolution_y = size
     scene.render.resolution_percentage = 100
     scene.render.image_settings.file_format = "JPEG"
     scene.render.image_settings.quality = 85
     scene.render.filepath = str(out_path)
-    scene.render.engine = "BLENDER_EEVEE_NEXT" if "BLENDER_EEVEE_NEXT" in {
-        e.identifier for e in bpy.types.RenderSettings.bl_rna.properties["engine"].enum_items
-    } else "BLENDER_EEVEE"
-    print(f"Rendering preview con camera '{cam.name}' engine={scene.render.engine} ...")
+    engines = {e.identifier for e in
+                 bpy.types.RenderSettings.bl_rna.properties["engine"].enum_items}
+    # WORKBENCH: render solid shaded senza luci, robusto in background mode
+    # (EEVEE in --background su Windows puo' produrre frame vuoti).
+    scene.render.engine = "BLENDER_WORKBENCH"
+    if hasattr(scene, "display"):
+        scene.display.shading.light = "FLAT"
+        scene.display.shading.color_type = "TEXTURE"
+        scene.display.shading.show_xray = False
+    # film transparent false (vogliamo il cielo/sfondo)
+    scene.render.film_transparent = False
+    # world sky color grigio-azzurro neutro
+    world = scene.world
+    if world and world.use_nodes:
+        bg = world.node_tree.nodes.get("Background")
+        if bg:
+            bg.inputs[0].default_value = (0.55, 0.65, 0.75, 1.0)
+            bg.inputs[1].default_value = 1.0
+
+    print(f"Rendering preview ortho top-down (span={span:.0f} m, "
+          f"engine={scene.render.engine}) ...")
     try:
         bpy.ops.render.render(write_still=True)
         print(f"  -> scritto {out_path}")
@@ -365,8 +400,8 @@ def main() -> None:
     # Forest instances (alberi)
     export_forest_json(corridor, dx, dy, out_dir / "forest.json")
 
-    # Preview render 512x512 da OverviewCam
-    render_preview(out_dir / "preview.jpg", size=512)
+    # Preview render 512x512 bird-eye sul bbox centerline
+    render_preview(out_dir / "preview.jpg", cl_pts, size=512)
 
     print("blender_export.py OK")
 

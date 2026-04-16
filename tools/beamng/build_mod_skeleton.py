@@ -217,6 +217,88 @@ c) Converti .obj -> .dae con `assimp` (`assimp export buildings.obj buildings.da
 """
 
 
+def build_preview_from_satellite(dst: Path, size: int = 512) -> bool:
+    """
+    Genera preview.jpg ritagliando il satellite ESRI sul bbox della centerline.
+    Piu' affidabile e significativo di un render Blender headless.
+    """
+    from PIL import Image, ImageDraw
+    satellite = ROOT / "output" / "satellite.png"
+    satellite_meta = ROOT / "output" / "satellite_bbox.json"
+    centerline = ROOT / "output" / "centerline.csv"
+    road_data = ROOT / "road_data.json"
+    if not satellite.exists() or not satellite_meta.exists():
+        Image.new("RGB", (size, size), (120, 120, 120)).save(dst, "JPEG")
+        print(f"  preview placeholder (manca satellite): {dst.name}")
+        return False
+
+    meta = json.loads(satellite_meta.read_text(encoding="utf-8"))
+    bbox = meta.get("bbox_geo", {})
+    north = bbox.get("north")
+    south = bbox.get("south")
+    west = bbox.get("west")
+    east = bbox.get("east")
+    if None in (north, south, west, east):
+        Image.new("RGB", (size, size), (120, 120, 120)).save(dst, "JPEG")
+        print(f"  preview placeholder (bbox_geo incompleto)")
+        return False
+
+    # bbox della centerline in lat/lon (da road_data.json)
+    data = json.loads(road_data.read_text(encoding="utf-8"))
+    cl = data["centerline"]
+    lat_min = min(p["lat"] for p in cl)
+    lat_max = max(p["lat"] for p in cl)
+    lon_min = min(p["lon"] for p in cl)
+    lon_max = max(p["lon"] for p in cl)
+    # piccolo margine
+    pad_lat = (lat_max - lat_min) * 0.05
+    pad_lon = (lon_max - lon_min) * 0.05
+    lat_min -= pad_lat; lat_max += pad_lat
+    lon_min -= pad_lon; lon_max += pad_lon
+
+    img = Image.open(satellite).convert("RGB")
+    W, H = img.size
+    # mappa lat/lon -> pixel (ESRI tile zoom 17, Web Mercator)
+    # ma l'immagine e' salvata in proiezione Mercator con bbox in lat/lon,
+    # quindi uso lat/lon diretti per crop (approx lineare a piccole scale).
+    def to_px(lat, lon):
+        u = (lon - west) / (east - west) * W
+        v = (north - lat) / (north - south) * H
+        return u, v
+
+    x0, y0 = to_px(lat_max, lon_min)
+    x1, y1 = to_px(lat_min, lon_max)
+    x0 = max(0, int(x0)); y0 = max(0, int(y0))
+    x1 = min(W, int(x1)); y1 = min(H, int(y1))
+    crop = img.crop((x0, y0, x1, y1))
+
+    # square-ify con padding nero sopra/sotto
+    w, h = crop.size
+    side = max(w, h)
+    squared = Image.new("RGB", (side, side), (0, 0, 0))
+    squared.paste(crop, ((side - w) // 2, (side - h) // 2))
+    squared = squared.resize((size, size), Image.LANCZOS)
+
+    # disegna la centerline in rosso sopra
+    draw = ImageDraw.Draw(squared)
+    cl_px = []
+    for p in cl:
+        u, v = to_px(p["lat"], p["lon"])
+        # in coordinate squared (centrato nel side)
+        u -= x0; v -= y0
+        u += (side - w) / 2.0
+        v += (side - h) / 2.0
+        u = u * size / side
+        v = v * size / side
+        cl_px.append((u, v))
+    if len(cl_px) >= 2:
+        draw.line(cl_px, fill=(255, 40, 40), width=3)
+
+    squared.save(dst, "JPEG", quality=88)
+    print(f"  preview.jpg generata da satellite + centerline: {dst.name}")
+    return True
+
+
 def copy_if_exists(src: Path, dst: Path) -> bool:
     if src.exists():
         dst.parent.mkdir(parents=True, exist_ok=True)
@@ -277,16 +359,9 @@ def main() -> None:
     copy_if_exists(ROOT / "output" / "satellite.png",
                     level_dir / "art" / "terrains" / "satellite_diffuse.png")
 
-    # preview.jpg: prova a usare quella renderizzata da blender_export.py,
-    # altrimenti placeholder grigio.
+    # preview.jpg: genera dalla satellite.png (mappa del tratto reale).
     preview_dst = level_dir / "preview.jpg"
-    preview_src = BEAMNG_OUT / "preview.jpg"
-    if preview_src.exists():
-        copy_if_exists(preview_src, preview_dst)
-    else:
-        from PIL import Image
-        Image.new("RGB", (512, 512), (120, 120, 120)).save(preview_dst, "JPEG")
-        print(f"  creato placeholder {preview_dst.relative_to(MOD_DIR)}")
+    build_preview_from_satellite(preview_dst)
 
     print(f"Mod skeleton pronta in {MOD_DIR}")
 
