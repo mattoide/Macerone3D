@@ -287,6 +287,26 @@
     ],
     "materialTag0": "Miscellaneous"
   },
+  "SatelliteTerrain": {
+    "name": "SatelliteTerrain",
+    "mapTo": "SatelliteTerrain",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.42,
+          0.5,
+          0.32,
+          1.0
+        ],
+        "colorMap": "levels/macerone/art/terrains/satellite_diffuse.png"
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
   "Terrain": {
     "name": "Terrain",
     "mapTo": "Terrain",
@@ -299,7 +319,7 @@
           0.32,
           1.0
         ],
-        "colorMap": "levels/macerone/art/terrains/terrain_grass.png"
+        "colorMap": "levels/macerone/art/terrains/satellite_diffuse.png"
       },
       {},
       {},
@@ -319,7 +339,7 @@
           0.32,
           1.0
         ],
-        "colorMap": "levels/macerone/art/terrains/terrain_grass.png"
+        "colorMap": "levels/macerone/art/terrains/satellite_diffuse.png"
       },
       {},
       {},
@@ -339,7 +359,7 @@
           0.32,
           1.0
         ],
-        "colorMap": "levels/macerone/art/terrains/terrain_grass.png"
+        "colorMap": "levels/macerone/art/terrains/satellite_diffuse.png"
       },
       {},
       {},

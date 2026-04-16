@@ -730,7 +730,9 @@ def write_materials(level_dir: Path, asphalt_rgb: tuple[float, float, float],
         ("Pole", [0.55, 0.55, 0.55]),         # metallo scuro
         ("Sign", [0.92, 0.92, 0.92]),         # bianco cartello
         # Terrain mesh Blender (collection "Terrain")
-        ("Terrain", [0.42, 0.50, 0.32]),          # verde-grigio base
+        # Nome reale nel blend: "SatelliteTerrain" (ha UV satellite mappata)
+        ("SatelliteTerrain", [0.42, 0.50, 0.32]),
+        ("Terrain", [0.42, 0.50, 0.32]),
         ("TerrainMat", [0.42, 0.50, 0.32]),
         ("Ground", [0.42, 0.50, 0.32]),
         # Roadside procedural clutter
@@ -749,8 +751,11 @@ def write_materials(level_dir: Path, asphalt_rgb: tuple[float, float, float],
         if asphalt_color_map and name in ("Asphalt", "AsphaltPatch_Dark",
                                              "AsphaltPatch_Light"):
             stage0["colorMap"] = asphalt_color_map
-        # Terrain mesh Blender: applica texture erba variata con fiori
-        if terrain_color_map and name in ("Terrain", "TerrainMat", "Ground"):
+        # Terrain mesh Blender: usa la SATELLITE reale come colorMap (il
+        # mesh ha UV che mappa lat/lon -> texture). Cosi' si vede il vero
+        # paesaggio dell'area (campi, boschi, edifici) dall'alto.
+        if terrain_color_map and name in ("SatelliteTerrain", "Terrain",
+                                             "TerrainMat", "Ground"):
             stage0["colorMap"] = terrain_color_map
         mats[name] = {
             "name": name,
@@ -793,53 +798,34 @@ def _fbm_noise(size: int, octaves: int, seed: int,
 
 def generate_asphalt_texture(level_dir: Path,
                                base_rgb: tuple[float, float, float]) -> str:
-    """Asfalto realistico 1024x1024: fBm multi-scala (grana organica senza
-    pattern), granelli pietra salt&pepper, crepe sottili orientate, macchie
-    scure irregolari da fBm low-freq, subtle cold/warm variation."""
+    """Asfalto 1024x1024 MINIMALE: solo grana fine uniforme. Niente crepe
+    evidenti, niente macchie scure, niente cold/warm. L'asfalto reale a
+    distanza medium appare come una superficie quasi uniforme grigio-scura
+    con una finissima texture di granelli."""
     size = 1024
     rng = np.random.default_rng(42)
 
-    # Grana base organica via fBm 5 ottave
-    grain = _fbm_noise(size, octaves=5, seed=42, start_freq=8) * 0.055
+    # Solo grana fine (noise gaussiano stretto) - niente pattern fBm-dense
+    fine_grain = rng.normal(0.0, 0.025, (size, size)).astype(np.float32)
 
-    # Granelli pietra (salt & pepper)
+    # Granelli pietra pochissimi e piccoli (salt&pepper minimo)
     spk = rng.random((size, size), dtype=np.float32)
-    dark_grit = np.where(spk > 0.992, -0.13, 0.0)
-    light_grit = np.where(spk < 0.008, 0.08, 0.0)
+    dark_grit = np.where(spk > 0.997, -0.06, 0.0)
+    light_grit = np.where(spk < 0.003, 0.04, 0.0)
 
-    # Crepe random orientate (no pattern regolare)
-    cracks = np.zeros((size, size), dtype=np.float32)
-    for _ in range(40):
-        y0 = rng.integers(50, size - 50)
-        x0 = rng.integers(0, size - 50)
-        angle = rng.uniform(-math.pi / 4, math.pi / 4)  # quasi orizzontale
-        length = rng.integers(40, 180)
-        for i in range(length):
-            xi = x0 + int(i * math.cos(angle))
-            yi = y0 + int(i * math.sin(angle))
-            if 0 <= xi < size and 0 <= yi < size:
-                cracks[yi, xi] = -0.13
-                # leggero feather
-                if xi + 1 < size:
-                    cracks[yi, xi + 1] += -0.04
+    delta = fine_grain + dark_grit + light_grit
 
-    # Macchie scure da fBm low-freq (patches di ombra/usura irregolari)
-    shadow_fbm = _fbm_noise(size, octaves=3, seed=7, start_freq=4)
-    # tieni solo valori bassi come macchie scure
-    dark_blobs = np.where(shadow_fbm < -0.7, (shadow_fbm + 0.7) * 0.12, 0.0)
-
-    # Variazione cold/warm sottile
-    tone = _fbm_noise(size, octaves=2, seed=99, start_freq=3) * 0.015
-
-    delta = grain + dark_grit + light_grit + cracks + dark_blobs
-
+    # Colore base: grigio scuro uniforme tipico asfalto
     r, g, b = base_rgb
-    scale = 0.78  # asfalto medio (non nero, non chiaro sovraesposto)
-    r, g, b = r * scale, g * scale, b * scale
+    # Desatura e scurisci: asfalto e' grigio neutro, non verdino
+    gray = (r + g + b) / 3.0 * 0.70
+    r = gray
+    g = gray
+    b = gray
 
-    R = np.clip(r + delta - tone, 0.04, 1.0)
-    G = np.clip(g + delta, 0.04, 1.0)
-    B = np.clip(b + delta + tone, 0.04, 1.0)
+    R = np.clip(r + delta, 0.10, 1.0)
+    G = np.clip(g + delta, 0.10, 1.0)
+    B = np.clip(b + delta, 0.10, 1.0)
     img = np.stack([R, G, B], axis=-1)
     img_u8 = (img * 255.0).astype(np.uint8)
 
@@ -1559,17 +1545,19 @@ def main() -> None:
     # Blender (BeamNG richiede sempre un TerrainBlock). Mesh Blender sopra.
     max_height, elev_min, z_offset_blender = write_flat_fallback_terrain(LEVEL_DIR)
 
-    # 5. Materiali + texture asfalto/erba procedurali
+    # 5. Materiali + texture asfalto + satellite come terrain colorMap
     asphalt_rgb = sample_asphalt_color_from_satellite()
     print(f"asfalto RGB campionato: "
           f"({asphalt_rgb[0]:.3f}, {asphalt_rgb[1]:.3f}, {asphalt_rgb[2]:.3f})")
     generate_asphalt_texture(LEVEL_DIR, asphalt_rgb)
-    grass_map = generate_terrain_grass_texture(LEVEL_DIR)
+    copy_satellite_texture(LEVEL_DIR)  # copia satellite_diffuse.png
     asphalt_map = f"levels/{LEVEL_NAME}/art/road/asphalt_base.png"
+    # Uso la SATELLITE come colorMap del mesh Terrain Blender (UV gia'
+    # mappata lat/lon dal blender_build). Mostra il vero paesaggio dell'area.
+    terrain_map = f"levels/{LEVEL_NAME}/art/terrains/satellite_diffuse.png"
     write_materials(LEVEL_DIR, asphalt_rgb,
                      asphalt_color_map=asphalt_map,
-                     terrain_color_map=grass_map)
-    copy_satellite_texture(LEVEL_DIR)
+                     terrain_color_map=terrain_map)
 
     # 5b. Roadside clutter procedurale (sassi + ciuffi ai bordi strada)
     roadside_obj = generate_roadside_clutter(LEVEL_DIR)
