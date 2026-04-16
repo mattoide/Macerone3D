@@ -809,6 +809,15 @@
   "collisionType" : "Visible Mesh Final",
   "decalType" : "Visible Mesh Final",
   "shapeName" : "levels/macerone/art/shapes/macerone_terrain.dae"
+},
+        {
+  "class" : "TSStatic",
+  "name" : "macerone_extra_buildings_mesh",
+  "position" : [ 0, 0, 0 ],
+  "allowPlayerStep" : "1",
+  "collisionType" : "Visible Mesh Final",
+  "decalType" : "Visible Mesh Final",
+  "shapeName" : "levels/macerone/art/shapes/macerone_extra_buildings.dae"
 }
 
       ]

@@ -1,0 +1,4 @@
+newmtl Building
+Kd 0.82 0.76 0.62
+newmtl Roof
+Kd 0.62 0.32 0.22

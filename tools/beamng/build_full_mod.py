@@ -1609,6 +1609,7 @@ def write_level_json(level_dir: Path,
                       world_shape_rel: str | None,
                       roadside_shape_rel: str | None,
                       terrain_shape_rel: str | None,
+                      extra_buildings_shape_rel: str | None,
                       spawn_xyz: tuple[float, float, float],
                       spawn_heading: float,
                       max_height: float,
@@ -1720,6 +1721,13 @@ def write_level_json(level_dir: Path,
             (
                 "macerone_terrain_mesh",
                 f"levels/{LEVEL_NAME}/{terrain_shape_rel}",
+            )
+        )
+    if extra_buildings_shape_rel is not None:
+        tsstatics.append(
+            (
+                "macerone_extra_buildings_mesh",
+                f"levels/{LEVEL_NAME}/{extra_buildings_shape_rel}",
             )
         )
 
@@ -1878,6 +1886,15 @@ def main() -> None:
         roadside_dae = convert_to_dae(roadside_obj)
         roadside_rel = roadside_dae.relative_to(LEVEL_DIR).as_posix()
 
+    # 5c. Edifici OSM mancanti (blender ne filtra alcuni per dimensione/etc)
+    extra_buildings_rel = None
+    run("generate_extra_buildings",
+        [sys.executable, str(TOOLS / "generate_extra_buildings.py")])
+    extra_buildings_obj = LEVEL_DIR / "art" / "shapes" / "macerone_extra_buildings.obj"
+    if extra_buildings_obj.exists() and extra_buildings_obj.stat().st_size > 200:
+        extra_buildings_dae = convert_to_dae(extra_buildings_obj)
+        extra_buildings_rel = extra_buildings_dae.relative_to(LEVEL_DIR).as_posix()
+
     # 6. Spawn con tuning offset (forward/up/turn_right dai parametri globali)
     sx, sy, _sz = read_first_centerline_point()
     top_z = road_top_z_at(road_obj, sx, sy, radius=3.0)
@@ -1897,7 +1914,8 @@ def main() -> None:
 
     # 7. main.level.json + info.json
     write_level_json(LEVEL_DIR, road_rel, world_rel, roadside_rel,
-                      terrain_rel, spawn, heading,
+                      terrain_rel, extra_buildings_rel,
+                      spawn, heading,
                       max_height, elev_min, z_offset_blender)
     write_empty_jsons(LEVEL_DIR)
     write_preview(LEVEL_DIR)
