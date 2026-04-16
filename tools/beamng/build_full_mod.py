@@ -59,7 +59,7 @@ SPAWN_TURN_RIGHT_DEG = -25.0  # gradi di rotazione a destra (negativo = sx)
 # Triangoli del world mesh con centroide entro questa distanza dalla
 # centerline vengono rimossi: alberi procedurali, bushes, rocce che sono
 # finiti casualmente sull'asfalto.
-ROAD_CORRIDOR_FILTER_M = 4.5
+ROAD_CORRIDOR_FILTER_M = 5.5
 
 # Collezioni Blender da esportare come "world" (tutto tranne Road e roba troppo
 # pesante tipo Grass/Bushes). Se una non esiste, viene saltata.
@@ -1382,21 +1382,21 @@ def generate_roadside_clutter(level_dir: Path) -> Path | None:
                     count_bush += 1
                 side *= -1
 
-    # Parapetti sui ponti: una striscia per lato
+    # Parapetti sui ponti: segui la centerline punto per punto (evita
+    # muri dritti che tagliano la strada nei ponti in curva).
     count_parapet = 0
     for (a, b) in bridge_segments:
-        if b - a < 1:
-            continue
-        x0, y0, z0 = cl[a][0], cl[a][1], cl[a][2]
-        x1, y1, z1 = cl[b][0], cl[b][1], cl[b][2]
-        dx = x1 - x0; dy = y1 - y0
-        d = math.hypot(dx, dy)
-        if d < 1.0:
-            continue
-        nx, ny = -dy / d, dx / d
-        add_parapet_segment(x0, y0, z0, x1, y1, z1, (nx, ny))
-        add_parapet_segment(x0, y0, z0, x1, y1, z1, (-nx, -ny))
-        count_parapet += 2
+        for i in range(a, b):
+            x0, y0, z0 = cl[i][0], cl[i][1], cl[i][2]
+            x1, y1, z1 = cl[i + 1][0], cl[i + 1][1], cl[i + 1][2]
+            dx = x1 - x0; dy = y1 - y0
+            d = math.hypot(dx, dy)
+            if d < 0.5:
+                continue
+            nx, ny = -dy / d, dx / d
+            add_parapet_segment(x0, y0, z0, x1, y1, z1, (nx, ny))
+            add_parapet_segment(x0, y0, z0, x1, y1, z1, (-nx, -ny))
+            count_parapet += 2
 
     # Node barriers (bollard/gate) OSM
     count_bollard = 0
