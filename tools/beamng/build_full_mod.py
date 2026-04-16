@@ -310,6 +310,49 @@ FILTER_OBJ_NAME_KEYWORDS = (
 )
 
 
+def drop_world_obj_to_terrain(obj_path: Path, arr_orig: np.ndarray,
+                                 arr_carved: np.ndarray,
+                                 max_height: float) -> int:
+    """Per ogni vertex del world OBJ, calcola la differenza tra DEM
+    pre-carve e post-carve alla sua XY, poi abbassa v.z di quella delta.
+    Gli oggetti appoggiati al DEM originale rimangono al nuovo terrain
+    level (niente alberi/edifici fluttuanti dopo il carve).
+
+    Ritorna numero di vertex shiftati significativamente."""
+    H, W = arr_orig.shape
+    half = TER_EXTENT / 2.0
+    cell = TER_SQUARESIZE
+
+    def sample_m(arr, x, y):
+        col = int((x + half) / cell)
+        ry = int((y + half) / cell)
+        if not (0 <= col < W and 0 <= ry < H):
+            return None
+        return float(arr[ry, col]) / 65535.0 * max_height
+
+    lines = obj_path.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
+    out_lines = []
+    shifted = 0
+    for line in lines:
+        if not line.startswith("v "):
+            out_lines.append(line)
+            continue
+        parts = line.split()
+        x, y, z = float(parts[1]), float(parts[2]), float(parts[3])
+        t_orig = sample_m(arr_orig, x, y)
+        t_new = sample_m(arr_carved, x, y)
+        if t_orig is None or t_new is None:
+            out_lines.append(line)
+            continue
+        delta = t_new - t_orig  # <= 0 (il carve abbassa mai alza)
+        if abs(delta) > 0.05:
+            z += delta
+            shifted += 1
+        out_lines.append(f"v {x:.6f} {y:.6f} {z:.6f}\n")
+    obj_path.write_text("".join(out_lines), encoding="utf-8")
+    return shifted
+
+
 def filter_world_obj_near_road(obj_path: Path, radius_m: float) -> int:
     """Rimuove dal .obj le face DI CERTI OGGETTI (alberi/rocce/bushes) i cui
     centroidi XY stanno entro radius_m dalla centerline. Oggetti come
@@ -457,21 +500,17 @@ def carve_heightmap_under_road(arr: np.ndarray, elev_min: float,
 
             sub = arr_f[r0c:r1c, c0c:c1c]
             a = alpha[kr0:kr1, kc0:kc1]
-            # Upper bound HARD: road+0.4m per TUTTO il corridoio (no falloff).
-            # Il carve abbassa SEMPRE se il terreno supera la road.
+            # Solo MIN-carve: terrain mai alzato, solo abbassato al max
+            # road+0.4m dove supera. Rimossa ogni logica di lower_bound
+            # che alzava il terreno e causava "erba sopra strada" quando
+            # il plateau di un centerline alto overlappava con celle
+            # gia' al livello road locale piu' basso.
             upper_hard_u16 = upper_u16 + (0.5 / max_height * 65535.0)
-            # Lower bound ATTIVO SOLO nel plateau (a quasi 1): garantisce
-            # che il terreno sia "attaccato" sotto la strada nel plateau.
-            # Fuori plateau NON alza il terreno (altrimenti centerline points
-            # con z diversi forzerebbero il terrain sopra la road locale
-            # quando la strada sale/scende nelle vicinanze).
-            in_plateau = a >= 0.95
-            lower_effective = np.where(in_plateau, lower_u16, 0.0).astype(np.float32)
             in_kernel = a > 0
-            new = np.where(in_kernel,
-                             np.clip(sub, lower_effective, upper_hard_u16),
-                             sub)
-            changed = int((np.abs(new - sub) > 0.5).sum())
+            # Dove in_kernel: min(sub, upper_hard). Fuori: sub invariato.
+            cap = np.where(in_kernel, upper_hard_u16, 1e9).astype(np.float32)
+            new = np.minimum(sub, cap)
+            changed = int((new < sub).sum())
             carved += changed
             arr_f[r0c:r1c, c0c:c1c] = new
 
@@ -480,7 +519,8 @@ def carve_heightmap_under_road(arr: np.ndarray, elev_min: float,
 
 
 def write_dem_terrain(level_dir: Path, info: dict,
-                       z_offset_blender: float) -> tuple[float, float, float]:
+                       z_offset_blender: float,
+                       out_arrays: dict | None = None) -> tuple[float, float, float]:
     """Scrive theTerrain.ter SHIFTATO in coord Blender: ogni pixel uint16
     rappresenta (real_z - z_offset_blender), cosi' il terreno si allinea
     alla road che ha vertici in coord Blender (z~72 invece di z~496).
@@ -514,12 +554,19 @@ def write_dem_terrain(level_dir: Path, info: dict,
     max_height_shifted = 800.0  # copre range centerline (0..600) con margine
     blender_z_clipped = np.clip(blender_z, 0.0, max_height_shifted)
     arr = (blender_z_clipped / max_height_shifted * 65535.0).astype(np.uint16)
+    # Salva copia pre-carve per il drop-to-ground del world mesh
+    arr_orig = arr.copy()
 
     # Carve sotto la strada: target e' in coord Blender (identico alla road).
     carved = carve_heightmap_under_road(arr, 0.0, max_height_shifted,
                                           z_offset_blender,
                                           target_is_blender_z=True)
     print(f"  heightmap carve: abbassate {carved} celle sotto la centerline")
+
+    if out_arrays is not None:
+        out_arrays["arr_orig"] = arr_orig
+        out_arrays["arr_carved"] = arr
+        out_arrays["max_height"] = max_height_shifted
 
     layer = np.zeros((TER_SIZE, TER_SIZE), dtype=np.uint8)
 
@@ -1382,13 +1429,24 @@ def main() -> None:
         removed = filter_world_obj_near_road(world_obj, ROAD_CORRIDOR_FILTER_M)
         print(f"  filter corridoio {ROAD_CORRIDOR_FILTER_M}m: "
               f"rimosse {removed} face dal world mesh")
+
+    # 4. Terrain .ter dal DEM (salva array pre/post-carve per drop-to-ground)
+    hm_arrays: dict = {}
+    max_height, elev_min, z_offset_blender = write_dem_terrain(
+        LEVEL_DIR, info, z_offset_blender, out_arrays=hm_arrays,
+    )
+
+    # 4b. Drop-to-ground world: abbassa oggetti (alberi/edifici/muri) dove
+    # il carve ha abbassato il terrain sotto di loro. Evita alberi fluttuanti.
+    if world_has_content:
+        shifted = drop_world_obj_to_terrain(
+            world_obj,
+            hm_arrays["arr_orig"], hm_arrays["arr_carved"],
+            hm_arrays["max_height"],
+        )
+        print(f"  drop-to-ground: shiftati {shifted} vertex del world mesh")
         world_dae = convert_to_dae(world_obj)
         world_rel = world_dae.relative_to(LEVEL_DIR).as_posix()
-
-    # 4. Terrain .ter dal DEM (usa z_offset_blender inferito)
-    max_height, elev_min, z_offset_blender = write_dem_terrain(
-        LEVEL_DIR, info, z_offset_blender
-    )
 
     # 5. Materiali + satellite texture + asfalto procedurale + detail grass
     asphalt_rgb = sample_asphalt_color_from_satellite()
