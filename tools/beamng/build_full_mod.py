@@ -147,7 +147,9 @@ args = sys.argv[sys.argv.index("--") + 1:]
 road_out = args[0]
 world_out = args[1]
 world_cols_csv = args[2]
+skip_names_csv = args[3] if len(args) > 3 else ""
 world_cols = [c for c in world_cols_csv.split(",") if c]
+skip_names = set(n for n in skip_names_csv.split(",") if n)
 
 def select_only(objs):
     bpy.ops.object.select_all(action="DESELECT")
@@ -156,20 +158,34 @@ def select_only(objs):
     if objs:
         bpy.context.view_layer.objects.active = objs[0]
 
-# --- Road (con Solidify 0.4m sotto) ---
+# --- Road: Solidify SOLO su Asphalt e Shoulder, non su elementi sottili
+# (linee, catarifrangenti, tombini, patches) che non devono sporgere dalla
+# superficie.
+SOLIDIFY_KEYWORDS = ("Asphalt", "Shoulder")
+def needs_solidify(name: str) -> bool:
+    if "Patch" in name:  # AsphaltPatches va a filo con l'asfalto, no solidify
+        return False
+    return any(k in name for k in SOLIDIFY_KEYWORDS)
+
 road_col = bpy.data.collections.get("Road")
 if road_col is None:
     print("!! Collezione 'Road' non trovata")
     sys.exit(2)
 road_objs = [o for o in road_col.all_objects if o.type == "MESH"]
+solidified = 0
 for o in road_objs:
+    if not needs_solidify(o.name):
+        continue
     if any(m.type == "SOLIDIFY" for m in o.modifiers):
+        solidified += 1
         continue
     mod = o.modifiers.new(name="RoadSolidify", type="SOLIDIFY")
     mod.thickness = 0.4
     mod.offset = -1.0
     mod.use_even_offset = True
     mod.use_quality_normals = True
+    solidified += 1
+print(f"Solidify applicato a {solidified}/{len(road_objs)} mesh Road")
 select_only(road_objs)
 bpy.ops.wm.obj_export(
     filepath=road_out,
@@ -181,14 +197,21 @@ bpy.ops.wm.obj_export(
 )
 print(f"Road: {len(road_objs)} oggetti -> {road_out}")
 
-# --- World: tutto il resto (eccetto Road, Grass, Bushes e terrain Blender) ---
+# --- World: tutto il resto (escluse mesh nella skip_names come Delineators) ---
 world_objs = []
 for cname in world_cols:
     col = bpy.data.collections.get(cname)
     if col is None:
         print(f"  collezione '{cname}' non trovata, skip")
         continue
-    ms = [o for o in col.all_objects if o.type == "MESH"]
+    ms = []
+    for o in col.all_objects:
+        if o.type != "MESH":
+            continue
+        if o.name in skip_names:
+            print(f"  skip mesh '{o.name}' (in SKIP_MESH_NAMES)")
+            continue
+        ms.append(o)
     world_objs.extend(ms)
     print(f"  {cname}: {len(ms)} mesh")
 
@@ -210,14 +233,20 @@ else:
 '''
 
 
+SKIP_MESH_NAMES = [
+    "Delineators",  # paletti bianchi bassi al bordo strada, non servono
+]
+
+
 def export_from_blender(road_obj: Path, world_obj: Path) -> None:
     script_path = BEAMNG_OUT / "_blender_full_export.py"
     script_path.write_text(BLENDER_EXPORT_SCRIPT, encoding="utf-8")
     world_cols = ",".join(WORLD_COLLECTIONS)
+    skip = ",".join(SKIP_MESH_NAMES)
     run("blender_export_full", [
         BLENDER_EXE, "--background", str(BLEND_FILE),
         "--python", str(script_path),
-        "--", str(road_obj), str(world_obj), world_cols,
+        "--", str(road_obj), str(world_obj), world_cols, skip,
     ])
     script_path.unlink(missing_ok=True)
 
@@ -274,11 +303,18 @@ def sample_asphalt_color_from_satellite() -> tuple[float, float, float]:
 # ---------------------------------------------------------------------------
 # Filtro OBJ world: rimuove triangoli dentro il corridoio road
 # ---------------------------------------------------------------------------
+FILTER_OBJ_NAME_KEYWORDS = (
+    "TreeTrunks", "TreeCanopies",
+    "RoadsideTrunks", "RoadsideCanopies", "Roadside",
+    "Bushes", "Rocks", "StoneWalls",
+)
+
+
 def filter_world_obj_near_road(obj_path: Path, radius_m: float) -> int:
-    """Rimuove dal .obj tutte le face i cui centroidi XY stanno entro
-    radius_m dalla centerline. Cosi' alberi/rocce/bushes spuri che finiscono
-    sull'asfalto non causano bump/muri al veicolo. Ritorna numero face
-    rimosse. In-place rewrite del file."""
+    """Rimuove dal .obj le face DI CERTI OGGETTI (alberi/rocce/bushes) i cui
+    centroidi XY stanno entro radius_m dalla centerline. Oggetti come
+    Guardrails/Delineators/Signs restano intatti anche se vicini. Filtra
+    per nome mesh via blocchi `o <nome>` nel OBJ."""
     import csv as _csv
     cl_path = ROOT / "output" / "centerline.csv"
     if not cl_path.exists():
@@ -309,17 +345,22 @@ def filter_world_obj_near_road(obj_path: Path, radius_m: float) -> int:
                 p = line.split()
                 verts.append((float(p[1]), float(p[2]), float(p[3])))
 
-    # 2. Riscrivi l'OBJ filtrando le faces
+    # 2. Riscrivi l'OBJ filtrando le faces solo degli oggetti filterabili
     out_lines: list[str] = []
     removed = 0
+    current_obj = "default"
+    filter_active = False
     with obj_path.open("r", encoding="utf-8", errors="replace") as f:
         for line in f:
-            if not line.startswith("f "):
+            if line.startswith("o ") or line.startswith("g "):
+                current_obj = line.split(maxsplit=1)[1].strip()
+                filter_active = any(k in current_obj for k in FILTER_OBJ_NAME_KEYWORDS)
+                out_lines.append(line)
+                continue
+            if not filter_active or not line.startswith("f "):
                 out_lines.append(line)
                 continue
             tokens = line.split()[1:]
-            # Triangoli o ngon. Per calcolare il centroide prendo la media
-            # dei vertici (XY).
             coords = []
             for tk in tokens:
                 try:
@@ -348,11 +389,13 @@ def filter_world_obj_near_road(obj_path: Path, radius_m: float) -> int:
 def carve_heightmap_under_road(arr: np.ndarray, elev_min: float,
                                  max_height: float, z_offset_blender: float,
                                  target_is_blender_z: bool = False) -> int:
-    """Abbassa dolcemente il heightmap DEM verso la quota strada. Usa coord
-    REALI DEM: per ogni centerline point target = (real_road_z - 2m) / maxH.
+    """Conforma BIDIREZIONALMENTE il heightmap verso la quota strada: alza
+    dove troppo basso, abbassa dove troppo alto, cosi' il paesaggio segue
+    la strada invece di stare "qualche metro sotto" come il DEM grezzo.
 
-    Se `target_is_blender_z=True` il target e' in coord Blender (road_z =
-    z_blender), altrimenti real (road_z = z_blender + z_offset_blender).
+    Per ogni centerline point target = road_z - 0.8m (sotto il manto).
+    Raggio 8 celle (~100m) con falloff lineare: al centro blend verso target
+    (pieno), al bordo nessun effetto.
     """
     import csv as _csv
     cl_path = ROOT / "output" / "centerline.csv"
@@ -383,7 +426,7 @@ def carve_heightmap_under_road(arr: np.ndarray, elev_min: float,
                 road_z = zb
             else:
                 road_z = zb + z_offset_blender
-            target = road_z - elev_min - 2.0
+            target = road_z - elev_min - 0.8
             if target < 0:
                 target = 0.0
             tgt_u16 = min(65535.0, target / max_height * 65535.0)
@@ -402,10 +445,10 @@ def carve_heightmap_under_road(arr: np.ndarray, elev_min: float,
 
             sub = arr_f[r0c:r1c, c0c:c1c]
             a = alpha[kr0:kr1, kc0:kc1]
-            # blended = sub*(1-a) + target*a; carve solo se < sub
-            blended = sub * (1.0 - a) + tgt_u16 * a
-            new = np.minimum(sub, blended)
-            changed = int((new < sub).sum())
+            # Bidirectional blend: alza o abbassa verso target con falloff.
+            # Al centro (a=1) = target; al bordo (a=0) = dem invariato.
+            new = sub * (1.0 - a) + tgt_u16 * a
+            changed = int((np.abs(new - sub) > 0.5).sum())
             carved += changed
             arr_f[r0c:r1c, c0c:c1c] = new
 
@@ -497,7 +540,8 @@ def write_dem_terrain(level_dir: Path, info: dict,
 # ---------------------------------------------------------------------------
 # Step 4: materiali (terrain con texture satellite + road/world generic)
 # ---------------------------------------------------------------------------
-def write_materials(level_dir: Path, asphalt_rgb: tuple[float, float, float]) -> None:
+def write_materials(level_dir: Path, asphalt_rgb: tuple[float, float, float],
+                     asphalt_color_map: str | None = None) -> None:
     # TerrainMaterial con diffuse = texture satellite.
     # BeamNG cerca il file provando estensioni .dds .png .jpg quindi il path
     # va scritto SENZA estensione. Il leading "/" e' consigliato (path
@@ -563,12 +607,17 @@ def write_materials(level_dir: Path, asphalt_rgb: tuple[float, float, float]) ->
     ]
     mats = {}
     for name, rgb in entries:
+        stage0 = {"diffuseColor": [*rgb, 1.0]}
+        # Texture procedurale solo sui materiali asfalto+patches (non linee/segnali)
+        if asphalt_color_map and name in ("Asphalt", "AsphaltPatch_Dark",
+                                             "AsphaltPatch_Light"):
+            stage0["colorMap"] = asphalt_color_map
         mats[name] = {
             "name": name,
             "mapTo": name,
             "class": "Material",
             "Stages": [
-                {"diffuseColor": [*rgb, 1.0]},
+                stage0,
                 {}, {}, {},
             ],
             "materialTag0": "Miscellaneous",
@@ -582,6 +631,48 @@ def write_materials(level_dir: Path, asphalt_rgb: tuple[float, float, float]) ->
 # ---------------------------------------------------------------------------
 # Step 5: copia satellite texture nel mod
 # ---------------------------------------------------------------------------
+def generate_asphalt_texture(level_dir: Path,
+                               base_rgb: tuple[float, float, float]) -> str:
+    """Genera PNG 512x512 procedurale per l'asfalto: grana fine + piccole
+    striature longitudinali + leggera variazione macchie. Colore di base
+    dal satellite. Ritorna path relativo al level_dir."""
+    size = 512
+    rng = np.random.default_rng(42)
+    # grana (rumore gaussiano stretto) + granelli (noise salt)
+    grain = rng.normal(0.0, 0.05, (size, size)).astype(np.float32)
+    pepper = rng.random((size, size), dtype=np.float32)
+    dark_spots = np.where(pepper > 0.98, -0.10, 0.0)
+    light_spots = np.where(pepper < 0.015, 0.08, 0.0)
+    # Striature longitudinali (direzione Y): piccole variazioni di luminosita'
+    strip_base = rng.normal(0.0, 0.04, (size,)).astype(np.float32)
+    strip = np.tile(strip_base[None, :], (size, 1))  # varia in X, uniforme in Y
+    # Crepe: linee scure casuali orizzontali fini
+    cracks = np.zeros((size, size), dtype=np.float32)
+    for _ in range(30):
+        y = rng.integers(0, size)
+        x0 = rng.integers(0, size // 2)
+        x1 = rng.integers(size // 2, size)
+        cracks[y, x0:x1] = -0.12
+        if y + 1 < size:
+            cracks[y + 1, x0:x1] = -0.06
+
+    delta = grain + dark_spots + light_spots + strip + cracks
+    r, g, b = base_rgb
+    R = np.clip(r + delta, 0.0, 1.0)
+    G = np.clip(g + delta, 0.0, 1.0)
+    B = np.clip(b + delta, 0.0, 1.0)
+    img = np.stack([R, G, B], axis=-1)
+    img_u8 = (img * 255.0).astype(np.uint8)
+
+    tex_dir = level_dir / "art" / "road"
+    tex_dir.mkdir(parents=True, exist_ok=True)
+    out = tex_dir / "asphalt_base.png"
+    Image.fromarray(img_u8, mode="RGB").save(out, optimize=True)
+    rel = f"/levels/{LEVEL_NAME}/art/road/asphalt_base"
+    print(f"Asfalto texture procedurale: {out.relative_to(MOD_DIR)}")
+    return rel
+
+
 def copy_satellite_texture(level_dir: Path) -> None:
     src = BEAMNG_OUT / "satellite_diffuse.png"
     if not src.exists():
@@ -852,11 +943,12 @@ def main() -> None:
         LEVEL_DIR, info, z_offset_blender
     )
 
-    # 5. Materiali + satellite texture
+    # 5. Materiali + satellite texture + asfalto procedurale
     asphalt_rgb = sample_asphalt_color_from_satellite()
     print(f"asfalto RGB campionato: "
           f"({asphalt_rgb[0]:.3f}, {asphalt_rgb[1]:.3f}, {asphalt_rgb[2]:.3f})")
-    write_materials(LEVEL_DIR, asphalt_rgb)
+    asphalt_map = generate_asphalt_texture(LEVEL_DIR, asphalt_rgb)
+    write_materials(LEVEL_DIR, asphalt_rgb, asphalt_color_map=asphalt_map)
     copy_satellite_texture(LEVEL_DIR)
 
     # 6. Spawn con tuning offset (forward/up/turn_right dai parametri globali)
