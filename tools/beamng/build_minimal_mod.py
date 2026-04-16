@@ -82,8 +82,8 @@ bpy.ops.wm.obj_export(
     filepath=out_path,
     export_selected_objects=True,
     apply_modifiers=True,
-    forward_axis="NEGATIVE_Z",
-    up_axis="Y",
+    forward_axis="Y",
+    up_axis="Z",
     export_materials=True,
 )
 print(f"Scritto {out_path}")

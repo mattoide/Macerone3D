@@ -254,7 +254,7 @@ def write_dae(obj_path: Path, dae_path: Path | None = None) -> Path:
     <created>{DATE_ISO}</created>
     <modified>{DATE_ISO}</modified>
     <unit name="meter" meter="1"/>
-    <up_axis>Y_UP</up_axis>
+    <up_axis>Z_UP</up_axis>
   </asset>
   <library_effects>
     {"".join(effects_xml)}
