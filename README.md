@@ -133,37 +133,62 @@ Organizzati in collection (Outliner):
 
 ## Build mod BeamNG.drive
 
-Tutta la pipeline mod è sotto `tools/beamng/`. Un singolo comando genera una mod installabile (heightmap, DecalRoad, edifici, guardrail, alberi, skeleton cartelle):
+Un singolo comando genera la mod installabile (ZIP pronta) e la copia in BeamNG:
 
 ```bash
-python tools/beamng/build_mod.py
+python tools/beamng/build_full_mod.py
 ```
 
-Esegue in sequenza:
+Output: `output/beamng/macerone3d.zip` (~16 MB) automaticamente copiata in `C:\Users\Matto\AppData\Local\BeamNG\BeamNG.drive\current\mods\`.
 
-| Step | Script | Output |
-|------|--------|--------|
-| 1 | `build_heightmap.py` | `output/beamng/heightmap.png` (PNG 16-bit 4096² @ 3 m/pixel = 12.3 km quadrato) + `terrain_info.json` |
-| 2 | `build_roads.py` | `output/beamng/roads.json` (nodi DecalRoad per SS17 + strade secondarie) |
-| 3 | `blender_export.py` (in Blender) | `output/beamng/dae/{buildings,guardrails,walls,props}.dae` + `output/beamng/forest.json` |
-| 4 | `build_mod_skeleton.py` | `output/beamng/mod/` con `info.json`, `main.level.json`, `materials.json`, preview placeholder |
+### Cosa fa la pipeline `build_full_mod.py`
 
-### Installazione mod
+1. Legge il heightmap DEM pre-calcolato (`build_heightmap.py` se manca).
+2. Inferisce `z_offset_blender` vero campionando il DEM lungo la centerline (il valore in `terrain_info.json` è sbagliato — vedi sotto).
+3. Esporta con Blender headless:
+   - **Road mesh** (collection `Road`, Solidify 0.4 m SOLO su Asphalt/Shoulder) → `macerone_road.dae`
+   - **World mesh** (Buildings + Walls + Guardrails + Trees + Rocks + Signals, escluso `Delineators`) → `macerone_world.dae`
+4. Filtra dall'OBJ world le face di alberi/bushes/rocce entro 3.5 m dalla centerline (procedurali finiti sull'asfalto).
+5. Scrive `theTerrain.ter` con heightmap SHIFTATO in coord Blender + carve bidirezionale sul corridoio road (falloff 100 m).
+6. Campiona RGB asfalto dal satellite ESRI lungo la centerline e genera texture procedurale 512×512 (grana + crepe + striature) usata come `colorMap` del material Asphalt.
+7. Scrive `main.level.json` con TerrainBlock + TSStatic road/world + SpawnSphere orientata verso il primo rettilineo.
+8. Zippa e copia nei mods di BeamNG.
 
-Leggi `output/beamng/mod/README_install.md`. In breve:
+### Tuning spawn (variabili in testa a `build_full_mod.py`)
 
-1. Copia `output/beamng/mod/*` dentro `Documents/BeamNG.drive/<versione>/mods/unpacked/macerone3d/`.
+```python
+SPAWN_FORWARD_M = 5.0        # metri avanti lungo il muso
+SPAWN_UP_M = 1.0             # altezza extra sopra l'asfalto
+SPAWN_TURN_RIGHT_DEG = -25.0 # gradi di rotazione a destra (negativi = sinistra)
+ROAD_CORRIDOR_FILTER_M = 3.5 # raggio filtro oggetti vicino alla strada
+```
+
+### Installazione manuale (se serve)
+
+1. Copia `output/beamng/macerone3d.zip` in `Documents/BeamNG.drive/<versione>/mods/` (o lascia che lo faccia lo script).
 2. Avvia BeamNG → Singleplayer → Freeroam → "SS17 Valico del Macerone".
-3. Al primo avvio: F11 (World Editor) → `Tools → Terrain and Road Importer` → carica `terrain/heightmap.png` + `roads.json`. Il tool genera terrain + DecalRoad e terraforma sotto la strada.
-4. Salva il livello (da quel momento non serve più reimportare).
 
-### Scelte tecniche della mod
+### Scelte tecniche critiche (hard-earned)
 
-- **Terrain 4096×4096 @ 3 m/pixel** = quadrato 12.3 km, centrato sul centroide della centerline. Copre tutto il bbox DEM esistente con margine; qualità massima vicino alla strada (dove il DEM reale c'è), feathering verso plateau mediano ai bordi.
-- **Elevazione 0→1200 m** mappata su PNG16 0→65535 → precisione 1.83 cm per step.
-- **Strade come DecalRoad** (non MeshRoad): scelta ufficiale BeamNG per strade asfaltate reali. Il Terrain Importer terraforma il terreno sotto la strada per evitare clipping.
-- **Export Blender selettivo**: solo oggetti entro ~250 m dalla strada (edifici), ~80 m (muretti), ~100 m (rocce/props). Tutto ciò che è "lontano" viene smussato dal plateau — massima qualità dove si guida, meno peso GPU altrove.
-- **Alberi come forest instances** (JSON con x/y/z/rot/scale/type), non come mesh pesanti: BeamNG Forest Editor fa GPU instancing con LOD+billboard automatico.
+- **DAE Z-up nativo**: BeamNG/Torque ignora il tag `<up_axis>Y_UP</up_axis>`. `tools/beamng/obj_to_dae.py` scrive sempre `Z_UP`; l'export Blender usa `forward_axis="Y", up_axis="Z"`. Con Y-up il mesh finisce a z=4000 m.
+- **Muso veicolo = -Y locale**: heading corretto `atan2(dx, -dy)`. Con la formula standard il veicolo spawna voltato di 180°.
+- **z_offset_blender inferito dal DEM**: `terrain_info.json.z_offset_blender_m` = `min(DEM bbox)` ≈ 336 m, ma `blender_build.py` usa `min(centerline_recompute_z)` ≈ 424 m. Diff ~88 m. `infer_z_offset_blender()` campiona il DEM lungo la centerline e prende mediana.
+- **Heightmap shiftato in coord Blender**: pixel uint16 = `(real_z - z_offset_blender) / 800 * 65535`. TSStatic road/world a `(0, 0, 0)`. Evita z=500 che crea problemi fisici in BeamNG.
+- **Carve heightmap bidirezionale**: blend verso `road_z - 0.8 m` con falloff lineare raggio 8 celle (96 m). Alza il DEM dove troppo basso, abbassa dove troppo alto → paesaggio segue la strada invece di essere sospeso sopra valli o sprofondato in trincea.
+- **Solidify solo su Asphalt/Shoulder**: non su linee/catarifrangenti/tombini/patches (altrimenti sporgono e sbalzano il veicolo).
+- **Filter corridoio per nome mesh**: rimuove face entro 3.5 m solo per `Trees*/Roadside*/Bushes/Rocks/StoneWalls`. Guardrail, Delineators (se abilitati), Signs restano.
+- **TerrainMaterial path**: `/levels/macerone/art/terrains/satellite_diffuse` (senza estensione, leading `/`). `diffuseColor` di fallback (verde-grigio) presente.
+- **`.ter` formato BeamNG 0.38**: version=9 (version 7 non carica più). TER_SIZE=1024 stabile.
+
+### File scripts `tools/beamng/`
+
+| File | Uso |
+|------|-----|
+| `build_full_mod.py` | **orchestrator principale** — genera la mod completa |
+| `build_minimal_mod.py` | baseline "solo strada + terrain flat", utile come fallback di debug |
+| `build_heightmap.py` | genera heightmap PNG16 4096² dal DEM |
+| `obj_to_dae.py` | convertitore OBJ→DAE Z-up (per evitare il Collada exporter di Blender 5.x rimosso) |
+| `build_mod.py`, `build_mod_skeleton.py`, `build_ter.py`, `build_roads.py`, `build_textures.py`, `optimize_satellite.py`, `blender_export.py` | script legacy della vecchia pipeline "DecalRoad", non usati dalla full — mantenuti per riferimento |
 
 ## Limitazioni note
 

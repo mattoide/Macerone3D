@@ -389,13 +389,15 @@ def filter_world_obj_near_road(obj_path: Path, radius_m: float) -> int:
 def carve_heightmap_under_road(arr: np.ndarray, elev_min: float,
                                  max_height: float, z_offset_blender: float,
                                  target_is_blender_z: bool = False) -> int:
-    """Conforma BIDIREZIONALMENTE il heightmap verso la quota strada: alza
-    dove troppo basso, abbassa dove troppo alto, cosi' il paesaggio segue
-    la strada invece di stare "qualche metro sotto" come il DEM grezzo.
+    """Forza il terreno vicino alla strada in una fascia [road-3m, road-1m]:
+    - Upper bound (carve): terreno mai piu' alto di road_z-1m
+    - Lower bound (fill): terreno mai piu' basso di road_z-3m
+    La strada resta SEMPRE visibile 1m sopra il terreno.
 
-    Per ogni centerline point target = road_z - 0.8m (sotto il manto).
-    Raggio 8 celle (~100m) con falloff lineare: al centro blend verso target
-    (pieno), al bordo nessun effetto.
+    Falloff lineare raggio 8 celle (~100m): al centro bounds stretti, al
+    bordo bounds rilassati (nessun effetto). Previene il caso precedente
+    dove il blend bidirezionale con multipli centerline points conver-
+    geva alla quota del punto PIU' ALTO nel corridoio, seppellendo la road.
     """
     import csv as _csv
     cl_path = ROOT / "output" / "centerline.csv"
@@ -426,10 +428,11 @@ def carve_heightmap_under_road(arr: np.ndarray, elev_min: float,
                 road_z = zb
             else:
                 road_z = zb + z_offset_blender
-            target = road_z - elev_min - 0.8
-            if target < 0:
-                target = 0.0
-            tgt_u16 = min(65535.0, target / max_height * 65535.0)
+            # Bounds in metri (sempre sotto road): carve a -1m, fill a -3m
+            upper_m = max(0.0, road_z - elev_min - 1.0)
+            lower_m = max(0.0, road_z - elev_min - 3.0)
+            upper_u16 = min(65535.0, upper_m / max_height * 65535.0)
+            lower_u16 = min(65535.0, lower_m / max_height * 65535.0)
 
             col = int((x + half) / cell)
             ry = int((y + half) / cell)
@@ -445,9 +448,13 @@ def carve_heightmap_under_road(arr: np.ndarray, elev_min: float,
 
             sub = arr_f[r0c:r1c, c0c:c1c]
             a = alpha[kr0:kr1, kc0:kc1]
-            # Bidirectional blend: alza o abbassa verso target con falloff.
-            # Al centro (a=1) = target; al bordo (a=0) = dem invariato.
-            new = sub * (1.0 - a) + tgt_u16 * a
+            # Bounds che si rilassano al bordo: al centro (a=1) upper/lower
+            # stretti, al bordo (a=0) infinitamente rilassati → no effect.
+            # +30000 u16 ~= +550m, sufficiente per neutralizzare.
+            relax = (1.0 - a) * 30000.0
+            upper_bound = upper_u16 + relax
+            lower_bound = np.maximum(0.0, lower_u16 - relax)
+            new = np.clip(sub, lower_bound, upper_bound)
             changed = int((np.abs(new - sub) > 0.5).sum())
             carved += changed
             arr_f[r0c:r1c, c0c:c1c] = new
