@@ -6,6 +6,7 @@
   "elevation_min_m": 0.0,
   "elevation_max_m": 1200.0,
   "terrain_height_scale_m": 1200.0,
+  "z_offset_blender_m": 336.0778503417969,
   "projection_origin_geo": {
     "lat": 41.66578477356948,
     "lon": 14.187693743505903

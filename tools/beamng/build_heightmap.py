@@ -144,6 +144,10 @@ def main() -> None:
         "elevation_min_m": ELEV_MIN_M,
         "elevation_max_m": ELEV_MAX_M,
         "terrain_height_scale_m": ELEV_MAX_M - ELEV_MIN_M,
+        # z_offset_blender: l'offset di quota usato da blender_build.py per
+        # centralizzare la scena attorno alla strada (= min DEM reale). La
+        # centerline.csv ha z relative a questo offset: real_elev = csv.z + offset.
+        "z_offset_blender_m": float(min(float(v) for row in terrain["grid"] for v in row)),
         "projection_origin_geo": {"lat": lat0, "lon": lon0},
         "terrain_origin_local_m": {"x": x_min, "y": y_min},
         "beamng_import_hints": {

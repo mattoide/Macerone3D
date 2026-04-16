@@ -90,7 +90,9 @@ def main() -> None:
     out_ter = MOD_LEVEL_DIR / "theTerrain.ter"
     MOD_LEVEL_DIR.mkdir(parents=True, exist_ok=True)
     with out_ter.open("wb") as f:
-        f.write(struct.pack("<B", 7))             # version
+        # version 9 = formato BeamNG 0.38. Layout identico a version 7
+        # (version 7 genera warning "outdated" e fallisce il caricamento).
+        f.write(struct.pack("<B", 9))             # version
         f.write(struct.pack("<I", TER_SIZE))      # size
         f.write(arr.tobytes(order="C"))            # heightMap uint16 LE row-major
         f.write(layer.tobytes(order="C"))          # layerMap uint8
@@ -157,10 +159,41 @@ def main() -> None:
         r'\{\s*"class"\s*:\s*"TerrainBlock".*?\}',
         patch_terrainblock, text, count=1, flags=re.S,
     )
-    mlj.write_text(text, encoding="utf-8")
     print(f"Patched TerrainBlock in main.level.json "
           f"(maxHeight={max_height}, squareSize={square_size:.2f}, "
           f"position=[{-extent_m/2}, {-extent_m/2}, {elev_min}])")
+
+    # Patcha TUTTE le SpawnSphere per metterle sopra l'inizio della SS17.
+    # Il primo punto della centerline nel sistema Blender e' circa (3552, -4449)
+    # con z=72 (relativa a z_offset=elev_min). World z = elev_min + 72 + buffer.
+    cl_csv = ROOT / "output" / "centerline.csv"
+    # Il centerline.csv ha z relative all'elev min del DEM: z_real = csv.z + offset
+    z_offset = float(info.get("z_offset_blender_m", 0.0))
+    spawn_x = 0.0; spawn_y = 0.0; spawn_z = elev_max + 50.0  # fallback
+    if cl_csv.exists():
+        import csv as _csv
+        with cl_csv.open(newline="", encoding="utf-8") as fcsv:
+            row = next(_csv.DictReader(fcsv))
+            spawn_x = float(row["x"])
+            spawn_y = float(row["y"])
+            # quota world BeamNG = quota reale = csv.z + z_offset_blender + 3m
+            spawn_z = float(row["z"]) + z_offset + 3.0
+    print(f"Spawn point: ({spawn_x:.1f}, {spawn_y:.1f}, {spawn_z:.1f})  "
+          f"[z_offset={z_offset}]")
+
+    def patch_spawnsphere(m):
+        block = m.group(0)
+        block = re.sub(r'"position"\s*:\s*\[[^\]]+\]',
+                        f'"position" : [ {spawn_x}, {spawn_y}, {spawn_z} ]',
+                        block)
+        return block
+
+    text = re.sub(
+        r'\{\s*"class"\s*:\s*"SpawnSphere".*?\}',
+        patch_spawnsphere, text, flags=re.S,
+    )
+    mlj.write_text(text, encoding="utf-8")
+    print(f"Patched SpawnSphere(s) in main.level.json")
 
     # --- Aggiorna main.materials.json con il nostro material custom ---
     materials_file = MOD_LEVEL_DIR / "main.materials.json"
