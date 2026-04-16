@@ -466,6 +466,86 @@
     ],
     "materialTag0": "Miscellaneous"
   },
+  "AsphaltPatchDarkNew": {
+    "name": "AsphaltPatchDarkNew",
+    "mapTo": "AsphaltPatchDarkNew",
+    "class": "Material",
+    "persistentId": "3026cc9f-338a-e0bd-6f5e-d253ee1b0fd2",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.06,
+          0.06,
+          0.07,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "AsphaltPatchLightNew": {
+    "name": "AsphaltPatchLightNew",
+    "mapTo": "AsphaltPatchLightNew",
+    "class": "Material",
+    "persistentId": "f9270bdb-3ca7-b781-53cb-d8cadb02b6bf",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.35,
+          0.34,
+          0.32,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "ChevronPole": {
+    "name": "ChevronPole",
+    "mapTo": "ChevronPole",
+    "class": "Material",
+    "persistentId": "8bde5d84-56ed-c3ce-be9c-4b8d9e3df15b",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.85,
+          0.85,
+          0.85,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "ChevronSign": {
+    "name": "ChevronSign",
+    "mapTo": "ChevronSign",
+    "class": "Material",
+    "persistentId": "f06c83e6-706a-6211-ed9a-a1970a068b50",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.95,
+          0.82,
+          0.1,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
   "default": {
     "name": "default",
     "mapTo": "default",

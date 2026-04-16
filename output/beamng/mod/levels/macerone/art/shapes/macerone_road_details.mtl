@@ -1,0 +1,8 @@
+newmtl AsphaltPatchDarkNew
+Kd 0.06 0.06 0.07
+newmtl AsphaltPatchLightNew
+Kd 0.35 0.34 0.32
+newmtl ChevronPole
+Kd 0.85 0.85 0.85
+newmtl ChevronSign
+Kd 0.95 0.82 0.10

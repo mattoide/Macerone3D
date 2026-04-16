@@ -1016,6 +1016,11 @@ def write_materials(level_dir: Path, asphalt_rgb: tuple[float, float, float],
         ("BushGreen", [0.26, 0.40, 0.20]),
         ("Parapet", [0.62, 0.58, 0.52]),       # cemento parapetti ponte
         ("BollardMat", [0.82, 0.82, 0.80]),    # paletto bianco-grigio
+        # Road details (generate_road_details)
+        ("AsphaltPatchDarkNew", [0.06, 0.06, 0.07]),  # bitume nuovo nero
+        ("AsphaltPatchLightNew", [0.35, 0.34, 0.32]),  # asfalto scolorito
+        ("ChevronPole", [0.85, 0.85, 0.85]),           # palo chevron bianco
+        ("ChevronSign", [0.95, 0.82, 0.10]),           # cartello giallo
         # Fallback generici
         ("default", [0.55, 0.55, 0.55]),
         ("DefaultMat", [0.55, 0.55, 0.55]),
@@ -1618,6 +1623,7 @@ def write_level_json(level_dir: Path,
                       roadside_shape_rel: str | None,
                       terrain_shape_rel: str | None,
                       extra_buildings_shape_rel: str | None,
+                      road_details_shape_rel: str | None,
                       spawn_xyz: tuple[float, float, float],
                       spawn_heading: float,
                       max_height: float,
@@ -1736,6 +1742,13 @@ def write_level_json(level_dir: Path,
             (
                 "macerone_extra_buildings_mesh",
                 f"levels/{LEVEL_NAME}/{extra_buildings_shape_rel}",
+            )
+        )
+    if road_details_shape_rel is not None:
+        tsstatics.append(
+            (
+                "macerone_road_details_mesh",
+                f"levels/{LEVEL_NAME}/{road_details_shape_rel}",
             )
         )
 
@@ -1900,12 +1913,19 @@ def main() -> None:
         [sys.executable, str(TOOLS / "generate_extra_buildings.py")])
     extra_buildings_obj = LEVEL_DIR / "art" / "shapes" / "macerone_extra_buildings.obj"
     if extra_buildings_obj.exists() and extra_buildings_obj.stat().st_size > 200:
-        # Drop-to-ground anche sugli extra buildings (il generate usa
-        # heightmap DEM ma il terrain visibile e' il mesh Blender coarse)
         if terrain_has_content:
             drop_world_obj_to_terrain_mesh(extra_buildings_obj, terrain_obj)
         extra_buildings_dae = convert_to_dae(extra_buildings_obj)
         extra_buildings_rel = extra_buildings_dae.relative_to(LEVEL_DIR).as_posix()
+
+    # 5d. Dettagli realistici su asfalto: patches bitume + chevrons tornanti
+    road_details_rel = None
+    run("generate_road_details",
+        [sys.executable, str(TOOLS / "generate_road_details.py")])
+    road_details_obj = LEVEL_DIR / "art" / "shapes" / "macerone_road_details.obj"
+    if road_details_obj.exists() and road_details_obj.stat().st_size > 200:
+        road_details_dae = convert_to_dae(road_details_obj)
+        road_details_rel = road_details_dae.relative_to(LEVEL_DIR).as_posix()
 
     # 6. Spawn con tuning offset (forward/up/turn_right dai parametri globali)
     sx, sy, _sz = read_first_centerline_point()
@@ -1926,7 +1946,7 @@ def main() -> None:
 
     # 7. main.level.json + info.json
     write_level_json(LEVEL_DIR, road_rel, world_rel, roadside_rel,
-                      terrain_rel, extra_buildings_rel,
+                      terrain_rel, extra_buildings_rel, road_details_rel,
                       spawn, heading,
                       max_height, elev_min, z_offset_blender)
     write_empty_jsons(LEVEL_DIR)
