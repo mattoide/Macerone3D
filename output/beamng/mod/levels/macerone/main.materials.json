@@ -1,45 +1,14 @@
 {
-  "m_asphalt_road_damaged": {
-    "name": "m_asphalt_road_damaged",
-    "mapTo": "m_asphalt_road_damaged",
+  "Asphalt": {
+    "name": "Asphalt",
+    "mapTo": "Asphalt",
     "class": "Material",
-    "persistentId": "a1b2c3d4-0001-0000-0000-000000000001",
-    "Stages": [
-      {
-        "colorMap": "/levels/macerone/art/road/asphalt_base"
-      },
-      {},
-      {},
-      {}
-    ],
-    "materialTag0": "Miscellaneous"
-  },
-  "m_terrain_diffuse": {
-    "name": "m_terrain_diffuse",
-    "mapTo": "m_terrain_diffuse",
-    "class": "Material",
-    "persistentId": "a1b2c3d4-0002-0000-0000-000000000002",
-    "Stages": [
-      {
-        "colorMap": "/levels/macerone/art/terrains/satellite_diffuse"
-      },
-      {},
-      {},
-      {}
-    ],
-    "materialTag0": "Miscellaneous"
-  },
-  "m_building_generic": {
-    "name": "m_building_generic",
-    "mapTo": "m_building_generic",
-    "class": "Material",
-    "persistentId": "a1b2c3d4-0003-0000-0000-000000000003",
     "Stages": [
       {
         "diffuseColor": [
-          0.7,
-          0.65,
-          0.55,
+          0.22,
+          0.22,
+          0.22,
           1.0
         ]
       },
@@ -49,17 +18,16 @@
     ],
     "materialTag0": "Miscellaneous"
   },
-  "m_guardrail_steel": {
-    "name": "m_guardrail_steel",
-    "mapTo": "m_guardrail_steel",
+  "AsphaltDark": {
+    "name": "AsphaltDark",
+    "mapTo": "AsphaltDark",
     "class": "Material",
-    "persistentId": "a1b2c3d4-0004-0000-0000-000000000004",
     "Stages": [
       {
         "diffuseColor": [
-          0.7,
-          0.72,
-          0.75,
+          0.18,
+          0.18,
+          0.18,
           1.0
         ]
       },
@@ -69,17 +37,92 @@
     ],
     "materialTag0": "Miscellaneous"
   },
-  "m_wall_drystone": {
-    "name": "m_wall_drystone",
-    "mapTo": "m_wall_drystone",
+  "Shoulder": {
+    "name": "Shoulder",
+    "mapTo": "Shoulder",
     "class": "Material",
-    "persistentId": "a1b2c3d4-0005-0000-0000-000000000005",
     "Stages": [
       {
         "diffuseColor": [
-          0.55,
-          0.5,
-          0.45,
+          0.35,
+          0.32,
+          0.28,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "LineWhite": {
+    "name": "LineWhite",
+    "mapTo": "LineWhite",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.92,
+          0.92,
+          0.92,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "LineYellow": {
+    "name": "LineYellow",
+    "mapTo": "LineYellow",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.9,
+          0.8,
+          0.25,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "default": {
+    "name": "default",
+    "mapTo": "default",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.22,
+          0.22,
+          0.22,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "DefaultMat": {
+    "name": "DefaultMat",
+    "mapTo": "DefaultMat",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.22,
+          0.22,
+          0.22,
           1.0
         ]
       },

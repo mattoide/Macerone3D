@@ -1,10 +1,15 @@
 {
-  "macerone_ground-a1b2c3d4-9999-0000-0000-000000000099": {
-    "internalName": "macerone_ground",
+  "macerone_base_ground-aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee": {
+    "internalName": "macerone_base_ground",
     "class": "TerrainMaterial",
-    "persistentId": "a1b2c3d4-9999-0000-0000-000000000099",
-    "diffuseMap": "levels/macerone/art/terrains/satellite_diffuse.png",
-    "diffuseSize": 12288,
-    "groundmodelName": "ASPHALT"
+    "persistentId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+    "diffuseColor": [
+      0.35,
+      0.4,
+      0.3,
+      1.0
+    ],
+    "diffuseSize": 256,
+    "groundmodelName": "GRASS"
   }
 }

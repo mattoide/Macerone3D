@@ -1,5 +1,4 @@
 {
-  "binaryFormat": "version(char), size(unsigned int), heightMap(heightMapSize * heightMapItemSize), layerMap (layerMapSize * layerMapItemSize), materialNames",
   "datafile": "levels/macerone/theTerrain.ter",
   "heightMapItemSize": 2,
   "heightMapSize": 1048576,
@@ -7,7 +6,7 @@
   "layerMapItemSize": 1,
   "layerMapSize": 1048576,
   "materials": [
-    "macerone_ground"
+    "macerone_base_ground"
   ],
   "size": 1024
 }
