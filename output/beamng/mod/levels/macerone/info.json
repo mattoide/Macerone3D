@@ -1,6 +1,6 @@
 {
   "title": "SS17 Valico del Macerone",
-  "description": "Tracciato SS17 Valico del Macerone (Molise), mesh + terrain flat",
+  "description": "Ricostruzione 3D SS17 Valico del Macerone (Molise)",
   "authors": "mattoide",
   "previews": [
     "main_preview.png"
@@ -22,7 +22,7 @@
       "translation": [
         3552.641,
         -4449.504,
-        72.745775
+        408.8236253417969
       ],
       "rot": [
         0.0,

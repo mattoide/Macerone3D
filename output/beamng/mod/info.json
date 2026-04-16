@@ -1,12 +1,13 @@
 {
   "title": "SS17 Valico del Macerone",
-  "description": "SS17 Valico del Macerone - minimal build",
+  "description": "SS17 Valico del Macerone - full build (DEM + satellite + world)",
   "author": "mattoide",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "tag": [
     "level",
     "map",
     "italy",
-    "real-road"
+    "real-road",
+    "mountain"
   ]
 }

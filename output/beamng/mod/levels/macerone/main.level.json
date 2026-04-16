@@ -769,7 +769,7 @@
           "position" : [ -6144.0, -6144.0, 0.0 ],
 
           "squareSize" : 12.0,
-          "maxHeight" : 100.0,
+          "maxHeight" : 1200.0,
 
           "terrainFile" : "levels/macerone/theTerrain.ter"
 
@@ -777,11 +777,20 @@
         {
   "class" : "TSStatic",
   "name" : "macerone_road_mesh",
-  "position" : [ 0, 0, 0 ],
+  "position" : [ 0, 0, 336.0778503417969 ],
   "allowPlayerStep" : "1",
   "collisionType" : "Visible Mesh Final",
   "decalType" : "Visible Mesh Final",
   "shapeName" : "levels/macerone/art/shapes/macerone_road.dae"
+},
+        {
+  "class" : "TSStatic",
+  "name" : "macerone_world_mesh",
+  "position" : [ 0, 0, 336.0778503417969 ],
+  "allowPlayerStep" : "1",
+  "collisionType" : "Visible Mesh Final",
+  "decalType" : "Visible Mesh Final",
+  "shapeName" : "levels/macerone/art/shapes/macerone_world.dae"
 }
 
       ]
@@ -845,7 +854,7 @@
           "class" : "SpawnSphere",
           "rotation" : [ 0, 0, 1, -144.69395485073215 ],
           "name" : "spawn_start",
-          "position" : [ 3552.641, -4449.504, 72.745775 ],
+          "position" : [ 3552.641, -4449.504, 408.8236253417969 ],
 
           "autoplaceOnSpawn" : "0",
 

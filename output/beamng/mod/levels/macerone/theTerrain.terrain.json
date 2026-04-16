@@ -6,7 +6,7 @@
   "layerMapItemSize": 1,
   "layerMapSize": 1048576,
   "materials": [
-    "macerone_base_ground"
+    "macerone_ground"
   ],
   "size": 1024
 }

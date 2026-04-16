@@ -6,9 +6,9 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.22,
-          0.22,
-          0.22,
+          0.1,
+          0.1,
+          0.1,
           1.0
         ]
       },
@@ -18,16 +18,35 @@
     ],
     "materialTag0": "Miscellaneous"
   },
-  "AsphaltDark": {
-    "name": "AsphaltDark",
-    "mapTo": "AsphaltDark",
+  "AsphaltPatch_Dark": {
+    "name": "AsphaltPatch_Dark",
+    "mapTo": "AsphaltPatch_Dark",
     "class": "Material",
     "Stages": [
       {
         "diffuseColor": [
-          0.18,
-          0.18,
-          0.18,
+          0.06,
+          0.06,
+          0.06,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "AsphaltPatch_Light": {
+    "name": "AsphaltPatch_Light",
+    "mapTo": "AsphaltPatch_Light",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.14,
+          0.14,
+          0.14,
           1.0
         ]
       },
@@ -40,6 +59,44 @@
   "Shoulder": {
     "name": "Shoulder",
     "mapTo": "Shoulder",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.35,
+          0.32,
+          0.28,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "Shoulder_L": {
+    "name": "Shoulder_L",
+    "mapTo": "Shoulder_L",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.35,
+          0.32,
+          0.28,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "Shoulder_R": {
+    "name": "Shoulder_R",
+    "mapTo": "Shoulder_R",
     "class": "Material",
     "Stages": [
       {
@@ -82,9 +139,389 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.9,
+          0.88,
+          0.78,
+          0.2,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "Catarifrangente": {
+    "name": "Catarifrangente",
+    "mapTo": "Catarifrangente",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.85,
           0.8,
-          0.25,
+          0.15,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "Catarifrangenti": {
+    "name": "Catarifrangenti",
+    "mapTo": "Catarifrangenti",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.85,
+          0.8,
+          0.15,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "StopLines": {
+    "name": "StopLines",
+    "mapTo": "StopLines",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.92,
+          0.92,
+          0.92,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "Tombino": {
+    "name": "Tombino",
+    "mapTo": "Tombino",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.2,
+          0.18,
+          0.17,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "Building": {
+    "name": "Building",
+    "mapTo": "Building",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.78,
+          0.72,
+          0.6,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "BuildingWall": {
+    "name": "BuildingWall",
+    "mapTo": "BuildingWall",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.78,
+          0.72,
+          0.6,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "Roof": {
+    "name": "Roof",
+    "mapTo": "Roof",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.55,
+          0.3,
+          0.22,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "Chimney": {
+    "name": "Chimney",
+    "mapTo": "Chimney",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.55,
+          0.3,
+          0.22,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "Wall": {
+    "name": "Wall",
+    "mapTo": "Wall",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.58,
+          0.52,
+          0.45,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "WallDryStone": {
+    "name": "WallDryStone",
+    "mapTo": "WallDryStone",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.58,
+          0.52,
+          0.45,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "Guardrail": {
+    "name": "Guardrail",
+    "mapTo": "Guardrail",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.7,
+          0.72,
+          0.75,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "Tree": {
+    "name": "Tree",
+    "mapTo": "Tree",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.22,
+          0.35,
+          0.18,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "TreeTrunk": {
+    "name": "TreeTrunk",
+    "mapTo": "TreeTrunk",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.28,
+          0.2,
+          0.12,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "Canopy": {
+    "name": "Canopy",
+    "mapTo": "Canopy",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.22,
+          0.35,
+          0.18,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "Cypress": {
+    "name": "Cypress",
+    "mapTo": "Cypress",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.18,
+          0.3,
+          0.15,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "Shrub": {
+    "name": "Shrub",
+    "mapTo": "Shrub",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.3,
+          0.4,
+          0.22,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "Rock": {
+    "name": "Rock",
+    "mapTo": "Rock",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.52,
+          0.5,
+          0.45,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "Pole": {
+    "name": "Pole",
+    "mapTo": "Pole",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.55,
+          0.55,
+          0.55,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "Sign": {
+    "name": "Sign",
+    "mapTo": "Sign",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.85,
+          0.85,
+          0.85,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "SignalPost": {
+    "name": "SignalPost",
+    "mapTo": "SignalPost",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.55,
+          0.55,
+          0.55,
           1.0
         ]
       },
@@ -101,9 +538,9 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.22,
-          0.22,
-          0.22,
+          0.6,
+          0.6,
+          0.6,
           1.0
         ]
       },
@@ -120,9 +557,9 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.22,
-          0.22,
-          0.22,
+          0.6,
+          0.6,
+          0.6,
           1.0
         ]
       },
