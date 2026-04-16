@@ -6,12 +6,12 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.5915349682107176,
-          0.5976135776744849,
-          0.5523057470036152,
+          0.34309028156221616,
+          0.34661587505120117,
+          0.3203373332620968,
           1.0
         ],
-        "colorMap": "levels/macerone/art/road/asphalt_base"
+        "colorMap": "levels/macerone/art/road/asphalt_base.png"
       },
       {},
       {},
@@ -26,12 +26,12 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.4140744777475023,
-          0.4183295043721394,
-          0.38661402290253066,
+          0.2401631970935513,
+          0.2426311125358408,
+          0.22423613328346773,
           1.0
         ],
-        "colorMap": "levels/macerone/art/road/asphalt_base"
+        "colorMap": "levels/macerone/art/road/asphalt_base.png"
       },
       {},
       {},
@@ -46,12 +46,12 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.739418710263397,
-          0.7470169720931061,
-          0.690382183754519,
+          0.4288628519527702,
+          0.43326984381400147,
+          0.400421666577621,
           1.0
         ],
-        "colorMap": "levels/macerone/art/road/asphalt_base"
+        "colorMap": "levels/macerone/art/road/asphalt_base.png"
       },
       {},
       {},
@@ -66,47 +66,9 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.6211117166212535,
-          0.6095658492279745,
-          0.5246904596534344,
-          1.0
-        ]
-      },
-      {},
-      {},
-      {}
-    ],
-    "materialTag0": "Miscellaneous"
-  },
-  "Shoulder_L": {
-    "name": "Shoulder_L",
-    "mapTo": "Shoulder_L",
-    "class": "Material",
-    "Stages": [
-      {
-        "diffuseColor": [
-          0.6211117166212535,
-          0.6095658492279745,
-          0.5246904596534344,
-          1.0
-        ]
-      },
-      {},
-      {},
-      {}
-    ],
-    "materialTag0": "Miscellaneous"
-  },
-  "Shoulder_R": {
-    "name": "Shoulder_R",
-    "mapTo": "Shoulder_R",
-    "class": "Material",
-    "Stages": [
-      {
-        "diffuseColor": [
-          0.6211117166212535,
-          0.6095658492279745,
-          0.5246904596534344,
+          0.3945538237965486,
+          0.38820978005734535,
+          0.33635419992520166,
           1.0
         ]
       },
@@ -123,8 +85,8 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.92,
-          0.92,
+          0.93,
+          0.93,
           0.92,
           1.0
         ]
@@ -142,85 +104,28 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.88,
-          0.78,
-          0.2,
-          1.0
-        ]
-      },
-      {},
-      {},
-      {}
-    ],
-    "materialTag0": "Miscellaneous"
-  },
-  "Catarifrangente": {
-    "name": "Catarifrangente",
-    "mapTo": "Catarifrangente",
-    "class": "Material",
-    "Stages": [
-      {
-        "diffuseColor": [
-          0.85,
+          0.92,
           0.8,
-          0.15,
-          1.0
-        ]
-      },
-      {},
-      {},
-      {}
-    ],
-    "materialTag0": "Miscellaneous"
-  },
-  "Catarifrangenti": {
-    "name": "Catarifrangenti",
-    "mapTo": "Catarifrangenti",
-    "class": "Material",
-    "Stages": [
-      {
-        "diffuseColor": [
-          0.85,
-          0.8,
-          0.15,
-          1.0
-        ]
-      },
-      {},
-      {},
-      {}
-    ],
-    "materialTag0": "Miscellaneous"
-  },
-  "StopLines": {
-    "name": "StopLines",
-    "mapTo": "StopLines",
-    "class": "Material",
-    "Stages": [
-      {
-        "diffuseColor": [
-          0.92,
-          0.92,
-          0.92,
-          1.0
-        ]
-      },
-      {},
-      {},
-      {}
-    ],
-    "materialTag0": "Miscellaneous"
-  },
-  "Tombino": {
-    "name": "Tombino",
-    "mapTo": "Tombino",
-    "class": "Material",
-    "Stages": [
-      {
-        "diffuseColor": [
-          0.2,
           0.18,
-          0.17,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "Manhole": {
+    "name": "Manhole",
+    "mapTo": "Manhole",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.14,
+          0.13,
+          0.12,
           1.0
         ]
       },
@@ -237,28 +142,9 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.78,
-          0.72,
-          0.6,
-          1.0
-        ]
-      },
-      {},
-      {},
-      {}
-    ],
-    "materialTag0": "Miscellaneous"
-  },
-  "BuildingWall": {
-    "name": "BuildingWall",
-    "mapTo": "BuildingWall",
-    "class": "Material",
-    "Stages": [
-      {
-        "diffuseColor": [
-          0.78,
-          0.72,
-          0.6,
+          0.82,
+          0.76,
+          0.62,
           1.0
         ]
       },
@@ -275,9 +161,28 @@
     "Stages": [
       {
         "diffuseColor": [
+          0.62,
+          0.32,
+          0.22,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "StoneWall": {
+    "name": "StoneWall",
+    "mapTo": "StoneWall",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
           0.55,
-          0.3,
-          0.22,
+          0.5,
+          0.42,
           1.0
         ]
       },
@@ -287,92 +192,16 @@
     ],
     "materialTag0": "Miscellaneous"
   },
-  "Chimney": {
-    "name": "Chimney",
-    "mapTo": "Chimney",
+  "TreeCanopy": {
+    "name": "TreeCanopy",
+    "mapTo": "TreeCanopy",
     "class": "Material",
     "Stages": [
       {
         "diffuseColor": [
-          0.55,
-          0.3,
-          0.22,
-          1.0
-        ]
-      },
-      {},
-      {},
-      {}
-    ],
-    "materialTag0": "Miscellaneous"
-  },
-  "Wall": {
-    "name": "Wall",
-    "mapTo": "Wall",
-    "class": "Material",
-    "Stages": [
-      {
-        "diffuseColor": [
-          0.58,
-          0.52,
-          0.45,
-          1.0
-        ]
-      },
-      {},
-      {},
-      {}
-    ],
-    "materialTag0": "Miscellaneous"
-  },
-  "WallDryStone": {
-    "name": "WallDryStone",
-    "mapTo": "WallDryStone",
-    "class": "Material",
-    "Stages": [
-      {
-        "diffuseColor": [
-          0.58,
-          0.52,
-          0.45,
-          1.0
-        ]
-      },
-      {},
-      {},
-      {}
-    ],
-    "materialTag0": "Miscellaneous"
-  },
-  "Guardrail": {
-    "name": "Guardrail",
-    "mapTo": "Guardrail",
-    "class": "Material",
-    "Stages": [
-      {
-        "diffuseColor": [
-          0.7,
-          0.72,
-          0.75,
-          1.0
-        ]
-      },
-      {},
-      {},
-      {}
-    ],
-    "materialTag0": "Miscellaneous"
-  },
-  "Tree": {
-    "name": "Tree",
-    "mapTo": "Tree",
-    "class": "Material",
-    "Stages": [
-      {
-        "diffuseColor": [
-          0.22,
+          0.2,
           0.35,
-          0.18,
+          0.16,
           1.0
         ]
       },
@@ -389,28 +218,9 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.28,
-          0.2,
-          0.12,
-          1.0
-        ]
-      },
-      {},
-      {},
-      {}
-    ],
-    "materialTag0": "Miscellaneous"
-  },
-  "Canopy": {
-    "name": "Canopy",
-    "mapTo": "Canopy",
-    "class": "Material",
-    "Stages": [
-      {
-        "diffuseColor": [
+          0.32,
           0.22,
-          0.35,
-          0.18,
+          0.14,
           1.0
         ]
       },
@@ -420,54 +230,16 @@
     ],
     "materialTag0": "Miscellaneous"
   },
-  "Cypress": {
-    "name": "Cypress",
-    "mapTo": "Cypress",
+  "Guardrail": {
+    "name": "Guardrail",
+    "mapTo": "Guardrail",
     "class": "Material",
     "Stages": [
       {
         "diffuseColor": [
-          0.18,
-          0.3,
-          0.15,
-          1.0
-        ]
-      },
-      {},
-      {},
-      {}
-    ],
-    "materialTag0": "Miscellaneous"
-  },
-  "Shrub": {
-    "name": "Shrub",
-    "mapTo": "Shrub",
-    "class": "Material",
-    "Stages": [
-      {
-        "diffuseColor": [
-          0.3,
-          0.4,
-          0.22,
-          1.0
-        ]
-      },
-      {},
-      {},
-      {}
-    ],
-    "materialTag0": "Miscellaneous"
-  },
-  "Rock": {
-    "name": "Rock",
-    "mapTo": "Rock",
-    "class": "Material",
-    "Stages": [
-      {
-        "diffuseColor": [
-          0.52,
-          0.5,
-          0.45,
+          0.72,
+          0.74,
+          0.78,
           1.0
         ]
       },
@@ -503,28 +275,9 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.85,
-          0.85,
-          0.85,
-          1.0
-        ]
-      },
-      {},
-      {},
-      {}
-    ],
-    "materialTag0": "Miscellaneous"
-  },
-  "SignalPost": {
-    "name": "SignalPost",
-    "mapTo": "SignalPost",
-    "class": "Material",
-    "Stages": [
-      {
-        "diffuseColor": [
-          0.55,
-          0.55,
-          0.55,
+          0.92,
+          0.92,
+          0.92,
           1.0
         ]
       },
@@ -541,9 +294,9 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.6,
-          0.6,
-          0.6,
+          0.55,
+          0.55,
+          0.55,
           1.0
         ]
       },
@@ -560,9 +313,9 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.6,
-          0.6,
-          0.6,
+          0.55,
+          0.55,
+          0.55,
           1.0
         ]
       },

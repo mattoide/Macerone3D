@@ -551,11 +551,12 @@ def write_dem_terrain(level_dir: Path, info: dict,
 # ---------------------------------------------------------------------------
 def write_materials(level_dir: Path, asphalt_rgb: tuple[float, float, float],
                      asphalt_color_map: str | None = None) -> None:
-    # TerrainMaterial con diffuse = texture satellite.
-    # BeamNG cerca il file provando estensioni .dds .png .jpg quindi il path
-    # va scritto SENZA estensione. Il leading "/" e' consigliato (path
-    # assoluto dalla root della mod). diffuseSize = metri di tiling in world
-    # space: 12288 = una sola ripetizione sul terrain intero.
+    # TerrainMaterial con:
+    # - diffuseMap = texture satellite (colore macro su scala del tile 12288m)
+    # - detailMap = texture erba/terriccio procedurale che ripete ogni 10m
+    #   per avere grana close-range (altrimenti da vicino tutto uniforme).
+    # Path SENZA leading "/" e CON estensione .png (il wiki dice dipende
+    # dalla versione — BeamNG 0.38 vuole path con estensione in TerrainMat).
     terrain_mat_dir = level_dir / "art" / "terrain"
     terrain_mat_dir.mkdir(parents=True, exist_ok=True)
     terrain_materials = {
@@ -563,9 +564,12 @@ def write_materials(level_dir: Path, asphalt_rgb: tuple[float, float, float],
             "internalName": TERRAIN_MATERIAL_NAME,
             "class": "TerrainMaterial",
             "persistentId": TERRAIN_MATERIAL_UUID,
-            "diffuseMap": f"/levels/{LEVEL_NAME}/art/terrains/satellite_diffuse",
-            "diffuseColor": [0.45, 0.50, 0.38, 1.0],
+            "diffuseMap": f"levels/{LEVEL_NAME}/art/terrains/satellite_diffuse.png",
+            "diffuseColor": [0.38, 0.48, 0.30, 1.0],
             "diffuseSize": 12288,
+            "detailMap": f"levels/{LEVEL_NAME}/art/terrains/detail_grass.png",
+            "detailSize": 10,
+            "detailStrength": 0.7,
             "groundmodelName": "GRASS",
         }
     }
@@ -577,42 +581,35 @@ def write_materials(level_dir: Path, asphalt_rgb: tuple[float, float, float],
     # per ogni material del .mtl; qui creiamo entries compatibili con i nomi
     # che compaiono tipicamente nei .mtl di Blender.
     a_r, a_g, a_b = asphalt_rgb
+    # Asfalto piu' scuro del satellite (che e' sovraesposto). Il sample dava
+    # ~0.60; riduciamo a 0.58x per grigio scuro realistico.
+    a_r *= 0.58; a_g *= 0.58; a_b *= 0.58
     asphalt_dark = [a_r * 0.7, a_g * 0.7, a_b * 0.7]
     asphalt_light = [min(1.0, a_r * 1.25), min(1.0, a_g * 1.25), min(1.0, a_b * 1.25)]
-    shoulder_rgb = [min(1.0, a_r * 1.05), min(1.0, a_g * 1.02), min(1.0, a_b * 0.95)]
+    shoulder_rgb = [min(1.0, a_r * 1.15), min(1.0, a_g * 1.12), min(1.0, a_b * 1.05)]
     entries = [
-        # Road: colori campionati dal satellite ESRI lungo la centerline
+        # ROAD (dal blend: Asphalt, AsphaltPatch_*, Shoulder, LineWhite,
+        # LineYellow, Manhole)
         ("Asphalt", [a_r, a_g, a_b]),
         ("AsphaltPatch_Dark", asphalt_dark),
         ("AsphaltPatch_Light", asphalt_light),
         ("Shoulder", shoulder_rgb),
-        ("Shoulder_L", shoulder_rgb),
-        ("Shoulder_R", shoulder_rgb),
-        ("LineWhite", [0.92, 0.92, 0.92]),
-        ("LineYellow", [0.88, 0.78, 0.20]),
-        ("Catarifrangente", [0.85, 0.80, 0.15]),
-        ("Catarifrangenti", [0.85, 0.80, 0.15]),
-        ("StopLines", [0.92, 0.92, 0.92]),
-        ("Tombino", [0.20, 0.18, 0.17]),
-        # World
-        ("Building", [0.78, 0.72, 0.60]),
-        ("BuildingWall", [0.78, 0.72, 0.60]),
-        ("Roof", [0.55, 0.30, 0.22]),
-        ("Chimney", [0.55, 0.30, 0.22]),
-        ("Wall", [0.58, 0.52, 0.45]),
-        ("WallDryStone", [0.58, 0.52, 0.45]),
-        ("Guardrail", [0.70, 0.72, 0.75]),
-        ("Tree", [0.22, 0.35, 0.18]),
-        ("TreeTrunk", [0.28, 0.20, 0.12]),
-        ("Canopy", [0.22, 0.35, 0.18]),
-        ("Cypress", [0.18, 0.30, 0.15]),
-        ("Shrub", [0.30, 0.40, 0.22]),
-        ("Rock", [0.52, 0.50, 0.45]),
-        ("Pole", [0.55, 0.55, 0.55]),
-        ("Sign", [0.85, 0.85, 0.85]),
-        ("SignalPost", [0.55, 0.55, 0.55]),
-        ("default", [0.60, 0.60, 0.60]),
-        ("DefaultMat", [0.60, 0.60, 0.60]),
+        ("LineWhite", [0.93, 0.93, 0.92]),
+        ("LineYellow", [0.92, 0.80, 0.18]),
+        ("Manhole", [0.14, 0.13, 0.12]),
+        # WORLD (dal blend: Building, Guardrail, Pole, Roof, Sign, StoneWall,
+        # TreeCanopy, TreeTrunk)
+        ("Building", [0.82, 0.76, 0.62]),    # beige caldo toscano
+        ("Roof", [0.62, 0.32, 0.22]),         # terracotta italiana
+        ("StoneWall", [0.55, 0.50, 0.42]),    # pietra grigio-beige
+        ("TreeCanopy", [0.20, 0.35, 0.16]),   # verde foglia scuro
+        ("TreeTrunk", [0.32, 0.22, 0.14]),    # corteccia marrone
+        ("Guardrail", [0.72, 0.74, 0.78]),    # metallo chiaro
+        ("Pole", [0.55, 0.55, 0.55]),         # metallo scuro
+        ("Sign", [0.92, 0.92, 0.92]),         # bianco cartello
+        # Fallback generici (in caso il blend abbia altri nomi)
+        ("default", [0.55, 0.55, 0.55]),
+        ("DefaultMat", [0.55, 0.55, 0.55]),
     ]
     mats = {}
     for name, rgb in entries:
@@ -642,44 +639,121 @@ def write_materials(level_dir: Path, asphalt_rgb: tuple[float, float, float],
 # ---------------------------------------------------------------------------
 def generate_asphalt_texture(level_dir: Path,
                                base_rgb: tuple[float, float, float]) -> str:
-    """Genera PNG 512x512 procedurale per l'asfalto: grana fine + piccole
-    striature longitudinali + leggera variazione macchie. Colore di base
-    dal satellite. Ritorna path relativo al level_dir."""
-    size = 512
+    """Genera PNG 1024x1024 procedurale per l'asfalto piu' realistica:
+    grana fine, crepe a ragnatela, giunti trasversali (espansione), chiazze
+    di usura chiare/scure, niente striature longitudinali artificiali.
+    Base color piu' scuro del satellite (che e' sovraesposto in full sun).
+    """
+    size = 1024
     rng = np.random.default_rng(42)
-    # grana (rumore gaussiano stretto) + granelli (noise salt)
-    grain = rng.normal(0.0, 0.05, (size, size)).astype(np.float32)
-    pepper = rng.random((size, size), dtype=np.float32)
-    dark_spots = np.where(pepper > 0.98, -0.10, 0.0)
-    light_spots = np.where(pepper < 0.015, 0.08, 0.0)
-    # Striature longitudinali (direzione Y): piccole variazioni di luminosita'
-    strip_base = rng.normal(0.0, 0.04, (size,)).astype(np.float32)
-    strip = np.tile(strip_base[None, :], (size, 1))  # varia in X, uniforme in Y
-    # Crepe: linee scure casuali orizzontali fini
-    cracks = np.zeros((size, size), dtype=np.float32)
-    for _ in range(30):
-        y = rng.integers(0, size)
-        x0 = rng.integers(0, size // 2)
-        x1 = rng.integers(size // 2, size)
-        cracks[y, x0:x1] = -0.12
-        if y + 1 < size:
-            cracks[y + 1, x0:x1] = -0.06
 
-    delta = grain + dark_spots + light_spots + strip + cracks
+    # --- base: grana tri-scale (grande, media, fine) ---
+    # noise grande (macchie a 64px = zone di finitura)
+    big = rng.normal(0.0, 1.0, (size // 16, size // 16)).astype(np.float32)
+    big_img = Image.fromarray(big, mode="F").resize((size, size), Image.BICUBIC)
+    big = np.array(big_img, dtype=np.float32) * 0.05
+    # noise medio (32px)
+    med = rng.normal(0.0, 1.0, (size // 8, size // 8)).astype(np.float32)
+    med_img = Image.fromarray(med, mode="F").resize((size, size), Image.BICUBIC)
+    med = np.array(med_img, dtype=np.float32) * 0.04
+    # grana fine
+    fine = rng.normal(0.0, 0.035, (size, size)).astype(np.float32)
+
+    # Granelli pietra nel bitume (salt & pepper)
+    spk = rng.random((size, size), dtype=np.float32)
+    dark_grit = np.where(spk > 0.985, -0.15, 0.0)
+    light_grit = np.where(spk < 0.010, 0.10, 0.0)
+
+    # Crepe a ragnatela: linee sottili random
+    cracks = np.zeros((size, size), dtype=np.float32)
+    for _ in range(60):
+        y = rng.integers(0, size)
+        x0 = rng.integers(0, size - 40)
+        length = rng.integers(20, 200)
+        drift = rng.integers(-2, 3)
+        for i in range(length):
+            xi = x0 + i
+            yi = y + i * drift // 30
+            if 0 <= xi < size and 0 <= yi < size:
+                cracks[yi, xi] = -0.18
+        # Alcune verticali
+        if rng.random() < 0.4:
+            x = rng.integers(0, size)
+            y0 = rng.integers(0, size - 40)
+            length = rng.integers(20, 150)
+            for i in range(length):
+                yi = y0 + i
+                if 0 <= yi < size:
+                    cracks[yi, x] = -0.16
+
+    # Giunti di espansione trasversali ogni ~4m (96px se 40px=1m)
+    joints = np.zeros((size, size), dtype=np.float32)
+    joint_spacing = 96
+    for row in range(joint_spacing, size, joint_spacing):
+        # linea orizzontale scura sottile, 2px di spessore con variazione
+        jitter = rng.integers(-3, 4)
+        r1 = min(size - 1, row + jitter)
+        joints[r1, :] = -0.15
+        if r1 + 1 < size:
+            joints[r1 + 1, :] = -0.08
+
+    # Macchia d'olio scura occasionale (grandi pozze)
+    oil = np.zeros((size, size), dtype=np.float32)
+    for _ in range(4):
+        cx = rng.integers(size // 8, size - size // 8)
+        cy = rng.integers(size // 8, size - size // 8)
+        r = rng.integers(20, 60)
+        yy, xx = np.ogrid[:size, :size]
+        d2 = (yy - cy) ** 2 + (xx - cx) ** 2
+        oil += np.where(d2 < r * r, -0.08 * (1.0 - d2 / (r * r)), 0.0).astype(np.float32)
+
+    delta = big + med + fine + dark_grit + light_grit + cracks + joints + oil
+
+    # Base piu' scuro del sample satellite: sat rgb tendeva a 0.60 (sovrae-
+    # sposto), asfalto reale e' grigio scuro saturo ~0.30-0.35.
     r, g, b = base_rgb
-    R = np.clip(r + delta, 0.0, 1.0)
-    G = np.clip(g + delta, 0.0, 1.0)
-    B = np.clip(b + delta, 0.0, 1.0)
+    base_scale = 0.58  # rendi piu' scuro
+    r = r * base_scale
+    g = g * base_scale
+    b = b * base_scale
+
+    R = np.clip(r + delta, 0.02, 1.0)
+    G = np.clip(g + delta, 0.02, 1.0)
+    B = np.clip(b + delta * 1.02, 0.02, 1.0)
     img = np.stack([R, G, B], axis=-1)
     img_u8 = (img * 255.0).astype(np.uint8)
 
     tex_dir = level_dir / "art" / "road"
     tex_dir.mkdir(parents=True, exist_ok=True)
     out = tex_dir / "asphalt_base.png"
-    Image.fromarray(img_u8, mode="RGB").save(out, optimize=True)
-    rel = f"/levels/{LEVEL_NAME}/art/road/asphalt_base"
-    print(f"Asfalto texture procedurale: {out.relative_to(MOD_DIR)}")
+    Image.fromarray(img_u8).save(out, optimize=True)
+    rel = f"levels/{LEVEL_NAME}/art/road/asphalt_base.png"
+    print(f"Asfalto texture {size}x{size}: {out.relative_to(MOD_DIR)}")
     return rel
+
+
+def generate_terrain_detail_texture(level_dir: Path) -> str:
+    """Texture micro-dettaglio erba/terriccio per il TerrainMaterial: da
+    vicino la satellite e' troppo stretched (12288m per tile), serve un
+    detailMap che ripete ogni ~10m per dare grana al paesaggio."""
+    size = 512
+    rng = np.random.default_rng(7)
+    # mix verde erba + chiazze terriccio
+    green = rng.normal(0.0, 0.08, (size, size)).astype(np.float32)
+    brown_blob = rng.normal(0.0, 1.0, (size // 16, size // 16)).astype(np.float32)
+    brown_img = Image.fromarray(brown_blob, mode="F").resize((size, size), Image.BICUBIC)
+    brown = np.array(brown_img, dtype=np.float32)
+    R = np.clip(0.35 + green * 0.3 + brown * 0.06, 0.1, 0.9)
+    G = np.clip(0.45 + green - brown * 0.08, 0.1, 0.9)
+    B = np.clip(0.28 + green * 0.4, 0.1, 0.9)
+    img = np.stack([R, G, B], axis=-1)
+    img_u8 = (img * 255.0).astype(np.uint8)
+    tex_dir = level_dir / "art" / "terrains"
+    tex_dir.mkdir(parents=True, exist_ok=True)
+    out = tex_dir / "detail_grass.png"
+    Image.fromarray(img_u8).save(out, optimize=True)
+    print(f"Terrain detailMap {size}x{size}: {out.relative_to(MOD_DIR)}")
+    return f"levels/{LEVEL_NAME}/art/terrains/detail_grass.png"
 
 
 def copy_satellite_texture(level_dir: Path) -> None:
@@ -957,8 +1031,9 @@ def main() -> None:
     print(f"asfalto RGB campionato: "
           f"({asphalt_rgb[0]:.3f}, {asphalt_rgb[1]:.3f}, {asphalt_rgb[2]:.3f})")
     generate_asphalt_texture(LEVEL_DIR, asphalt_rgb)
-    # Material colorMap SENZA leading "/" (convenzione BeamNG Material).
-    asphalt_map = f"levels/{LEVEL_NAME}/art/road/asphalt_base"
+    generate_terrain_detail_texture(LEVEL_DIR)
+    # Material colorMap BeamNG: path relativo senza leading / e CON estensione.
+    asphalt_map = f"levels/{LEVEL_NAME}/art/road/asphalt_base.png"
     write_materials(LEVEL_DIR, asphalt_rgb, asphalt_color_map=asphalt_map)
     copy_satellite_texture(LEVEL_DIR)
 
