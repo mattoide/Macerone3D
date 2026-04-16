@@ -1,0 +1,69 @@
+{
+  "m_asphalt_road_damaged": {
+    "mapTo": "m_asphalt_road_damaged",
+    "baseColorMap": "levels/macerone/art/road/asphalt_base.png",
+    "normalMap": "levels/macerone/art/road/asphalt_normal.png",
+    "roughnessMap": "levels/macerone/art/road/asphalt_roughness.png",
+    "roughnessFactor": 0.9,
+    "metalnessFactor": 0.0,
+    "uvScale": [
+      0.2,
+      0.2
+    ],
+    "__note": "texture da fornire o riferire con .link al pacchetto 'art_common'."
+  },
+  "m_asphalt_road_damaged_small": {
+    "mapTo": "m_asphalt_road_damaged_small",
+    "baseColor": [
+      0.35,
+      0.35,
+      0.35,
+      1.0
+    ],
+    "roughnessFactor": 0.95,
+    "metalnessFactor": 0.0
+  },
+  "m_terrain_diffuse": {
+    "mapTo": "m_terrain_diffuse",
+    "baseColorMap": "levels/macerone/art/terrains/satellite_diffuse.png",
+    "roughnessFactor": 1.0,
+    "metalnessFactor": 0.0,
+    "uvScale": [
+      1.0,
+      1.0
+    ]
+  },
+  "m_building_generic": {
+    "mapTo": "m_building_generic",
+    "baseColor": [
+      0.7,
+      0.65,
+      0.55,
+      1.0
+    ],
+    "roughnessFactor": 0.85,
+    "metalnessFactor": 0.0
+  },
+  "m_guardrail_steel": {
+    "mapTo": "m_guardrail_steel",
+    "baseColor": [
+      0.7,
+      0.72,
+      0.75,
+      1.0
+    ],
+    "roughnessFactor": 0.4,
+    "metalnessFactor": 0.9
+  },
+  "m_wall_drystone": {
+    "mapTo": "m_wall_drystone",
+    "baseColor": [
+      0.55,
+      0.5,
+      0.45,
+      1.0
+    ],
+    "roughnessFactor": 0.95,
+    "metalnessFactor": 0.0
+  }
+}

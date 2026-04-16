@@ -1,0 +1,64 @@
+{
+  "format": "macerone_beamng_forest_v1",
+  "coordinate_space": "terrain_local (origin=SW corner, X=east, Y=north)",
+  "note": "Import via BeamNG Forest Editor o script Lua. Il campo 'type' va mappato a un ForestItem definito nella mod.",
+  "instance_count": 7,
+  "instances": [
+    {
+      "x": 6144.0,
+      "y": 6144.0,
+      "z": 0.0,
+      "rot_z": 0.0,
+      "scale": 1.0,
+      "type": "tree_medium"
+    },
+    {
+      "x": 6144.0,
+      "y": 6144.0,
+      "z": 0.0,
+      "rot_z": 0.0,
+      "scale": 1.0,
+      "type": "tree_medium"
+    },
+    {
+      "x": 6144.0,
+      "y": 6144.0,
+      "z": 0.0,
+      "rot_z": 0.0,
+      "scale": 1.0,
+      "type": "tree_medium"
+    },
+    {
+      "x": 6144.0,
+      "y": 6144.0,
+      "z": 0.0,
+      "rot_z": 0.0,
+      "scale": 1.0,
+      "type": "tree_medium"
+    },
+    {
+      "x": 6144.0,
+      "y": 6144.0,
+      "z": 0.0,
+      "rot_z": 0.0,
+      "scale": 1.0,
+      "type": "tree_medium"
+    },
+    {
+      "x": 6144.0,
+      "y": 6144.0,
+      "z": 0.0,
+      "rot_z": 0.0,
+      "scale": 1.0,
+      "type": "cypress"
+    },
+    {
+      "x": 6144.0,
+      "y": 6144.0,
+      "z": 0.0,
+      "rot_z": 0.0,
+      "scale": 1.0,
+      "type": "cypress"
+    }
+  ]
+}

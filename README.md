@@ -131,14 +131,39 @@ Organizzati in collection (Outliner):
 - **Guardrails** — automatici sui tratti esposti
 - **Debug** — nastro evidenziatore arancione + marker start/end (disattiva prima dell'export a BeamNG)
 
-## Importare in BeamNG.drive
+## Build mod BeamNG.drive
 
-1. Aprire il BeamNG World Editor
-2. Importare `output/macerone.obj` come static mesh
-3. Posizionare all'origine del livello
-4. `output/centerline.csv` può essere usato per creare un decalRoad con l'asse strada
+Tutta la pipeline mod è sotto `tools/beamng/`. Un singolo comando genera una mod installabile (heightmap, DecalRoad, edifici, guardrail, alberi, skeleton cartelle):
 
-Per una mappa BeamNG completa servirebbe ancora: heightmap terrain, spawn point, atmospheric, manifest `main.level.json`. Non incluso in questo pipeline (per ora).
+```bash
+python tools/beamng/build_mod.py
+```
+
+Esegue in sequenza:
+
+| Step | Script | Output |
+|------|--------|--------|
+| 1 | `build_heightmap.py` | `output/beamng/heightmap.png` (PNG 16-bit 4096² @ 3 m/pixel = 12.3 km quadrato) + `terrain_info.json` |
+| 2 | `build_roads.py` | `output/beamng/roads.json` (nodi DecalRoad per SS17 + strade secondarie) |
+| 3 | `blender_export.py` (in Blender) | `output/beamng/dae/{buildings,guardrails,walls,props}.dae` + `output/beamng/forest.json` |
+| 4 | `build_mod_skeleton.py` | `output/beamng/mod/` con `info.json`, `main.level.json`, `materials.json`, preview placeholder |
+
+### Installazione mod
+
+Leggi `output/beamng/mod/README_install.md`. In breve:
+
+1. Copia `output/beamng/mod/*` dentro `Documents/BeamNG.drive/<versione>/mods/unpacked/macerone3d/`.
+2. Avvia BeamNG → Singleplayer → Freeroam → "SS17 Valico del Macerone".
+3. Al primo avvio: F11 (World Editor) → `Tools → Terrain and Road Importer` → carica `terrain/heightmap.png` + `roads.json`. Il tool genera terrain + DecalRoad e terraforma sotto la strada.
+4. Salva il livello (da quel momento non serve più reimportare).
+
+### Scelte tecniche della mod
+
+- **Terrain 4096×4096 @ 3 m/pixel** = quadrato 12.3 km, centrato sul centroide della centerline. Copre tutto il bbox DEM esistente con margine; qualità massima vicino alla strada (dove il DEM reale c'è), feathering verso plateau mediano ai bordi.
+- **Elevazione 0→1200 m** mappata su PNG16 0→65535 → precisione 1.83 cm per step.
+- **Strade come DecalRoad** (non MeshRoad): scelta ufficiale BeamNG per strade asfaltate reali. Il Terrain Importer terraforma il terreno sotto la strada per evitare clipping.
+- **Export Blender selettivo**: solo oggetti entro ~250 m dalla strada (edifici), ~80 m (muretti), ~100 m (rocce/props). Tutto ciò che è "lontano" viene smussato dal plateau — massima qualità dove si guida, meno peso GPU altrove.
+- **Alberi come forest instances** (JSON con x/y/z/rot/scale/type), non come mesh pesanti: BeamNG Forest Editor fa GPU instancing con LOD+billboard automatico.
 
 ## Limitazioni note
 
