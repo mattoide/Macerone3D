@@ -294,8 +294,11 @@ def build_preview_from_satellite(dst: Path, size: int = 512) -> bool:
     if len(cl_px) >= 2:
         draw.line(cl_px, fill=(255, 40, 40), width=3)
 
-    squared.save(dst, "JPEG", quality=88)
-    print(f"  preview.jpg generata da satellite + centerline: {dst.name}")
+    if dst.suffix.lower() == ".png":
+        squared.save(dst, "PNG", optimize=True)
+    else:
+        squared.save(dst, "JPEG", quality=88)
+    print(f"  preview generata da satellite + centerline: {dst.name}")
     return True
 
 
@@ -367,9 +370,10 @@ def main() -> None:
         copy_if_exists(ROOT / "output" / "satellite.png",
                         level_dir / "art" / "terrains" / "satellite_diffuse.png")
 
-    # preview.jpg: genera dalla satellite.png (mappa del tratto reale).
-    preview_dst = level_dir / "preview.jpg"
-    build_preview_from_satellite(preview_dst)
+    # Preview per il menu BeamNG. v0.38+ cerca 'main_preview.png', le vecchie
+    # guide online riferiscono 'preview.jpg'. Creiamo entrambi per sicurezza.
+    build_preview_from_satellite(level_dir / "main_preview.png")
+    build_preview_from_satellite(level_dir / "preview.jpg")
 
     print(f"Mod skeleton pronta in {MOD_DIR}")
 
