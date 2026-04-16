@@ -214,7 +214,8 @@
           0.35,
           0.16,
           1.0
-        ]
+        ],
+        "colorMap": "levels/macerone/art/nature/foliage.png"
       },
       {},
       {},
@@ -234,7 +235,8 @@
           0.22,
           0.14,
           1.0
-        ]
+        ],
+        "colorMap": "levels/macerone/art/nature/bark.png"
       },
       {},
       {},
@@ -478,7 +480,8 @@
           0.21,
           0.13,
           1.0
-        ]
+        ],
+        "colorMap": "levels/macerone/art/nature/bark.png"
       },
       {},
       {},
@@ -498,7 +501,8 @@
           0.32,
           0.14,
           1.0
-        ]
+        ],
+        "colorMap": "levels/macerone/art/nature/foliage.png"
       },
       {},
       {},

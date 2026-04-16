@@ -450,6 +450,111 @@ def carve_terrain_mesh_near_road(terrain_obj_path: Path) -> int:
     return carved
 
 
+def remove_buildings_on_road(obj_path: Path, radius_m: float = 4.0,
+                               target_names: tuple[str, ...] = (
+                                   "Buildings_Walls", "Buildings_Roofs",
+                                   "Chimneys", "ExtraBuildings")) -> int:
+    """Rimuove INTERI edifici (componenti connesse) dal mesh se un qualsiasi
+    loro vertex cade entro radius_m dalla centerline. Filtra per nome
+    oggetto nel OBJ (solo building-like). Ritorna numero di isole rimosse."""
+    import csv as _csv
+    cl_path = ROOT / "output" / "centerline.csv"
+    if not cl_path.exists():
+        return 0
+    cell_grid = 30.0
+    buckets: dict[tuple[int, int], list[tuple[float, float]]] = {}
+    with cl_path.open(newline="", encoding="utf-8") as f:
+        for r in _csv.DictReader(f):
+            x = float(r["x"]); y = float(r["y"])
+            buckets.setdefault((int(x // cell_grid), int(y // cell_grid)), []).append((x, y))
+    r2 = radius_m * radius_m
+
+    def near_road(vx: float, vy: float) -> bool:
+        ix = int(vx // cell_grid); iy = int(vy // cell_grid)
+        for di in (-1, 0, 1):
+            for dj in (-1, 0, 1):
+                for (cx, cy) in buckets.get((ix + di, iy + dj), []):
+                    if (cx - vx) ** 2 + (cy - vy) ** 2 <= r2:
+                        return True
+        return False
+
+    # Prima passata: legge vertex + face con track di current_obj
+    lines = obj_path.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
+    wverts: list[tuple[float, float, float]] = []
+    # Memorizzo per ogni face: (obj_name, vertex_indices list)
+    face_info: list[tuple[int, str, list[int]]] = []  # (line_idx, name, idx)
+    current_obj = "default"
+    for li, line in enumerate(lines):
+        if line.startswith("v "):
+            p = line.split()
+            wverts.append((float(p[1]), float(p[2]), float(p[3])))
+        elif line.startswith("o "):
+            current_obj = line.split(maxsplit=1)[1].strip()
+        elif line.startswith("f "):
+            toks = line.split()[1:]
+            idx = [int(t.split("/")[0]) - 1 for t in toks]
+            face_info.append((li, current_obj, idx))
+
+    # Union-find solo su face degli oggetti target
+    n = len(wverts)
+    parent = list(range(n))
+
+    def find(x):
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    def union(a, b):
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            parent[ra] = rb
+
+    for (_, name, idx) in face_info:
+        if name not in target_names:
+            continue
+        for i in range(1, len(idx)):
+            if 0 <= idx[0] < n and 0 <= idx[i] < n:
+                union(idx[0], idx[i])
+
+    # Raggruppa vertex per root; per ogni isola (tra quelle in target) verifica
+    # se qualche vertex e' vicino alla road
+    island_roots_bad: set[int] = set()
+    groups: dict[int, list[int]] = {}
+    for (_, name, idx) in face_info:
+        if name not in target_names:
+            continue
+        for vi in idx:
+            if 0 <= vi < n:
+                groups.setdefault(find(vi), []).append(vi)
+
+    for root, vlist in groups.items():
+        for vi in vlist:
+            if near_road(wverts[vi][0], wverts[vi][1]):
+                island_roots_bad.add(root)
+                break
+
+    if not island_roots_bad:
+        return 0
+
+    # Riscrivi OBJ escludendo le face che toccano isole bad
+    lines_to_skip = set()
+    for (li, name, idx) in face_info:
+        if name not in target_names:
+            continue
+        root = find(idx[0]) if idx and 0 <= idx[0] < n else None
+        if root in island_roots_bad:
+            lines_to_skip.add(li)
+
+    out = []
+    for li, line in enumerate(lines):
+        if li in lines_to_skip:
+            continue
+        out.append(line)
+    obj_path.write_text("".join(out), encoding="utf-8")
+    return len(island_roots_bad)
+
+
 def drop_world_obj_to_terrain_mesh(world_obj_path: Path,
                                       terrain_obj_path: Path) -> int:
     """Drop-to-ground per-ISOLA del world OBJ sul mesh Terrain Blender.
@@ -947,7 +1052,9 @@ def write_dem_terrain(level_dir: Path, info: dict,
 # ---------------------------------------------------------------------------
 def write_materials(level_dir: Path, asphalt_rgb: tuple[float, float, float],
                      asphalt_color_map: str | None = None,
-                     terrain_color_map: str | None = None) -> None:
+                     terrain_color_map: str | None = None,
+                     foliage_color_map: str | None = None,
+                     bark_color_map: str | None = None) -> None:
     # TerrainMaterial con:
     # - diffuseMap = texture satellite (colore macro su scala del tile 12288m)
     # - detailMap = texture erba/terriccio procedurale che ripete ogni 10m
@@ -1038,6 +1145,13 @@ def write_materials(level_dir: Path, asphalt_rgb: tuple[float, float, float],
         if terrain_color_map and name in ("SatelliteTerrain", "Terrain",
                                              "TerrainMat", "Ground"):
             stage0["colorMap"] = terrain_color_map
+        # Foliage texture: alberi Blender + procedurali (canopy/chioma verde)
+        if foliage_color_map and name in ("TreeCanopy", "TreeFoliage",
+                                             "Canopy"):
+            stage0["colorMap"] = foliage_color_map
+        # Bark texture: tronchi
+        if bark_color_map and name in ("TreeTrunk", "TreeBark"):
+            stage0["colorMap"] = bark_color_map
         # persistentId deterministico dal nome: aiuta BeamNG a registrare
         # il material (alcuni mesh apparivano neri senza persistentId).
         pid = _h.md5(name.encode()).hexdigest()
@@ -1170,6 +1284,55 @@ def generate_terrain_grass_texture(level_dir: Path) -> str:
     rel = f"levels/{LEVEL_NAME}/art/terrains/terrain_grass.png"
     print(f"Terrain grass texture {size}x{size}: {out.relative_to(MOD_DIR)}")
     return rel
+
+
+def generate_foliage_texture(level_dir: Path) -> str:
+    """Texture foliage 512x512 procedurale: verde scuro base + cluster di
+    foglie chiare (luce filtrata) + cluster scuri (ombre interne chioma).
+    Tile senza pattern grazie a fBm multi-scala."""
+    size = 512
+    rng = np.random.default_rng(13)
+    # Base scura organica
+    base = _fbm_noise(size, octaves=4, seed=13, start_freq=4) * 0.12
+    # Pattern foglie: puntini chiari densi (simula luce tra foglie)
+    light_leaves = rng.random((size, size), dtype=np.float32)
+    light_mask = np.where(light_leaves > 0.85, (light_leaves - 0.85) / 0.15, 0.0)
+    # Puntini scuri (ombre tra cluster)
+    dark_mask = np.where(light_leaves < 0.08, (0.08 - light_leaves) / 0.08, 0.0)
+    # Composizione
+    delta = base
+    R = np.clip(0.18 + delta + light_mask * 0.25 - dark_mask * 0.10, 0.04, 0.80)
+    G = np.clip(0.35 + delta + light_mask * 0.35 - dark_mask * 0.15, 0.08, 0.90)
+    B = np.clip(0.14 + delta + light_mask * 0.20 - dark_mask * 0.08, 0.03, 0.60)
+    img = np.stack([R, G, B], axis=-1)
+    img_u8 = (img * 255.0).astype(np.uint8)
+    tex_dir = level_dir / "art" / "nature"
+    tex_dir.mkdir(parents=True, exist_ok=True)
+    out = tex_dir / "foliage.png"
+    Image.fromarray(img_u8).save(out, optimize=True)
+    print(f"Foliage texture {size}x{size}: {out.relative_to(MOD_DIR)}")
+    return f"levels/{LEVEL_NAME}/art/nature/foliage.png"
+
+
+def generate_bark_texture(level_dir: Path) -> str:
+    """Texture corteccia 256x256: marrone con striature verticali."""
+    size = 256
+    rng = np.random.default_rng(29)
+    # Striature verticali (fBm orizz freq bassa, vert freq alta)
+    stripe_noise = _fbm_noise(size, octaves=3, seed=29, start_freq=2)
+    # Noise fine per dettagli
+    fine = rng.normal(0, 0.05, (size, size)).astype(np.float32)
+    delta = stripe_noise * 0.15 + fine
+    R = np.clip(0.30 + delta, 0.15, 0.55)
+    G = np.clip(0.21 + delta * 0.8, 0.10, 0.40)
+    B = np.clip(0.13 + delta * 0.5, 0.05, 0.28)
+    img = np.stack([R, G, B], axis=-1)
+    img_u8 = (img * 255.0).astype(np.uint8)
+    tex_dir = level_dir / "art" / "nature"
+    tex_dir.mkdir(parents=True, exist_ok=True)
+    out = tex_dir / "bark.png"
+    Image.fromarray(img_u8).save(out, optimize=True)
+    return f"levels/{LEVEL_NAME}/art/nature/bark.png"
 
 
 def generate_terrain_detail_texture(level_dir: Path) -> str:
@@ -1923,6 +2086,10 @@ def main() -> None:
         removed = filter_world_obj_near_road(world_obj, ROAD_CORRIDOR_FILTER_M)
         print(f"  filter corridoio {ROAD_CORRIDOR_FILTER_M}m: "
               f"rimosse {removed} face dal world mesh")
+        # Rimuove edifici che intrudono sulla strada (building INTERO,
+        # non solo face). Raggio 4m dal centerline.
+        removed_b = remove_buildings_on_road(world_obj, radius_m=4.0)
+        print(f"  rimossi {removed_b} edifici world che invadevano la strada")
         # Drop-to-ground usa il terrain mesh CARVATO come riferimento
         if terrain_has_content:
             drop_world_obj_to_terrain_mesh(world_obj, terrain_obj)
@@ -1955,19 +2122,21 @@ def main() -> None:
     # Blender (BeamNG richiede sempre un TerrainBlock). Mesh Blender sopra.
     max_height, elev_min, z_offset_blender = write_flat_fallback_terrain(LEVEL_DIR)
 
-    # 5. Materiali + texture asfalto + satellite come terrain colorMap
+    # 5. Materiali + texture asfalto + satellite terrain + foliage/bark
     asphalt_rgb = sample_asphalt_color_from_satellite()
     print(f"asfalto RGB campionato: "
           f"({asphalt_rgb[0]:.3f}, {asphalt_rgb[1]:.3f}, {asphalt_rgb[2]:.3f})")
     generate_asphalt_texture(LEVEL_DIR, asphalt_rgb)
-    copy_satellite_texture(LEVEL_DIR)  # copia satellite_diffuse.png
+    foliage_map = generate_foliage_texture(LEVEL_DIR)
+    bark_map = generate_bark_texture(LEVEL_DIR)
+    copy_satellite_texture(LEVEL_DIR)
     asphalt_map = f"levels/{LEVEL_NAME}/art/road/asphalt_base.png"
-    # Uso la SATELLITE come colorMap del mesh Terrain Blender (UV gia'
-    # mappata lat/lon dal blender_build). Mostra il vero paesaggio dell'area.
     terrain_map = f"levels/{LEVEL_NAME}/art/terrains/satellite_diffuse.png"
     write_materials(LEVEL_DIR, asphalt_rgb,
                      asphalt_color_map=asphalt_map,
-                     terrain_color_map=terrain_map)
+                     terrain_color_map=terrain_map,
+                     foliage_color_map=foliage_map,
+                     bark_color_map=bark_map)
 
     # 5b. Roadside clutter procedurale (sassi + ciuffi ai bordi strada)
     roadside_obj = generate_roadside_clutter(LEVEL_DIR)
@@ -1982,6 +2151,8 @@ def main() -> None:
         [sys.executable, str(TOOLS / "generate_extra_buildings.py")])
     extra_buildings_obj = LEVEL_DIR / "art" / "shapes" / "macerone_extra_buildings.obj"
     if extra_buildings_obj.exists() and extra_buildings_obj.stat().st_size > 200:
+        removed_eb = remove_buildings_on_road(extra_buildings_obj, radius_m=4.0)
+        print(f"  rimossi {removed_eb} extra buildings che invadevano la strada")
         if terrain_has_content:
             drop_world_obj_to_terrain_mesh(extra_buildings_obj, terrain_obj)
         extra_buildings_dae = convert_to_dae(extra_buildings_obj)
