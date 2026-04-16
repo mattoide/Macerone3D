@@ -374,47 +374,182 @@ FILTER_OBJ_NAME_KEYWORDS = (
 )
 
 
-def drop_world_obj_to_terrain(obj_path: Path, arr_orig: np.ndarray,
-                                 arr_carved: np.ndarray,
-                                 max_height: float) -> int:
-    """Per ogni vertex del world OBJ, calcola la differenza tra DEM
-    pre-carve e post-carve alla sua XY, poi abbassa v.z di quella delta.
-    Gli oggetti appoggiati al DEM originale rimangono al nuovo terrain
-    level (niente alberi/edifici fluttuanti dopo il carve).
+def drop_world_obj_to_terrain_mesh(world_obj_path: Path,
+                                      terrain_obj_path: Path) -> int:
+    """Drop-to-ground per-ISOLA del world OBJ sul mesh Terrain Blender.
 
-    Ritorna numero di vertex shiftati significativamente."""
-    H, W = arr_orig.shape
-    half = TER_EXTENT / 2.0
-    cell = TER_SQUARESIZE
+    Il mesh Blender Terrain e' coarse (5k face, media 160m tra vertex),
+    mentre gli alberi/edifici nel world mesh sono piazzati sul DEM fine.
+    Gap -> alberi/edifici fluttuanti.
 
-    def sample_m(arr, x, y):
-        col = int((x + half) / cell)
-        ry = int((y + half) / cell)
-        if not (0 <= col < W and 0 <= ry < H):
-            return None
-        return float(arr[ry, col]) / 65535.0 * max_height
+    Algoritmo:
+    1. Parso terrain mesh in face con loro bbox XY e Z interpolation coeff.
+    2. Spatial grid per nearest face lookup.
+    3. Parso world mesh: estraggo isole (componenti connesse) via union-find
+       sulle edges dei triangoli.
+    4. Per ogni isola: base_z = min(z), centroide XY. Campiono terrain_z al
+       centroide. delta = terrain_z - base_z. Shifto tutti i vertex della
+       isola di delta.
+    """
+    # --- 1. Parse terrain mesh: lista face con vertex XY e Z ---
+    tverts: list[tuple[float, float, float]] = []
+    tfaces: list[tuple[int, int, int]] = []
+    with terrain_obj_path.open("r", encoding="utf-8", errors="replace") as f:
+        for line in f:
+            if line.startswith("v "):
+                p = line.split()
+                tverts.append((float(p[1]), float(p[2]), float(p[3])))
+            elif line.startswith("f "):
+                toks = line.split()[1:]
+                idx = [int(t.split("/")[0]) - 1 for t in toks]
+                # triangoliarizza fan da idx[0]
+                for i in range(1, len(idx) - 1):
+                    tfaces.append((idx[0], idx[i], idx[i + 1]))
+    if not tfaces:
+        return 0
 
-    lines = obj_path.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
-    out_lines = []
-    shifted = 0
-    for line in lines:
-        if not line.startswith("v "):
-            out_lines.append(line)
+    # Spatial grid per face
+    GRID_CELL = 100.0  # 100m per cell
+    grid: dict[tuple[int, int], list[int]] = {}
+    face_bbox = []
+    for fi, (a, b, c) in enumerate(tfaces):
+        va, vb, vc = tverts[a], tverts[b], tverts[c]
+        x_min = min(va[0], vb[0], vc[0])
+        x_max = max(va[0], vb[0], vc[0])
+        y_min = min(va[1], vb[1], vc[1])
+        y_max = max(va[1], vb[1], vc[1])
+        face_bbox.append((x_min, y_min, x_max, y_max))
+        ix0 = int(x_min // GRID_CELL)
+        ix1 = int(x_max // GRID_CELL)
+        iy0 = int(y_min // GRID_CELL)
+        iy1 = int(y_max // GRID_CELL)
+        for ix in range(ix0, ix1 + 1):
+            for iy in range(iy0, iy1 + 1):
+                grid.setdefault((ix, iy), []).append(fi)
+
+    def sample_terrain_z(x: float, y: float) -> float | None:
+        """Ritorna z del terrain mesh al punto (x, y) via bary-interpolation
+        nella face che lo contiene. None se fuori terrain."""
+        ix = int(x // GRID_CELL)
+        iy = int(y // GRID_CELL)
+        best_z = None
+        best_d = float("inf")
+        for di in (-1, 0, 1):
+            for dj in (-1, 0, 1):
+                for fi in grid.get((ix + di, iy + dj), []):
+                    x0, y0, x1, y1 = face_bbox[fi]
+                    if not (x0 <= x <= x1 and y0 <= y <= y1):
+                        continue
+                    a, b, c = tfaces[fi]
+                    va, vb, vc = tverts[a], tverts[b], tverts[c]
+                    # barycentric
+                    denom = ((vb[1] - vc[1]) * (va[0] - vc[0])
+                             + (vc[0] - vb[0]) * (va[1] - vc[1]))
+                    if abs(denom) < 1e-9:
+                        continue
+                    l1 = ((vb[1] - vc[1]) * (x - vc[0])
+                          + (vc[0] - vb[0]) * (y - vc[1])) / denom
+                    l2 = ((vc[1] - va[1]) * (x - vc[0])
+                          + (va[0] - vc[0]) * (y - vc[1])) / denom
+                    l3 = 1.0 - l1 - l2
+                    eps = -0.01
+                    if l1 >= eps and l2 >= eps and l3 >= eps:
+                        z = l1 * va[2] + l2 * vb[2] + l3 * vc[2]
+                        return z
+        # Fallback: nearest vertex
+        for di in (-2, -1, 0, 1, 2):
+            for dj in (-2, -1, 0, 1, 2):
+                for fi in grid.get((ix + di, iy + dj), []):
+                    for vi in tfaces[fi]:
+                        v = tverts[vi]
+                        d2 = (v[0] - x) ** 2 + (v[1] - y) ** 2
+                        if d2 < best_d:
+                            best_d = d2
+                            best_z = v[2]
+        return best_z
+
+    # --- 2. Parse world mesh con vertex + face ---
+    wverts: list[tuple[float, float, float]] = []
+    wedges: list[tuple[int, int]] = []
+    world_lines = world_obj_path.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
+    vi_offset = 0
+    for line in world_lines:
+        if line.startswith("v "):
+            p = line.split()
+            wverts.append((float(p[1]), float(p[2]), float(p[3])))
+        elif line.startswith("f "):
+            toks = line.split()[1:]
+            idx = [int(t.split("/")[0]) - 1 for t in toks]
+            for i in range(1, len(idx)):
+                wedges.append((idx[0], idx[i]))
+
+    # --- 3. Union-find isole ---
+    n = len(wverts)
+    parent = list(range(n))
+
+    def find(x):
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    def union(a, b):
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            parent[ra] = rb
+
+    for (a, b) in wedges:
+        if 0 <= a < n and 0 <= b < n:
+            union(a, b)
+
+    # Raggruppa per root
+    groups: dict[int, list[int]] = {}
+    for i in range(n):
+        groups.setdefault(find(i), []).append(i)
+
+    # --- 4. Drop per isola ---
+    shifts = [0.0] * n  # per-vertex shift
+    n_isles = 0
+    n_shifted_isles = 0
+    for root, vlist in groups.items():
+        if len(vlist) < 3:
             continue
-        parts = line.split()
-        x, y, z = float(parts[1]), float(parts[2]), float(parts[3])
-        t_orig = sample_m(arr_orig, x, y)
-        t_new = sample_m(arr_carved, x, y)
-        if t_orig is None or t_new is None:
-            out_lines.append(line)
+        n_isles += 1
+        xs = [wverts[i][0] for i in vlist]
+        ys = [wverts[i][1] for i in vlist]
+        zs = [wverts[i][2] for i in vlist]
+        cx = sum(xs) / len(xs)
+        cy = sum(ys) / len(ys)
+        base_z = min(zs)
+        tz = sample_terrain_z(cx, cy)
+        if tz is None:
             continue
-        delta = t_new - t_orig  # <= 0 (il carve abbassa mai alza)
-        if abs(delta) > 0.05:
-            z += delta
-            shifted += 1
-        out_lines.append(f"v {x:.6f} {y:.6f} {z:.6f}\n")
-    obj_path.write_text("".join(out_lines), encoding="utf-8")
-    return shifted
+        delta = tz - base_z
+        # Shift solo se l'isola e' "quasi galleggiante" o "parzialmente sotto"
+        # (|delta| < 20m). Evita di muovere oggetti lontani da terrain.
+        if abs(delta) > 20.0:
+            continue
+        if abs(delta) < 0.1:
+            continue
+        for vi in vlist:
+            shifts[vi] = delta
+        n_shifted_isles += 1
+
+    # --- 5. Riscrivi OBJ ---
+    out_lines: list[str] = []
+    vi = 0
+    for line in world_lines:
+        if line.startswith("v "):
+            p = line.split()
+            x, y, z = float(p[1]), float(p[2]), float(p[3])
+            z += shifts[vi]
+            out_lines.append(f"v {x:.6f} {y:.6f} {z:.6f}\n")
+            vi += 1
+        else:
+            out_lines.append(line)
+    world_obj_path.write_text("".join(out_lines), encoding="utf-8")
+    print(f"  drop-to-ground: {n_shifted_isles}/{n_isles} isole spostate")
+    return n_shifted_isles
 
 
 def filter_world_obj_near_road(obj_path: Path, radius_m: float) -> int:
@@ -787,23 +922,26 @@ def write_materials(level_dir: Path, asphalt_rgb: tuple[float, float, float],
         ("default", [0.55, 0.55, 0.55]),
         ("DefaultMat", [0.55, 0.55, 0.55]),
     ]
+    import hashlib as _h
     mats = {}
     for name, rgb in entries:
         stage0 = {"diffuseColor": [*rgb, 1.0]}
-        # Texture procedurale solo sui materiali asfalto+patches (non linee/segnali)
         if asphalt_color_map and name in ("Asphalt", "AsphaltPatch_Dark",
                                              "AsphaltPatch_Light"):
             stage0["colorMap"] = asphalt_color_map
-        # Terrain mesh Blender: usa la SATELLITE reale come colorMap (il
-        # mesh ha UV che mappa lat/lon -> texture). Cosi' si vede il vero
-        # paesaggio dell'area (campi, boschi, edifici) dall'alto.
         if terrain_color_map and name in ("SatelliteTerrain", "Terrain",
                                              "TerrainMat", "Ground"):
             stage0["colorMap"] = terrain_color_map
+        # persistentId deterministico dal nome: aiuta BeamNG a registrare
+        # il material (alcuni mesh apparivano neri senza persistentId).
+        pid = _h.md5(name.encode()).hexdigest()
+        pid = (f"{pid[0:8]}-{pid[8:12]}-{pid[12:16]}-"
+               f"{pid[16:20]}-{pid[20:32]}")
         mats[name] = {
             "name": name,
             "mapTo": name,
             "class": "Material",
+            "persistentId": pid,
             "Stages": [
                 stage0,
                 {}, {}, {},
@@ -1570,11 +1708,15 @@ def main() -> None:
     road_rel = road_dae.relative_to(LEVEL_DIR).as_posix()
 
     world_has_content = world_obj.exists() and world_obj.stat().st_size > 200
+    terrain_has_content_check = terrain_obj.exists() and terrain_obj.stat().st_size > 200
     world_rel = None
     if world_has_content:
         removed = filter_world_obj_near_road(world_obj, ROAD_CORRIDOR_FILTER_M)
         print(f"  filter corridoio {ROAD_CORRIDOR_FILTER_M}m: "
               f"rimosse {removed} face dal world mesh")
+        # Drop-to-ground usando il mesh Terrain Blender come superficie reale
+        if terrain_has_content_check:
+            drop_world_obj_to_terrain_mesh(world_obj, terrain_obj)
         # Stats: conto face per ogni oggetto world
         obj_counts = {}
         current = None

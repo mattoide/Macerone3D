@@ -3,6 +3,7 @@
     "name": "Asphalt",
     "mapTo": "Asphalt",
     "class": "Material",
+    "persistentId": "69cdd2c7-900c-5a47-32b4-bb63bea57f6c",
     "Stages": [
       {
         "diffuseColor": [
@@ -23,6 +24,7 @@
     "name": "AsphaltPatch_Dark",
     "mapTo": "AsphaltPatch_Dark",
     "class": "Material",
+    "persistentId": "a677eb90-d3fc-0ebb-b531-a7d07a2a95b6",
     "Stages": [
       {
         "diffuseColor": [
@@ -43,6 +45,7 @@
     "name": "AsphaltPatch_Light",
     "mapTo": "AsphaltPatch_Light",
     "class": "Material",
+    "persistentId": "9a87a0af-6e72-9eb9-9fc3-30bd8373eba1",
     "Stages": [
       {
         "diffuseColor": [
@@ -63,6 +66,7 @@
     "name": "Shoulder",
     "mapTo": "Shoulder",
     "class": "Material",
+    "persistentId": "83cb4c14-4b3d-6ee1-a847-bee51a44b933",
     "Stages": [
       {
         "diffuseColor": [
@@ -82,6 +86,7 @@
     "name": "LineWhite",
     "mapTo": "LineWhite",
     "class": "Material",
+    "persistentId": "a0c344e3-18e9-64e0-e2b2-2330ee8e08a5",
     "Stages": [
       {
         "diffuseColor": [
@@ -101,6 +106,7 @@
     "name": "LineYellow",
     "mapTo": "LineYellow",
     "class": "Material",
+    "persistentId": "352eed82-e939-f572-d95d-33ef067a01be",
     "Stages": [
       {
         "diffuseColor": [
@@ -120,6 +126,7 @@
     "name": "Manhole",
     "mapTo": "Manhole",
     "class": "Material",
+    "persistentId": "b55615c9-fdf8-d2b3-9287-152a342727f4",
     "Stages": [
       {
         "diffuseColor": [
@@ -139,6 +146,7 @@
     "name": "Building",
     "mapTo": "Building",
     "class": "Material",
+    "persistentId": "c39b56d4-489f-b250-7289-e7ae19567b80",
     "Stages": [
       {
         "diffuseColor": [
@@ -158,6 +166,7 @@
     "name": "Roof",
     "mapTo": "Roof",
     "class": "Material",
+    "persistentId": "64230583-b048-3604-ea02-6c80b127f16a",
     "Stages": [
       {
         "diffuseColor": [
@@ -177,6 +186,7 @@
     "name": "StoneWall",
     "mapTo": "StoneWall",
     "class": "Material",
+    "persistentId": "2038d4cc-ad75-4d0a-dd18-495ba7343c7d",
     "Stages": [
       {
         "diffuseColor": [
@@ -196,6 +206,7 @@
     "name": "TreeCanopy",
     "mapTo": "TreeCanopy",
     "class": "Material",
+    "persistentId": "dd8c78d0-c5d6-293b-6eb6-414d8d7ba8fb",
     "Stages": [
       {
         "diffuseColor": [
@@ -215,6 +226,7 @@
     "name": "TreeTrunk",
     "mapTo": "TreeTrunk",
     "class": "Material",
+    "persistentId": "9545f743-9bcb-876a-8544-d38b8dab3ac9",
     "Stages": [
       {
         "diffuseColor": [
@@ -234,6 +246,7 @@
     "name": "Guardrail",
     "mapTo": "Guardrail",
     "class": "Material",
+    "persistentId": "c5602321-1de1-342d-6a95-9cbadfa1e77b",
     "Stages": [
       {
         "diffuseColor": [
@@ -253,6 +266,7 @@
     "name": "Pole",
     "mapTo": "Pole",
     "class": "Material",
+    "persistentId": "e2f9f85f-d569-b428-ca0e-a31f891c36b0",
     "Stages": [
       {
         "diffuseColor": [
@@ -272,6 +286,7 @@
     "name": "Sign",
     "mapTo": "Sign",
     "class": "Material",
+    "persistentId": "31c6b3fd-faaa-80db-a2db-f92a4600524c",
     "Stages": [
       {
         "diffuseColor": [
@@ -291,6 +306,7 @@
     "name": "SatelliteTerrain",
     "mapTo": "SatelliteTerrain",
     "class": "Material",
+    "persistentId": "f79a68ce-b62d-1d08-ce90-a7c6118d4bf2",
     "Stages": [
       {
         "diffuseColor": [
@@ -311,6 +327,7 @@
     "name": "Terrain",
     "mapTo": "Terrain",
     "class": "Material",
+    "persistentId": "4ccfea7a-25fa-e3c1-d315-55f0856d2b42",
     "Stages": [
       {
         "diffuseColor": [
@@ -331,6 +348,7 @@
     "name": "TerrainMat",
     "mapTo": "TerrainMat",
     "class": "Material",
+    "persistentId": "a3e47ede-e845-edb3-64b2-0f90cfcfeef6",
     "Stages": [
       {
         "diffuseColor": [
@@ -351,6 +369,7 @@
     "name": "Ground",
     "mapTo": "Ground",
     "class": "Material",
+    "persistentId": "3519d514-43d4-1746-a097-cd54cd5c11cf",
     "Stages": [
       {
         "diffuseColor": [
@@ -371,6 +390,7 @@
     "name": "Rock",
     "mapTo": "Rock",
     "class": "Material",
+    "persistentId": "4cfbb125-e987-8528-bab9-1d12421134d8",
     "Stages": [
       {
         "diffuseColor": [
@@ -390,6 +410,7 @@
     "name": "BushGreen",
     "mapTo": "BushGreen",
     "class": "Material",
+    "persistentId": "d060e9c3-503e-370c-41bb-ecd75aceff6d",
     "Stages": [
       {
         "diffuseColor": [
@@ -409,6 +430,7 @@
     "name": "Parapet",
     "mapTo": "Parapet",
     "class": "Material",
+    "persistentId": "431b93c6-85a7-beac-e6c9-b76f36a8fe9f",
     "Stages": [
       {
         "diffuseColor": [
@@ -428,6 +450,7 @@
     "name": "BollardMat",
     "mapTo": "BollardMat",
     "class": "Material",
+    "persistentId": "bd4804e2-c761-3853-acdc-b7c646dfcb0f",
     "Stages": [
       {
         "diffuseColor": [
@@ -447,6 +470,7 @@
     "name": "default",
     "mapTo": "default",
     "class": "Material",
+    "persistentId": "c21f969b-5f03-d33d-43e0-4f8f136e7682",
     "Stages": [
       {
         "diffuseColor": [
@@ -466,6 +490,7 @@
     "name": "DefaultMat",
     "mapTo": "DefaultMat",
     "class": "Material",
+    "persistentId": "c125d788-453e-7182-df4d-b047ed23119a",
     "Stages": [
       {
         "diffuseColor": [
