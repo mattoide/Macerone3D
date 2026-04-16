@@ -407,13 +407,20 @@ def carve_heightmap_under_road(arr: np.ndarray, elev_min: float,
     half = TER_EXTENT / 2.0
     cell = TER_SQUARESIZE
 
-    # Precompute kernel: distanza normalizzata da (0,0)
-    R = 8  # raggio in celle, ~96m
+    # Precompute kernel: plateau 4m attorno alla centerline (carreggiata +
+    # banchina), poi falloff lineare fino a ~96m. Cosi' la banchina appoggia
+    # al terreno invece di stare in cima a un "muro".
+    R = 8  # raggio totale in celle (96m)
+    cell = TER_SQUARESIZE
+    plateau_m = 12.0  # raggio piatto: almeno 1 cella attorno al centerline
     drs, dcs = np.meshgrid(np.arange(-R, R + 1), np.arange(-R, R + 1), indexing="ij")
-    dist = np.sqrt(drs * drs + dcs * dcs)
-    mask_in = dist <= R
-    # alpha: 1 al centro, 0 al bordo (falloff lineare)
-    alpha = np.where(mask_in, 1.0 - dist / R, 0.0).astype(np.float32)
+    dist_cells = np.sqrt(drs * drs + dcs * dcs)
+    dist_m = dist_cells * cell
+    R_m = R * cell
+    alpha = np.clip(
+        1.0 - np.maximum(0.0, dist_m - plateau_m) / (R_m - plateau_m),
+        0.0, 1.0,
+    ).astype(np.float32)
 
     # Lavoriamo in float32 per il blend
     arr_f = arr.astype(np.float32)
@@ -691,16 +698,9 @@ def generate_asphalt_texture(level_dir: Path,
                 if 0 <= yi < size:
                     cracks[yi, x] = -0.16
 
-    # Giunti di espansione trasversali ogni ~4m (96px se 40px=1m)
-    joints = np.zeros((size, size), dtype=np.float32)
-    joint_spacing = 96
-    for row in range(joint_spacing, size, joint_spacing):
-        # linea orizzontale scura sottile, 2px di spessore con variazione
-        jitter = rng.integers(-3, 4)
-        r1 = min(size - 1, row + jitter)
-        joints[r1, :] = -0.15
-        if r1 + 1 < size:
-            joints[r1 + 1, :] = -0.08
+    # Niente giunti trasversali regolari (creano pattern "piastrelle" quando
+    # la texture si tile sulla road mesh). La grana + crepe random bastano.
+    joints = 0.0
 
     # Macchia d'olio scura occasionale (grandi pozze)
     oil = np.zeros((size, size), dtype=np.float32)
