@@ -133,62 +133,83 @@ Organizzati in collection (Outliner):
 
 ## Build mod BeamNG.drive
 
-Un singolo comando genera la mod installabile (ZIP pronta) e la copia in BeamNG:
+Un singolo comando genera la mod installabile e la copia in BeamNG:
 
 ```bash
 python tools/beamng/build_full_mod.py
 ```
 
-Output: `output/beamng/macerone3d.zip` (~16 MB) automaticamente copiata in `C:\Users\Matto\AppData\Local\BeamNG\BeamNG.drive\current\mods\`.
+Output: `output/beamng/macerone3d.zip` automaticamente copiato in `C:\Users\Matto\AppData\Local\BeamNG\BeamNG.drive\current\mods\`. Build time: ~30 sec.
 
-### Cosa fa la pipeline `build_full_mod.py`
+### Cosa genera: 8 TSStatic mesh nel level
 
-1. Legge il heightmap DEM pre-calcolato (`build_heightmap.py` se manca).
-2. Inferisce `z_offset_blender` vero campionando il DEM lungo la centerline (il valore in `terrain_info.json` è sbagliato — vedi sotto).
-3. Esporta con Blender headless:
-   - **Road mesh** (collection `Road`, Solidify 0.4 m SOLO su Asphalt/Shoulder) → `macerone_road.dae`
-   - **World mesh** (Buildings + Walls + Guardrails + Trees + Rocks + Signals, escluso `Delineators`) → `macerone_world.dae`
-4. Filtra dall'OBJ world le face di alberi/bushes/rocce entro 3.5 m dalla centerline (procedurali finiti sull'asfalto).
-5. Scrive `theTerrain.ter` con heightmap SHIFTATO in coord Blender + carve bidirezionale sul corridoio road (falloff 100 m).
-6. Campiona RGB asfalto dal satellite ESRI lungo la centerline e genera texture procedurale 512×512 (grana + crepe + striature) usata come `colorMap` del material Asphalt.
-7. Scrive `main.level.json` con TerrainBlock + TSStatic road/world + SpawnSphere orientata verso il primo rettilineo.
-8. Zippa e copia nei mods di BeamNG.
+| # | TSStatic | Contenuto |
+|---|----------|-----------|
+| 1 | `macerone_road_mesh` | Road Blender (asfalto, banchine, linee, catarifrangenti, tombini, patches) con Solidify 40 cm su {Road, Shoulder_L, Shoulder_R} |
+| 2 | `macerone_world_mesh` | Edifici (Buildings_Walls + _Roofs + Chimneys), Guardrail L/R, Signs (Curve+Speed+KmMarker), StoneWalls, Delineators, PowerWires/Poles/Crosses, Trees (chioma+tronco), Rocks, Bushes, Cypresses |
+| 3 | `macerone_roadside_mesh` | Procedurale: 1800+ pietre + 2000+ cespugli + alberi veri tronco/chioma condizionati da satellite + parapetti ponte + bollards |
+| 4 | `macerone_terrain_mesh` | Mesh Terrain Blender carvato (5213 face) con satellite texture come colorMap via UV lat/lon |
+| 5 | `macerone_extra_buildings_mesh` | 70 edifici OSM mancanti dal Blender (walls + roofs fan-triangulated) |
+| 6 | `macerone_road_details_mesh` | 296 toppe bitume dark + 74 light + 5 chevrons sui tornanti |
+| 7 | `macerone_embankments_mesh` | 2925 quad scarpata tra bordo banchina e terrain sottostante |
+| 8 | `macerone_vegetation_mesh` | 3000 crossed billboards albero da analisi satellite map-wide |
 
-### Tuning spawn (variabili in testa a `build_full_mod.py`)
+TerrainBlock BeamNG: `.ter` flat a −30 m (fallback richiesto da BeamNG, non visibile).
+
+### Tool ausiliari invocati da `build_full_mod.py`
+
+| File | Ruolo |
+|------|-------|
+| `obj_to_dae.py` | convertitore OBJ→DAE Z-up (Blender 5.x ha rimosso Collada exporter) |
+| `build_heightmap.py` | heightmap PNG16 4096² dal DEM EU-DEM 25 m |
+| `analyze_satellite.py` | classifica bordi (paved/grass/tree) via satellite ESRI zoom 17, output `road_conditions.json` |
+| `generate_extra_buildings.py` | edifici OSM non presenti nel mesh Blender → procedural mesh |
+| `generate_road_details.py` | toppe bitume irregolari + chevrons gialli sui tornanti |
+| `generate_embankments.py` | scarpate procedurali dove strada è sopraelevata sul terrain |
+| `generate_vegetation.py` | crossed billboards albero map-wide, PNG RGBA con alpha procedurale |
+| `mapillary_sample.py` | PoC street-view (Mapillary zero copertura sulla SS17; KartaView richiede OAuth) — non usato |
+| `build_minimal_mod.py` | baseline strada-sola flat (debug/fallback) |
+| `build_heightmap.py, build_ter.py, build_roads.py, build_mod.py, build_mod_skeleton.py, build_textures.py, optimize_satellite.py, blender_export.py` | script legacy della vecchia pipeline "DecalRoad", conservati per riferimento |
+
+### Tuning parameters (in testa a `build_full_mod.py`)
 
 ```python
-SPAWN_FORWARD_M = 5.0        # metri avanti lungo il muso
-SPAWN_UP_M = 1.0             # altezza extra sopra l'asfalto
-SPAWN_TURN_RIGHT_DEG = -25.0 # gradi di rotazione a destra (negativi = sinistra)
-ROAD_CORRIDOR_FILTER_M = 3.5 # raggio filtro oggetti vicino alla strada
+SPAWN_FORWARD_M = 5.0           # spawn avanti lungo il muso
+SPAWN_UP_M = 1.0                 # altezza extra spawn
+SPAWN_TURN_RIGHT_DEG = -25.0    # rotazione spawn (negativo = sinistra)
+ROAD_CORRIDOR_FILTER_M = 5.5    # filter face alberi/bushes entro
+WORLD_COLLECTIONS = [...]       # collezioni blender esportate
+SKIP_MESH_NAMES = []             # mesh per-nome da escludere
 ```
 
-### Installazione manuale (se serve)
+### Scelte tecniche critiche (hard-earned, vedi memoria dettagliata)
 
-1. Copia `output/beamng/macerone3d.zip` in `Documents/BeamNG.drive/<versione>/mods/` (o lascia che lo faccia lo script).
-2. Avvia BeamNG → Singleplayer → Freeroam → "SS17 Valico del Macerone".
+- **DAE Z-up nativo**: BeamNG/Torque ignora `<up_axis>Y_UP</up_axis>`. `obj_to_dae.py` scrive sempre `Z_UP`; export Blender con `forward_axis="Y", up_axis="Z"`. Con Y-up mesh finisce a z=4000 m.
+- **Muso veicolo = −Y locale**: heading `atan2(dx, −dy)`. Con formula standard il veicolo spawna voltato 180°.
+- **z_offset_blender inferito**: `terrain_info.json` dà `min(DEM bbox) ≈ 336 m`, ma `blender_build.py` usa `min(centerline_recompute_z) ≈ 424 m`. Diff ~88 m. `infer_z_offset_blender()` campiona DEM lungo cl e prende mediana.
+- **Coord Blender native**: TSStatic tutti a `(0, 0, 0)`. Spawn a z ~73.75 (non 497). A z alti BeamNG physics ha stranezze.
+- **Solidify SOLO su nomi esatti** `{"Road", "Shoulder_L", "Shoulder_R"}`: linee/catarifrangenti/tombini/patches restano piatti.
+- **Markings +3 cm post-export**: Z-fighting col mesh Road rendeva le linee invisibili.
+- **Terrain mesh Blender come riferimento**: `macerone_terrain_mesh` (oggetto `SatelliteTerrain` nel blend) è il vero ground. Il `.ter` è piatto a −30 m fallback. Evita mismatch tra heightmap DEM fine e terrain mesh coarse.
+- **Drop-to-ground per-isola**: union-find sulle edges del world mesh. Skip oggetti estesi (bbox >30 m). Downshift se `−15 < delta < −0.1`, upshift compatti se `extent<15 m AND 0.1<delta<3`.
+- **Carve terrain mesh post-export**: abbassa vertex del mesh Terrain che sbucano sopra la road (falloff d<6→road−0.3, d<30→road+0.3, d<80→road+4).
+- **Remove buildings on road**: union-find sugli oggetti Building. Se qualsiasi vertex isola <4 m da cl → rimuovi intero edificio.
+- **Satellite analysis**: 10% paved, 87% grass, 0.5% tree. Classificazione via HSV+varianza condiziona clutter/vegetation.
+- **Asfalto colore**: 1526 pixel filtrati (sat<0.12, lum 0.20-0.70), mediana RGB (0.605, 0.623, 0.570). Texture procedurale minimalista (no pattern, solo grana fine).
+- **Nomi material nel blend** (match esatto richiesto):
+  - Road mesh: `Asphalt, AsphaltPatch_Dark, AsphaltPatch_Light, Shoulder, LineWhite, LineYellow, Manhole`
+  - World: `Building, Guardrail, LineWhite, Pole, Roof, Sign, StoneWall, TreeCanopy, TreeTrunk` (singolare!)
+  - Terrain: `SatelliteTerrain` (non "Terrain")
+- **Parapetti ponte per-segmento**: itera ogni coppia consecutiva di centerline points (non linea dritta start↔end) altrimenti attraversa ponti in curva.
+- **TreeBillboard alphaTest=True, alphaRef=100**: BeamNG maschera lo sfondo trasparente del PNG.
+- **`.ter` v9** (non v7, fallisce BeamNG 0.38). TER_SIZE=1024 stabile.
 
-### Scelte tecniche critiche (hard-earned)
+### Street view (provato, NON funziona sulla SS17)
 
-- **DAE Z-up nativo**: BeamNG/Torque ignora il tag `<up_axis>Y_UP</up_axis>`. `tools/beamng/obj_to_dae.py` scrive sempre `Z_UP`; l'export Blender usa `forward_axis="Y", up_axis="Z"`. Con Y-up il mesh finisce a z=4000 m.
-- **Muso veicolo = -Y locale**: heading corretto `atan2(dx, -dy)`. Con la formula standard il veicolo spawna voltato di 180°.
-- **z_offset_blender inferito dal DEM**: `terrain_info.json.z_offset_blender_m` = `min(DEM bbox)` ≈ 336 m, ma `blender_build.py` usa `min(centerline_recompute_z)` ≈ 424 m. Diff ~88 m. `infer_z_offset_blender()` campiona il DEM lungo la centerline e prende mediana.
-- **Heightmap shiftato in coord Blender**: pixel uint16 = `(real_z - z_offset_blender) / 800 * 65535`. TSStatic road/world a `(0, 0, 0)`. Evita z=500 che crea problemi fisici in BeamNG.
-- **Carve heightmap bidirezionale**: blend verso `road_z - 0.8 m` con falloff lineare raggio 8 celle (96 m). Alza il DEM dove troppo basso, abbassa dove troppo alto → paesaggio segue la strada invece di essere sospeso sopra valli o sprofondato in trincea.
-- **Solidify solo su Asphalt/Shoulder**: non su linee/catarifrangenti/tombini/patches (altrimenti sporgono e sbalzano il veicolo).
-- **Filter corridoio per nome mesh**: rimuove face entro 3.5 m solo per `Trees*/Roadside*/Bushes/Rocks/StoneWalls`. Guardrail, Delineators (se abilitati), Signs restano.
-- **TerrainMaterial path**: `/levels/macerone/art/terrains/satellite_diffuse` (senza estensione, leading `/`). `diffuseColor` di fallback (verde-grigio) presente.
-- **`.ter` formato BeamNG 0.38**: version=9 (version 7 non carica più). TER_SIZE=1024 stabile.
-
-### File scripts `tools/beamng/`
-
-| File | Uso |
-|------|-----|
-| `build_full_mod.py` | **orchestrator principale** — genera la mod completa |
-| `build_minimal_mod.py` | baseline "solo strada + terrain flat", utile come fallback di debug |
-| `build_heightmap.py` | genera heightmap PNG16 4096² dal DEM |
-| `obj_to_dae.py` | convertitore OBJ→DAE Z-up (per evitare il Collada exporter di Blender 5.x rimosso) |
-| `build_mod.py`, `build_mod_skeleton.py`, `build_ter.py`, `build_roads.py`, `build_textures.py`, `optimize_satellite.py`, `blender_export.py` | script legacy della vecchia pipeline "DecalRoad", non usati dalla full — mantenuti per riferimento |
+- **Mapillary**: token gratis, ma zero copertura sull'area.
+- **KartaView**: API pubblica restringe a OAuth complesso.
+- **Google Street View**: coperto ma costa ~2.3$/build.
+- → Fallback su **analisi satellite ESRI zoom 17** (~1 m/pixel), sufficiente per classificare paved/tree/grass per zone laterali.
 
 ## Limitazioni note
 
