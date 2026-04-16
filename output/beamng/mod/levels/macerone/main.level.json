@@ -766,10 +766,10 @@
 
           "name" : "theTerrain",
 
-          "position" : [ -6144.0, -6144.0, 0.0 ],
+          "position" : [ -6144.0, -6144.0, -30.0 ],
 
           "squareSize" : 12.0,
-          "maxHeight" : 800.0,
+          "maxHeight" : 10.0,
 
           "terrainFile" : "levels/macerone/theTerrain.ter"
 
@@ -800,6 +800,15 @@
   "collisionType" : "Visible Mesh Final",
   "decalType" : "Visible Mesh Final",
   "shapeName" : "levels/macerone/art/shapes/macerone_roadside.dae"
+},
+        {
+  "class" : "TSStatic",
+  "name" : "macerone_terrain_mesh",
+  "position" : [ 0, 0, 0 ],
+  "allowPlayerStep" : "1",
+  "collisionType" : "Visible Mesh Final",
+  "decalType" : "Visible Mesh Final",
+  "shapeName" : "levels/macerone/art/shapes/macerone_terrain.dae"
 }
 
       ]

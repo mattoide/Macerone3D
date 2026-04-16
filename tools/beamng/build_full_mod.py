@@ -146,8 +146,9 @@ from pathlib import Path
 args = sys.argv[sys.argv.index("--") + 1:]
 road_out = args[0]
 world_out = args[1]
-world_cols_csv = args[2]
-skip_names_csv = args[3] if len(args) > 3 else ""
+terrain_out = args[2]
+world_cols_csv = args[3]
+skip_names_csv = args[4] if len(args) > 4 else ""
 world_cols = [c for c in world_cols_csv.split(",") if c]
 skip_names = set(n for n in skip_names_csv.split(",") if n)
 
@@ -216,7 +217,6 @@ for cname in world_cols:
     print(f"  {cname}: {len(ms)} mesh")
 
 if not world_objs:
-    # Scrivi un OBJ vuoto minimale cosi' il main script capisce che non c'e' mondo
     Path(world_out).write_text("# empty\\n", encoding="utf-8")
     print(f"World: 0 oggetti -> {world_out} (empty)")
 else:
@@ -230,6 +230,27 @@ else:
         export_materials=True,
     )
     print(f"World: {len(world_objs)} oggetti -> {world_out}")
+
+# --- Terrain: esporta la collection Terrain (mesh DEM carvato + Perlin) ---
+terrain_col = bpy.data.collections.get("Terrain")
+if terrain_col is None:
+    Path(terrain_out).write_text("# empty\\n", encoding="utf-8")
+    print(f"Terrain: collezione non trovata -> {terrain_out} (empty)")
+else:
+    terrain_objs = [o for o in terrain_col.all_objects if o.type == "MESH"]
+    if not terrain_objs:
+        Path(terrain_out).write_text("# empty\\n", encoding="utf-8")
+    else:
+        select_only(terrain_objs)
+        bpy.ops.wm.obj_export(
+            filepath=terrain_out,
+            export_selected_objects=True,
+            apply_modifiers=True,
+            forward_axis="Y",
+            up_axis="Z",
+            export_materials=True,
+        )
+        print(f"Terrain: {len(terrain_objs)} oggetti -> {terrain_out}")
 '''
 
 
@@ -238,7 +259,8 @@ SKIP_MESH_NAMES = [
 ]
 
 
-def export_from_blender(road_obj: Path, world_obj: Path) -> None:
+def export_from_blender(road_obj: Path, world_obj: Path,
+                           terrain_obj: Path) -> None:
     script_path = BEAMNG_OUT / "_blender_full_export.py"
     script_path.write_text(BLENDER_EXPORT_SCRIPT, encoding="utf-8")
     world_cols = ",".join(WORLD_COLLECTIONS)
@@ -246,7 +268,7 @@ def export_from_blender(road_obj: Path, world_obj: Path) -> None:
     run("blender_export_full", [
         BLENDER_EXE, "--background", str(BLEND_FILE),
         "--python", str(script_path),
-        "--", str(road_obj), str(world_obj), world_cols, skip,
+        "--", str(road_obj), str(world_obj), str(terrain_obj), world_cols, skip,
     ])
     script_path.unlink(missing_ok=True)
 
@@ -518,6 +540,44 @@ def carve_heightmap_under_road(arr: np.ndarray, elev_min: float,
     return carved
 
 
+def write_flat_fallback_terrain(level_dir: Path) -> tuple[float, float, float]:
+    """Terrain piatto molto basso (-30m) come fallback SOTTO il mesh Blender
+    terrain. BeamNG richiede sempre un TerrainBlock, ma l'utente vede SOLO
+    il mesh Blender carvato che sta sopra."""
+    level_dir.mkdir(parents=True, exist_ok=True)
+    arr = np.zeros((TER_SIZE, TER_SIZE), dtype=np.uint16)
+    layer = np.zeros((TER_SIZE, TER_SIZE), dtype=np.uint8)
+    ter = level_dir / "theTerrain.ter"
+    with ter.open("wb") as f:
+        f.write(struct.pack("<B", 9))
+        f.write(struct.pack("<I", TER_SIZE))
+        f.write(arr.tobytes())
+        f.write(layer.tobytes())
+        names = [TERRAIN_MATERIAL_NAME]
+        f.write(struct.pack("<I", len(names)))
+        for n in names:
+            nb = n.encode("ascii")
+            f.write(struct.pack("<B", len(nb)))
+            f.write(nb)
+    terrain_json = {
+        "datafile": f"levels/{LEVEL_NAME}/theTerrain.ter",
+        "heightMapItemSize": 2,
+        "heightMapSize": TER_SIZE * TER_SIZE,
+        "heightmapImage": f"levels/{LEVEL_NAME}/theTerrain.terrainheightmap.png",
+        "layerMapItemSize": 1,
+        "layerMapSize": TER_SIZE * TER_SIZE,
+        "materials": [TERRAIN_MATERIAL_NAME],
+        "size": TER_SIZE,
+    }
+    (level_dir / "theTerrain.terrain.json").write_text(
+        json.dumps(terrain_json, indent=2), encoding="utf-8"
+    )
+    depth = np.zeros((TER_SIZE, TER_SIZE), dtype=np.uint8)
+    Image.fromarray(depth).save(level_dir / "theTerrain.ter.depth.png", optimize=True)
+    # elev_min = -30m: il TerrainBlock sta 30m sotto la scena. maxHeight piccolo.
+    return 10.0, -30.0, 0.0
+
+
 def write_dem_terrain(level_dir: Path, info: dict,
                        z_offset_blender: float,
                        out_arrays: dict | None = None) -> tuple[float, float, float]:
@@ -668,6 +728,10 @@ def write_materials(level_dir: Path, asphalt_rgb: tuple[float, float, float],
         ("Guardrail", [0.72, 0.74, 0.78]),    # metallo chiaro
         ("Pole", [0.55, 0.55, 0.55]),         # metallo scuro
         ("Sign", [0.92, 0.92, 0.92]),         # bianco cartello
+        # Terrain mesh Blender (collection "Terrain")
+        ("Terrain", [0.42, 0.50, 0.32]),          # verde-grigio base
+        ("TerrainMat", [0.42, 0.50, 0.32]),
+        ("Ground", [0.42, 0.50, 0.32]),
         # Roadside procedural clutter
         ("Rock", [0.55, 0.52, 0.46]),
         ("BushGreen", [0.26, 0.40, 0.20]),
@@ -1229,6 +1293,7 @@ def write_level_json(level_dir: Path,
                       road_shape_rel: str,
                       world_shape_rel: str | None,
                       roadside_shape_rel: str | None,
+                      terrain_shape_rel: str | None,
                       spawn_xyz: tuple[float, float, float],
                       spawn_heading: float,
                       max_height: float,
@@ -1335,6 +1400,13 @@ def write_level_json(level_dir: Path,
                 f"levels/{LEVEL_NAME}/{roadside_shape_rel}",
             )
         )
+    if terrain_shape_rel is not None:
+        tsstatics.append(
+            (
+                "macerone_terrain_mesh",
+                f"levels/{LEVEL_NAME}/{terrain_shape_rel}",
+            )
+        )
 
     tsstatic_blocks = []
     for name, shape in tsstatics:
@@ -1412,10 +1484,11 @@ def main() -> None:
           f"(terrain_info diceva {info['z_offset_blender_m']:.2f}m, diff="
           f"{z_offset_blender - info['z_offset_blender_m']:.2f}m)")
 
-    # 2. Blender export: road (con Solidify) + world (tutto il resto)
+    # 2. Blender export: road (Solidify) + world + terrain mesh
     road_obj = shapes_dir / "macerone_road.obj"
     world_obj = shapes_dir / "macerone_world.obj"
-    export_from_blender(road_obj, world_obj)
+    terrain_obj = shapes_dir / "macerone_terrain.obj"
+    export_from_blender(road_obj, world_obj, terrain_obj)
 
     # 3. OBJ -> DAE
     road_dae = convert_to_dae(road_obj)
@@ -1424,29 +1497,22 @@ def main() -> None:
     world_has_content = world_obj.exists() and world_obj.stat().st_size > 200
     world_rel = None
     if world_has_content:
-        # Filtro oggetti world che invadono il corridoio strada (alberi/rocce
-        # procedurali finiti per sbaglio sull'asfalto, causa bump fisici).
         removed = filter_world_obj_near_road(world_obj, ROAD_CORRIDOR_FILTER_M)
         print(f"  filter corridoio {ROAD_CORRIDOR_FILTER_M}m: "
               f"rimosse {removed} face dal world mesh")
-
-    # 4. Terrain .ter dal DEM (salva array pre/post-carve per drop-to-ground)
-    hm_arrays: dict = {}
-    max_height, elev_min, z_offset_blender = write_dem_terrain(
-        LEVEL_DIR, info, z_offset_blender, out_arrays=hm_arrays,
-    )
-
-    # 4b. Drop-to-ground world: abbassa oggetti (alberi/edifici/muri) dove
-    # il carve ha abbassato il terrain sotto di loro. Evita alberi fluttuanti.
-    if world_has_content:
-        shifted = drop_world_obj_to_terrain(
-            world_obj,
-            hm_arrays["arr_orig"], hm_arrays["arr_carved"],
-            hm_arrays["max_height"],
-        )
-        print(f"  drop-to-ground: shiftati {shifted} vertex del world mesh")
         world_dae = convert_to_dae(world_obj)
         world_rel = world_dae.relative_to(LEVEL_DIR).as_posix()
+
+    terrain_has_content = terrain_obj.exists() and terrain_obj.stat().st_size > 200
+    terrain_rel = None
+    if terrain_has_content:
+        terrain_dae = convert_to_dae(terrain_obj)
+        terrain_rel = terrain_dae.relative_to(LEVEL_DIR).as_posix()
+        print(f"terrain mesh (Blender carved DEM + noise): {terrain_rel}")
+
+    # 4. Terrain .ter: piatto a -30m, fa solo da fallback fuori dal mesh
+    # Blender (BeamNG richiede sempre un TerrainBlock). Mesh Blender sopra.
+    max_height, elev_min, z_offset_blender = write_flat_fallback_terrain(LEVEL_DIR)
 
     # 5. Materiali + satellite texture + asfalto procedurale + detail grass
     asphalt_rgb = sample_asphalt_color_from_satellite()
@@ -1485,7 +1551,7 @@ def main() -> None:
 
     # 7. main.level.json + info.json
     write_level_json(LEVEL_DIR, road_rel, world_rel, roadside_rel,
-                      spawn, heading,
+                      terrain_rel, spawn, heading,
                       max_height, elev_min, z_offset_blender)
     write_empty_jsons(LEVEL_DIR)
     write_preview(LEVEL_DIR)

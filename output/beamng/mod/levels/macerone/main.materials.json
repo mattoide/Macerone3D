@@ -287,6 +287,63 @@
     ],
     "materialTag0": "Miscellaneous"
   },
+  "Terrain": {
+    "name": "Terrain",
+    "mapTo": "Terrain",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.42,
+          0.5,
+          0.32,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "TerrainMat": {
+    "name": "TerrainMat",
+    "mapTo": "TerrainMat",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.42,
+          0.5,
+          0.32,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "Ground": {
+    "name": "Ground",
+    "mapTo": "Ground",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.42,
+          0.5,
+          0.32,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
   "Rock": {
     "name": "Rock",
     "mapTo": "Rock",
