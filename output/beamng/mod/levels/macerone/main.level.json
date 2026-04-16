@@ -777,7 +777,7 @@
         {
   "class" : "TSStatic",
   "name" : "macerone_road_mesh",
-  "position" : [ 0, 0, 336.0778503417969 ],
+  "position" : [ 0, 0, 424.1584861524376 ],
   "allowPlayerStep" : "1",
   "collisionType" : "Visible Mesh Final",
   "decalType" : "Visible Mesh Final",
@@ -786,7 +786,7 @@
         {
   "class" : "TSStatic",
   "name" : "macerone_world_mesh",
-  "position" : [ 0, 0, 336.0778503417969 ],
+  "position" : [ 0, 0, 424.1584861524376 ],
   "allowPlayerStep" : "1",
   "collisionType" : "Visible Mesh Final",
   "decalType" : "Visible Mesh Final",
@@ -854,7 +854,7 @@
           "class" : "SpawnSphere",
           "rotation" : [ 0, 0, 1, -144.69395485073215 ],
           "name" : "spawn_start",
-          "position" : [ 3552.641, -4449.504, 408.8236253417969 ],
+          "position" : [ 3552.641, -4449.504, 496.90426115243764 ],
 
           "autoplaceOnSpawn" : "0",
 

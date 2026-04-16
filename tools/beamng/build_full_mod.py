@@ -86,6 +86,45 @@ def ensure_heightmap() -> dict:
     return json.loads(info.read_text(encoding="utf-8"))
 
 
+def infer_z_offset_blender(info: dict) -> float:
+    """Inferisce il vero z_offset usato da blender_build.py per tradurre la
+    centerline da metri reali a coord Blender (z_blender = real - z_offset).
+
+    terrain_info.json.z_offset_blender_m = min(DEM bbox) = ~336m, ma
+    blender_build.py in realta' usa min(centerline_recompute_z) ~ 419m.
+    Differenza puo' essere 80m: se usata quella sbagliata la road finisce
+    sottoterra e i "muri altissimi" sono il terreno naturale intorno.
+
+    Strategy: per ogni centerline point (x, y, z_csv) campiono DEM(x,y) dal
+    heightmap. In blender_build.py la strada z reale ~ DEM - epsilon (MIN-17),
+    quindi candidate = DEM - z_csv - ROAD_EMBANKMENT(0.35). Ritorno mediana
+    (robust a outlier, mesh carvato e campioni su curve).
+    """
+    Image.MAX_IMAGE_PIXELS = None
+    im = Image.open(BEAMNG_OUT / "heightmap.png")
+    hm = np.array(im, dtype=np.uint16)
+    H, W = hm.shape
+    elev_min = info["elevation_min_m"]
+    elev_max = info["elevation_max_m"]
+    max_h = elev_max - elev_min
+    mpp = info["meters_per_pixel"]
+    half = info["extent_m"] / 2.0
+    offsets = []
+    import csv as _csv
+    with (ROOT / "output" / "centerline.csv").open(newline="", encoding="utf-8") as f:
+        for r in _csv.DictReader(f):
+            x, y, z_csv = float(r["x"]), float(r["y"]), float(r["z"])
+            col = int((x + half) / mpp)
+            row_px = int((half - y) / mpp)  # PNG row 0 = nord
+            if not (0 <= col < W and 0 <= row_px < H):
+                continue
+            dem_real = elev_min + (float(hm[row_px, col]) / 65535.0) * max_h
+            offsets.append(dem_real - z_csv - 0.35)
+    if not offsets:
+        return float(info["z_offset_blender_m"])
+    return float(np.median(offsets))
+
+
 # ---------------------------------------------------------------------------
 # Step 2: Blender export - Road (Solidify) + World (tutto il resto)
 # ---------------------------------------------------------------------------
@@ -247,9 +286,13 @@ def carve_heightmap_under_road(arr: np.ndarray, elev_min: float,
     return carved
 
 
-def write_dem_terrain(level_dir: Path, info: dict) -> tuple[float, float, float]:
+def write_dem_terrain(level_dir: Path, info: dict,
+                       z_offset_blender: float) -> tuple[float, float, float]:
     """Scrive theTerrain.ter usando l'heightmap DEM reale. Ritorna
-    (max_height, elev_min, z_offset_blender)."""
+    (max_height, elev_min, z_offset_blender).
+    z_offset_blender passato esternamente (inferito via infer_z_offset_blender)
+    perche' quello in terrain_info.json e' min(DEM) che NON matcha l'offset
+    usato da blender_build.py (= min(centerline_recompute))."""
     hm_png = BEAMNG_OUT / "heightmap.png"
     Image.MAX_IMAGE_PIXELS = None
     im = Image.open(hm_png)
@@ -257,7 +300,6 @@ def write_dem_terrain(level_dir: Path, info: dict) -> tuple[float, float, float]
     elev_min = float(info["elevation_min_m"])
     elev_max = float(info["elevation_max_m"])
     max_height = elev_max - elev_min
-    z_offset_blender = float(info["z_offset_blender_m"])
 
     # Downsample a TER_SIZE
     if TER_SIZE != source_size:
@@ -633,6 +675,12 @@ def main() -> None:
     # 1. Heightmap
     info = ensure_heightmap()
 
+    # 1b. Inferisco il vero z_offset_blender (diverso da terrain_info.json)
+    z_offset_blender = infer_z_offset_blender(info)
+    print(f"z_offset_blender inferito: {z_offset_blender:.2f}m "
+          f"(terrain_info diceva {info['z_offset_blender_m']:.2f}m, diff="
+          f"{z_offset_blender - info['z_offset_blender_m']:.2f}m)")
+
     # 2. Blender export: road (con Solidify) + world (tutto il resto)
     road_obj = shapes_dir / "macerone_road.obj"
     world_obj = shapes_dir / "macerone_world.obj"
@@ -648,8 +696,10 @@ def main() -> None:
         world_dae = convert_to_dae(world_obj)
         world_rel = world_dae.relative_to(LEVEL_DIR).as_posix()
 
-    # 4. Terrain .ter dal DEM
-    max_height, elev_min, z_offset_blender = write_dem_terrain(LEVEL_DIR, info)
+    # 4. Terrain .ter dal DEM (usa z_offset_blender inferito)
+    max_height, elev_min, z_offset_blender = write_dem_terrain(
+        LEVEL_DIR, info, z_offset_blender
+    )
 
     # 5. Materiali + satellite texture
     write_materials(LEVEL_DIR)
