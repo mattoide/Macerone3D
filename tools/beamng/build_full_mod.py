@@ -234,7 +234,7 @@ else:
 
 
 SKIP_MESH_NAMES = [
-    "Delineators",  # paletti bianchi bassi al bordo strada, non servono
+    # Delineators riabilitati: aiutano a "riempire" il bordo strada.
 ]
 
 
@@ -568,8 +568,8 @@ def write_materials(level_dir: Path, asphalt_rgb: tuple[float, float, float],
             "diffuseColor": [0.38, 0.48, 0.30, 1.0],
             "diffuseSize": 12288,
             "detailMap": f"levels/{LEVEL_NAME}/art/terrains/detail_grass.png",
-            "detailSize": 10,
-            "detailStrength": 0.7,
+            "detailSize": 60,
+            "detailStrength": 0.30,
             "groundmodelName": "GRASS",
         }
     }
@@ -581,9 +581,9 @@ def write_materials(level_dir: Path, asphalt_rgb: tuple[float, float, float],
     # per ogni material del .mtl; qui creiamo entries compatibili con i nomi
     # che compaiono tipicamente nei .mtl di Blender.
     a_r, a_g, a_b = asphalt_rgb
-    # Asfalto piu' scuro del satellite (che e' sovraesposto). Il sample dava
-    # ~0.60; riduciamo a 0.58x per grigio scuro realistico.
-    a_r *= 0.58; a_g *= 0.58; a_b *= 0.58
+    # Asfalto base_color material (fallback se texture non carica): grigio
+    # medio 0.80x del sample satellite.
+    a_r *= 0.80; a_g *= 0.80; a_b *= 0.80
     asphalt_dark = [a_r * 0.7, a_g * 0.7, a_b * 0.7]
     asphalt_light = [min(1.0, a_r * 1.25), min(1.0, a_g * 1.25), min(1.0, a_b * 1.25)]
     shoulder_rgb = [min(1.0, a_r * 1.15), min(1.0, a_g * 1.12), min(1.0, a_b * 1.05)]
@@ -607,7 +607,10 @@ def write_materials(level_dir: Path, asphalt_rgb: tuple[float, float, float],
         ("Guardrail", [0.72, 0.74, 0.78]),    # metallo chiaro
         ("Pole", [0.55, 0.55, 0.55]),         # metallo scuro
         ("Sign", [0.92, 0.92, 0.92]),         # bianco cartello
-        # Fallback generici (in caso il blend abbia altri nomi)
+        # Roadside procedural clutter
+        ("Rock", [0.55, 0.52, 0.46]),
+        ("BushGreen", [0.26, 0.40, 0.20]),
+        # Fallback generici
         ("default", [0.55, 0.55, 0.55]),
         ("DefaultMat", [0.55, 0.55, 0.55]),
     ]
@@ -709,10 +712,10 @@ def generate_asphalt_texture(level_dir: Path,
 
     delta = big + med + fine + dark_grit + light_grit + cracks + joints + oil
 
-    # Base piu' scuro del sample satellite: sat rgb tendeva a 0.60 (sovrae-
-    # sposto), asfalto reale e' grigio scuro saturo ~0.30-0.35.
+    # Base color: il satellite ha RGB ~0.60 (sovraesposto). Un asfalto reale
+    # di una SS italiana e' grigio medio (circa 0.45-0.50).
     r, g, b = base_rgb
-    base_scale = 0.58  # rendi piu' scuro
+    base_scale = 0.80  # asfalto grigio medio (non troppo scuro)
     r = r * base_scale
     g = g * base_scale
     b = b * base_scale
@@ -733,19 +736,21 @@ def generate_asphalt_texture(level_dir: Path,
 
 
 def generate_terrain_detail_texture(level_dir: Path) -> str:
-    """Texture micro-dettaglio erba/terriccio per il TerrainMaterial: da
-    vicino la satellite e' troppo stretched (12288m per tile), serve un
-    detailMap che ripete ogni ~10m per dare grana al paesaggio."""
+    """DetailMap per il TerrainMaterial: grana fine puramente noise, senza
+    elementi riconoscibili (altrimenti il tiling a tile-size si vede).
+    Tiled a 60m -> ripetizione meno evidente.
+    """
     size = 512
     rng = np.random.default_rng(7)
-    # mix verde erba + chiazze terriccio
-    green = rng.normal(0.0, 0.08, (size, size)).astype(np.float32)
-    brown_blob = rng.normal(0.0, 1.0, (size // 16, size // 16)).astype(np.float32)
-    brown_img = Image.fromarray(brown_blob, mode="F").resize((size, size), Image.BICUBIC)
-    brown = np.array(brown_img, dtype=np.float32)
-    R = np.clip(0.35 + green * 0.3 + brown * 0.06, 0.1, 0.9)
-    G = np.clip(0.45 + green - brown * 0.08, 0.1, 0.9)
-    B = np.clip(0.28 + green * 0.4, 0.1, 0.9)
+    # Noise high-frequency senza blob/macchie grandi (evita pattern tiled)
+    n1 = rng.normal(0.0, 0.09, (size, size)).astype(np.float32)
+    # tiny noise (fine grain)
+    n2 = rng.normal(0.0, 0.04, (size, size)).astype(np.float32)
+    delta = n1 * 0.6 + n2 * 0.4
+    # base verde-grigio uniforme (fa solo grana)
+    R = np.clip(0.38 + delta * 0.8, 0.15, 0.75)
+    G = np.clip(0.44 + delta * 0.9, 0.18, 0.80)
+    B = np.clip(0.30 + delta * 0.7, 0.12, 0.65)
     img = np.stack([R, G, B], axis=-1)
     img_u8 = (img * 255.0).astype(np.uint8)
     tex_dir = level_dir / "art" / "terrains"
@@ -754,6 +759,140 @@ def generate_terrain_detail_texture(level_dir: Path) -> str:
     Image.fromarray(img_u8).save(out, optimize=True)
     print(f"Terrain detailMap {size}x{size}: {out.relative_to(MOD_DIR)}")
     return f"levels/{LEVEL_NAME}/art/terrains/detail_grass.png"
+
+
+def generate_roadside_clutter(level_dir: Path) -> Path | None:
+    """Genera un OBJ con pietre e ciuffi sparsi al bordo strada, ogni ~18m
+    alternando lato sx/dx, offset laterale 3.5-6m dal centerline. Serve a
+    "riempire" i bordi che nella realta' non sono mai vuoti.
+    Ritorna path del DAE (dopo conversione)."""
+    import csv as _csv
+    cl_path = ROOT / "output" / "centerline.csv"
+    if not cl_path.exists():
+        return None
+    with cl_path.open(newline="", encoding="utf-8") as f:
+        cl = [(float(r["x"]), float(r["y"]), float(r["z"])) for r in _csv.DictReader(f)]
+    if len(cl) < 10:
+        return None
+
+    rng = np.random.default_rng(1234)
+    shapes_dir = level_dir / "art" / "shapes"
+    shapes_dir.mkdir(parents=True, exist_ok=True)
+    obj_path = shapes_dir / "macerone_roadside.obj"
+    mtl_path = shapes_dir / "macerone_roadside.mtl"
+
+    verts: list[tuple[float, float, float]] = []
+    faces: list[tuple[list[int], str]] = []
+
+    def add_rock(cx: float, cy: float, cz: float, size: float):
+        # icosaedro-like grezzo: 8 vertici piramide doppia
+        h = size
+        s = size * 0.8
+        top = (cx + rng.normal(0, 0.1 * s), cy + rng.normal(0, 0.1 * s), cz + h)
+        bot = (cx, cy, cz)
+        ring = []
+        for k in range(5):
+            ang = 2 * math.pi * k / 5 + rng.uniform(0, 0.5)
+            rr = s * rng.uniform(0.7, 1.1)
+            ring.append((cx + rr * math.cos(ang),
+                          cy + rr * math.sin(ang),
+                          cz + h * 0.35 * rng.uniform(0.6, 1.0)))
+        base = len(verts) + 1
+        verts.append(top); verts.append(bot); verts.extend(ring)
+        # top faces
+        for k in range(5):
+            a = base + 0  # top
+            b = base + 2 + k
+            c = base + 2 + (k + 1) % 5
+            faces.append(([a, b, c], "Rock"))
+        for k in range(5):
+            a = base + 1  # bottom
+            b = base + 2 + (k + 1) % 5
+            c = base + 2 + k
+            faces.append(([a, b, c], "Rock"))
+
+    def add_bush(cx: float, cy: float, cz: float, size: float):
+        # piramide triangolare (tetraedro) verdino
+        h = size * 1.5
+        s = size
+        base_pts = []
+        for k in range(4):
+            ang = 2 * math.pi * k / 4 + rng.uniform(0, 0.4)
+            base_pts.append((cx + s * math.cos(ang),
+                              cy + s * math.sin(ang), cz))
+        top = (cx + rng.normal(0, s * 0.2),
+                cy + rng.normal(0, s * 0.2), cz + h)
+        base = len(verts) + 1
+        verts.extend(base_pts)
+        verts.append(top)
+        for k in range(4):
+            a = base + k
+            b = base + (k + 1) % 4
+            c = base + 4  # top
+            faces.append(([a, b, c], "BushGreen"))
+        # base quad (due tri)
+        faces.append(([base + 0, base + 2, base + 1], "BushGreen"))
+        faces.append(([base + 0, base + 3, base + 2], "BushGreen"))
+
+    # Cammina lungo la centerline con step ~18m
+    step_m = 18.0
+    acc = 0.0
+    last_x, last_y = cl[0][0], cl[0][1]
+    side = 1  # alterna
+    count_rock = 0
+    count_bush = 0
+    for (x, y, z) in cl[1:]:
+        dx = x - last_x; dy = y - last_y
+        d = math.hypot(dx, dy)
+        acc += d
+        last_x, last_y = x, y
+        if acc < step_m:
+            continue
+        acc = 0.0
+        # Vettore perpendicolare normalizzato
+        if d < 0.01:
+            continue
+        nx, ny = -dy / d, dx / d
+        for _ in range(2):  # un oggetto per lato
+            offset = rng.uniform(3.5, 6.0) * side
+            ox = x + nx * offset + rng.normal(0, 0.3)
+            oy = y + ny * offset + rng.normal(0, 0.3)
+            oz = z - 0.1  # leggermente sotto road level
+            if rng.random() < 0.55:
+                add_rock(ox, oy, oz, rng.uniform(0.25, 0.55))
+                count_rock += 1
+            else:
+                add_bush(ox, oy, oz, rng.uniform(0.30, 0.60))
+                count_bush += 1
+            side *= -1
+
+    if not verts:
+        return None
+
+    # Scrivi OBJ
+    lines = [
+        "# macerone_roadside: procedurale sassi+cespugli al bordo\n",
+        "mtllib macerone_roadside.mtl\n",
+    ]
+    for (vx, vy, vz) in verts:
+        lines.append(f"v {vx:.3f} {vy:.3f} {vz:.3f}\n")
+    current_mat = None
+    lines.append("o Roadside\n")
+    for (idx, mat) in faces:
+        if mat != current_mat:
+            lines.append(f"usemtl {mat}\n")
+            current_mat = mat
+        lines.append(f"f {idx[0]} {idx[1]} {idx[2]}\n")
+    obj_path.write_text("".join(lines), encoding="utf-8")
+
+    mtl_lines = [
+        "newmtl Rock\nKd 0.52 0.50 0.45\n",
+        "newmtl BushGreen\nKd 0.28 0.40 0.22\n",
+    ]
+    mtl_path.write_text("".join(mtl_lines), encoding="utf-8")
+    print(f"Roadside clutter: {count_rock} pietre + {count_bush} cespugli -> "
+          f"{obj_path.relative_to(MOD_DIR)}")
+    return obj_path
 
 
 def copy_satellite_texture(level_dir: Path) -> None:
@@ -825,6 +964,7 @@ def heading_to_quat(h: float) -> tuple[float, float, float, float]:
 def write_level_json(level_dir: Path,
                       road_shape_rel: str,
                       world_shape_rel: str | None,
+                      roadside_shape_rel: str | None,
                       spawn_xyz: tuple[float, float, float],
                       spawn_heading: float,
                       max_height: float,
@@ -922,6 +1062,13 @@ def write_level_json(level_dir: Path,
             (
                 "macerone_world_mesh",
                 f"levels/{LEVEL_NAME}/{world_shape_rel}",
+            )
+        )
+    if roadside_shape_rel is not None:
+        tsstatics.append(
+            (
+                "macerone_roadside_mesh",
+                f"levels/{LEVEL_NAME}/{roadside_shape_rel}",
             )
         )
 
@@ -1026,7 +1173,7 @@ def main() -> None:
         LEVEL_DIR, info, z_offset_blender
     )
 
-    # 5. Materiali + satellite texture + asfalto procedurale
+    # 5. Materiali + satellite texture + asfalto procedurale + detail grass
     asphalt_rgb = sample_asphalt_color_from_satellite()
     print(f"asfalto RGB campionato: "
           f"({asphalt_rgb[0]:.3f}, {asphalt_rgb[1]:.3f}, {asphalt_rgb[2]:.3f})")
@@ -1036,6 +1183,13 @@ def main() -> None:
     asphalt_map = f"levels/{LEVEL_NAME}/art/road/asphalt_base.png"
     write_materials(LEVEL_DIR, asphalt_rgb, asphalt_color_map=asphalt_map)
     copy_satellite_texture(LEVEL_DIR)
+
+    # 5b. Roadside clutter procedurale (sassi + ciuffi ai bordi strada)
+    roadside_obj = generate_roadside_clutter(LEVEL_DIR)
+    roadside_rel = None
+    if roadside_obj is not None:
+        roadside_dae = convert_to_dae(roadside_obj)
+        roadside_rel = roadside_dae.relative_to(LEVEL_DIR).as_posix()
 
     # 6. Spawn con tuning offset (forward/up/turn_right dai parametri globali)
     sx, sy, _sz = read_first_centerline_point()
@@ -1055,7 +1209,8 @@ def main() -> None:
           f"(forward={SPAWN_FORWARD_M}m up={SPAWN_UP_M}m turn_right={SPAWN_TURN_RIGHT_DEG}deg)")
 
     # 7. main.level.json + info.json
-    write_level_json(LEVEL_DIR, road_rel, world_rel, spawn, heading,
+    write_level_json(LEVEL_DIR, road_rel, world_rel, roadside_rel,
+                      spawn, heading,
                       max_height, elev_min, z_offset_blender)
     write_empty_jsons(LEVEL_DIR)
     write_preview(LEVEL_DIR)

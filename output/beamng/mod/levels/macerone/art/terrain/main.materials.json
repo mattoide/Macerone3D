@@ -12,8 +12,8 @@
     ],
     "diffuseSize": 12288,
     "detailMap": "levels/macerone/art/terrains/detail_grass.png",
-    "detailSize": 10,
-    "detailStrength": 0.7,
+    "detailSize": 60,
+    "detailStrength": 0.3,
     "groundmodelName": "GRASS"
   }
 }

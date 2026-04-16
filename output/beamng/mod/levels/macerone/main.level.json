@@ -791,6 +791,15 @@
   "collisionType" : "Visible Mesh Final",
   "decalType" : "Visible Mesh Final",
   "shapeName" : "levels/macerone/art/shapes/macerone_world.dae"
+},
+        {
+  "class" : "TSStatic",
+  "name" : "macerone_roadside_mesh",
+  "position" : [ 0, 0, 0 ],
+  "allowPlayerStep" : "1",
+  "collisionType" : "Visible Mesh Final",
+  "decalType" : "Visible Mesh Final",
+  "shapeName" : "levels/macerone/art/shapes/macerone_roadside.dae"
 }
 
       ]

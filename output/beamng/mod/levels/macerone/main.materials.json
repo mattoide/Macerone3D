@@ -6,9 +6,9 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.34309028156221616,
-          0.34661587505120117,
-          0.3203373332620968,
+          0.47322797456857413,
+          0.4780908621395879,
+          0.4418445976028922,
           1.0
         ],
         "colorMap": "levels/macerone/art/road/asphalt_base.png"
@@ -26,9 +26,9 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.2401631970935513,
-          0.2426311125358408,
-          0.22423613328346773,
+          0.3312595821980019,
+          0.3346636034977115,
+          0.3092912183220245,
           1.0
         ],
         "colorMap": "levels/macerone/art/road/asphalt_base.png"
@@ -46,9 +46,9 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.4288628519527702,
-          0.43326984381400147,
-          0.400421666577621,
+          0.5915349682107176,
+          0.5976135776744849,
+          0.5523057470036152,
           1.0
         ],
         "colorMap": "levels/macerone/art/road/asphalt_base.png"
@@ -66,9 +66,9 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.3945538237965486,
-          0.38820978005734535,
-          0.33635419992520166,
+          0.5442121707538602,
+          0.5354617655963385,
+          0.46393682748303683,
           1.0
         ]
       },
@@ -278,6 +278,44 @@
           0.92,
           0.92,
           0.92,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "Rock": {
+    "name": "Rock",
+    "mapTo": "Rock",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.55,
+          0.52,
+          0.46,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
+  "BushGreen": {
+    "name": "BushGreen",
+    "mapTo": "BushGreen",
+    "class": "Material",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.26,
+          0.4,
+          0.2,
           1.0
         ]
       },
