@@ -158,14 +158,14 @@ def select_only(objs):
     if objs:
         bpy.context.view_layer.objects.active = objs[0]
 
-# --- Road: Solidify SOLO su Asphalt e Shoulder, non su elementi sottili
-# (linee, catarifrangenti, tombini, patches) che non devono sporgere dalla
-# superficie.
-SOLIDIFY_KEYWORDS = ("Asphalt", "Shoulder")
+# --- Road: Solidify sui mesh principali che formano la carreggiata. Nomi
+# esatti del blend: Road (asfalto), Shoulder_L/R (banchine). NON:
+# RoadStuds (catarifrangenti), Manholes (tombini), Marking* (linee),
+# Patches (rappezzi), StopLines (strisce stop) che sono sottili e non
+# devono sporgere.
+SOLIDIFY_EXACT = {"Road", "Shoulder_L", "Shoulder_R"}
 def needs_solidify(name: str) -> bool:
-    if "Patch" in name:  # AsphaltPatches va a filo con l'asfalto, no solidify
-        return False
-    return any(k in name for k in SOLIDIFY_KEYWORDS)
+    return name in SOLIDIFY_EXACT
 
 road_col = bpy.data.collections.get("Road")
 if road_col is None:
@@ -956,7 +956,9 @@ def main() -> None:
     asphalt_rgb = sample_asphalt_color_from_satellite()
     print(f"asfalto RGB campionato: "
           f"({asphalt_rgb[0]:.3f}, {asphalt_rgb[1]:.3f}, {asphalt_rgb[2]:.3f})")
-    asphalt_map = generate_asphalt_texture(LEVEL_DIR, asphalt_rgb)
+    generate_asphalt_texture(LEVEL_DIR, asphalt_rgb)
+    # Material colorMap SENZA leading "/" (convenzione BeamNG Material).
+    asphalt_map = f"levels/{LEVEL_NAME}/art/road/asphalt_base"
     write_materials(LEVEL_DIR, asphalt_rgb, asphalt_color_map=asphalt_map)
     copy_satellite_texture(LEVEL_DIR)
 
