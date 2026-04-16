@@ -88,5 +88,27 @@
       {}
     ],
     "materialTag0": "Miscellaneous"
+  },
+  "macerone_satellite": {
+    "name": "macerone_satellite",
+    "mapTo": "macerone_satellite",
+    "class": "Material",
+    "persistentId": "a1b2c3d4-9999-0000-0000-000000000099",
+    "Stages": [
+      {
+        "colorMap": "/levels/macerone/art/terrains/satellite_diffuse.jpg",
+        "detailScale": [
+          1,
+          1
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "detailDistance": "2000",
+    "detailSize": "1",
+    "diffuseSize": "1",
+    "materialTag0": "Miscellaneous"
   }
 }

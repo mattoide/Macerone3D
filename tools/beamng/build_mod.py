@@ -66,6 +66,11 @@ def main() -> None:
 
     run("mod_skeleton", [py, str(TOOLS / "build_mod_skeleton.py")])
 
+    # Genera .ter binary + terrain.json + patcha main.level.json TerrainBlock.
+    # Cosi' il livello carica con il terreno GIA' presente, senza dover
+    # lanciare il Terrain Importer manualmente.
+    run("build_ter", [py, str(TOOLS / "build_ter.py")])
+
     # Texture PBR asfalto (dopo mod_skeleton, scrivono in mod/levels/.../art/road/)
     run("textures", [py, str(TOOLS / "build_textures.py")])
 
