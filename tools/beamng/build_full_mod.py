@@ -220,15 +220,13 @@ def convert_to_dae(obj_path: Path) -> Path:
 # Step 3: .ter binary dal heightmap DEM + terrain.json
 # ---------------------------------------------------------------------------
 def carve_heightmap_under_road(arr: np.ndarray, elev_min: float,
-                                 max_height: float, z_offset_blender: float) -> int:
-    """Abbassa dolcemente il heightmap DEM verso la quota strada, cosi' il
-    terreno non fa muro invisibile dove la SS17 passa in trincea (il DEM a
-    12m/cell media tra pareti e fondo). Opera in-place su `arr` uint16.
+                                 max_height: float, z_offset_blender: float,
+                                 target_is_blender_z: bool = False) -> int:
+    """Abbassa dolcemente il heightmap DEM verso la quota strada. Usa coord
+    REALI DEM: per ogni centerline point target = (real_road_z - 2m) / maxH.
 
-    Strategy: per ogni centerline point calcolo target = real_road_z - 2m.
-    Raggio 8 celle (~100m) con falloff LINEARE: al centro full carve, al
-    bordo nessun carve. Evita cosi' discontinuita' ripide (picchi assurdi)
-    che si avevano con carve a raggio fisso 2.
+    Se `target_is_blender_z=True` il target e' in coord Blender (road_z =
+    z_blender), altrimenti real (road_z = z_blender + z_offset_blender).
     """
     import csv as _csv
     cl_path = ROOT / "output" / "centerline.csv"
@@ -255,8 +253,11 @@ def carve_heightmap_under_road(arr: np.ndarray, elev_min: float,
             x = float(row["x"])
             y = float(row["y"])
             zb = float(row["z"])
-            real_z = zb + z_offset_blender
-            target = real_z - elev_min - 2.0
+            if target_is_blender_z:
+                road_z = zb
+            else:
+                road_z = zb + z_offset_blender
+            target = road_z - elev_min - 2.0
             if target < 0:
                 target = 0.0
             tgt_u16 = min(65535.0, target / max_height * 65535.0)
@@ -288,29 +289,44 @@ def carve_heightmap_under_road(arr: np.ndarray, elev_min: float,
 
 def write_dem_terrain(level_dir: Path, info: dict,
                        z_offset_blender: float) -> tuple[float, float, float]:
-    """Scrive theTerrain.ter usando l'heightmap DEM reale. Ritorna
-    (max_height, elev_min, z_offset_blender).
-    z_offset_blender passato esternamente (inferito via infer_z_offset_blender)
-    perche' quello in terrain_info.json e' min(DEM) che NON matcha l'offset
-    usato da blender_build.py (= min(centerline_recompute))."""
+    """Scrive theTerrain.ter SHIFTATO in coord Blender: ogni pixel uint16
+    rappresenta (real_z - z_offset_blender), cosi' il terreno si allinea
+    alla road che ha vertici in coord Blender (z~72 invece di z~496).
+    Mantenere Z piccoli (<1000) evita stranezze fisiche di BeamNG a quote
+    molto alte e tiene spawn identico al minimal che funzionava.
+
+    Ritorna (max_height_output, terrain_z_position, z_offset_blender).
+    """
     hm_png = BEAMNG_OUT / "heightmap.png"
     Image.MAX_IMAGE_PIXELS = None
     im = Image.open(hm_png)
     source_size = info["size_px"]
-    elev_min = float(info["elevation_min_m"])
-    elev_max = float(info["elevation_max_m"])
-    max_height = elev_max - elev_min
+    elev_min_orig = float(info["elevation_min_m"])
+    elev_max_orig = float(info["elevation_max_m"])
+    max_height_orig = elev_max_orig - elev_min_orig
 
     # Downsample a TER_SIZE
     if TER_SIZE != source_size:
         im = im.resize((TER_SIZE, TER_SIZE), Image.BILINEAR)
-    arr = np.array(im, dtype=np.uint16)
+    arr_orig = np.array(im, dtype=np.uint16)
     # Nel PNG row 0 = nord; in Torque3D terrain row 0 = sud.
-    arr = np.flipud(arr)
+    arr_orig = np.flipud(arr_orig)
 
-    # Carve sotto la strada: evita che il DEM (che a 12m/cell media tra pareti
-    # di trincea) faccia muro invisibile dove la strada e' scavata.
-    carved = carve_heightmap_under_road(arr, elev_min, max_height, z_offset_blender)
+    # Converto da uint16 a real elevation, shiftato in coord Blender.
+    real_z = elev_min_orig + (arr_orig.astype(np.float32) / 65535.0) * max_height_orig
+    blender_z = real_z - z_offset_blender
+
+    # Il nuovo range: clip su [0, max_height_shifted]. z_blender puo' essere
+    # negativo (aree sotto z_offset) - le portiamo a 0 (perdita trascurabile
+    # lontano dalla strada). Il range utile sulla strada e' 0..~700m.
+    max_height_shifted = 800.0  # copre range centerline (0..600) con margine
+    blender_z_clipped = np.clip(blender_z, 0.0, max_height_shifted)
+    arr = (blender_z_clipped / max_height_shifted * 65535.0).astype(np.uint16)
+
+    # Carve sotto la strada: target e' in coord Blender (identico alla road).
+    carved = carve_heightmap_under_road(arr, 0.0, max_height_shifted,
+                                          z_offset_blender,
+                                          target_is_blender_z=True)
     print(f"  heightmap carve: abbassate {carved} celle sotto la centerline")
 
     layer = np.zeros((TER_SIZE, TER_SIZE), dtype=np.uint8)
@@ -328,7 +344,7 @@ def write_dem_terrain(level_dir: Path, info: dict,
             f.write(struct.pack("<B", len(nb)))
             f.write(nb)
     print(f"Scritto {ter}  ({ter.stat().st_size} bytes)  "
-          f"maxHeight={max_height}  elev_min={elev_min}  "
+          f"maxHeight={max_height_shifted} (shifted)  "
           f"z_offset_blender={z_offset_blender:.2f}")
 
     terrain_json = {
@@ -348,7 +364,8 @@ def write_dem_terrain(level_dir: Path, info: dict,
     depth = np.zeros((TER_SIZE, TER_SIZE), dtype=np.uint8)
     Image.fromarray(depth).save(level_dir / "theTerrain.ter.depth.png",
                                   optimize=True)
-    return max_height, elev_min, z_offset_blender
+    # Il terrain e' ora in coord Blender: maxHeight_shifted e elev_min=0.
+    return max_height_shifted, 0.0, z_offset_blender
 
 
 # ---------------------------------------------------------------------------
@@ -587,10 +604,9 @@ def write_level_json(level_dir: Path,
         return block
     tpl = re.sub(r'\{\s*"class"\s*:\s*"SpawnSphere".*?\}', patch_ss, tpl, flags=re.S)
 
-    # --- TSStatic Road + World @ (0, 0, z_offset_blender) ---
-    # Le coord delle mesh Blender hanno z relativa a z_offset_blender (min DEM).
-    # Sommando z_offset_blender alla position, i vertici finiscono alla quota
-    # reale del DEM (e coincidono col terrain heightmap).
+    # --- TSStatic Road + World @ (0, 0, 0) ---
+    # Il terrain e' gia' shiftato in coord Blender nel heightmap, quindi le
+    # mesh con z~72 stanno sopra il terreno shiftato senza offset.
     tsstatics = [
         (
             "macerone_road_mesh",
@@ -611,7 +627,7 @@ def write_level_json(level_dir: Path,
             '{\n'
             '  "class" : "TSStatic",\n'
             f'  "name" : "{name}",\n'
-            f'  "position" : [ 0, 0, {z_offset_blender} ],\n'
+            '  "position" : [ 0, 0, 0 ],\n'
             '  "allowPlayerStep" : "1",\n'
             '  "collisionType" : "Visible Mesh Final",\n'
             '  "decalType" : "Visible Mesh Final",\n'
@@ -626,7 +642,7 @@ def write_level_json(level_dir: Path,
                    tpl, count=1, flags=re.S)
 
     (level_dir / "main.level.json").write_text(tpl, encoding="utf-8")
-    print(f"main.level.json scritto (road + world TSStatic @ z={z_offset_blender:.2f}, "
+    print(f"main.level.json scritto (road+world TSStatic @ (0,0,0), "
           f"spawn @ {spawn_xyz}, heading={heading_deg:.1f} deg)")
 
 
@@ -705,13 +721,12 @@ def main() -> None:
     write_materials(LEVEL_DIR)
     copy_satellite_texture(LEVEL_DIR)
 
-    # 6. Spawn (10cm sopra top asfalto, z_offset_blender aggiunto per world)
+    # 6. Spawn (10cm sopra top asfalto, coord Blender native come il minimal)
     sx, sy, _sz = read_first_centerline_point()
     top_z = road_top_z_at(road_obj, sx, sy, radius=3.0)
-    # coord BeamNG world: x/y Blender diretti; z = top_blender + z_offset + 0.1
-    spawn = (sx, sy, top_z + z_offset_blender + 0.10)
+    spawn = (sx, sy, top_z + 0.10)
     heading = read_spawn_heading()
-    print(f"road top z (Blender): {top_z:.3f}  ->  spawn world z: {spawn[2]:.3f}")
+    print(f"road top z (Blender): {top_z:.3f}  ->  spawn z: {spawn[2]:.3f}")
     print(f"spawn heading: {math.degrees(heading):.1f} deg")
 
     # 7. main.level.json + info.json
