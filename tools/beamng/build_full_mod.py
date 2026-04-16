@@ -457,18 +457,19 @@ def carve_heightmap_under_road(arr: np.ndarray, elev_min: float,
 
             sub = arr_f[r0c:r1c, c0c:c1c]
             a = alpha[kr0:kr1, kc0:kc1]
-            # Upper bound HARD: road+0.4m per TUTTO il corridoio 100m, no
-            # falloff. Evita che il DEM naturale passi sopra la strada in
-            # qualsiasi punto entro vista. Al di fuori del kernel (a<=0)
-            # il terreno rimane invariato.
+            # Upper bound HARD: road+0.4m per TUTTO il corridoio (no falloff).
+            # Il carve abbassa SEMPRE se il terreno supera la road.
             upper_hard_u16 = upper_u16 + (0.5 / max_height * 65535.0)
-            # Lower bound: falloff normale (il terreno puo' scendere in valli
-            # lontane con transizione smooth).
-            relax_lower_u16 = (1.0 - a) * 30000.0
-            lower_bound = np.maximum(0.0, lower_u16 - relax_lower_u16)
+            # Lower bound ATTIVO SOLO nel plateau (a quasi 1): garantisce
+            # che il terreno sia "attaccato" sotto la strada nel plateau.
+            # Fuori plateau NON alza il terreno (altrimenti centerline points
+            # con z diversi forzerebbero il terrain sopra la road locale
+            # quando la strada sale/scende nelle vicinanze).
+            in_plateau = a >= 0.95
+            lower_effective = np.where(in_plateau, lower_u16, 0.0).astype(np.float32)
             in_kernel = a > 0
             new = np.where(in_kernel,
-                             np.clip(sub, lower_bound, upper_hard_u16),
+                             np.clip(sub, lower_effective, upper_hard_u16),
                              sub)
             changed = int((np.abs(new - sub) > 0.5).sum())
             carved += changed
