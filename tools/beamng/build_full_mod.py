@@ -53,7 +53,13 @@ TER_EXTENT = TER_SIZE * TER_SQUARESIZE
 # Offset rispetto al primo punto centerline. "Forward" = direzione del muso.
 SPAWN_FORWARD_M = 5.0      # metri avanti lungo la direzione dell'auto
 SPAWN_UP_M = 1.0            # metri in alto (oltre ai 0.10 sopra asfalto)
-SPAWN_TURN_RIGHT_DEG = 20.0  # gradi di rotazione a destra (CW dall'alto)
+SPAWN_TURN_RIGHT_DEG = -25.0  # gradi di rotazione a destra (negativo = sx)
+
+# --- Filtro oggetti world intrusivi ----------------------------------------
+# Triangoli del world mesh con centroide entro questa distanza dalla
+# centerline vengono rimossi: alberi procedurali, bushes, rocce che sono
+# finiti casualmente sull'asfalto.
+ROAD_CORRIDOR_FILTER_M = 3.5
 
 # Collezioni Blender da esportare come "world" (tutto tranne Road e roba troppo
 # pesante tipo Grass/Bushes). Se una non esiste, viene saltata.
@@ -223,6 +229,120 @@ def convert_to_dae(obj_path: Path) -> Path:
 
 
 # ---------------------------------------------------------------------------
+# Colore asfalto medio campionato dall'immagine satellite sulla centerline
+# ---------------------------------------------------------------------------
+def sample_asphalt_color_from_satellite() -> tuple[float, float, float]:
+    """Apre output/satellite.png e campiona il colore dei pixel che cadono
+    sulla centerline (lat/lon in road_data.json). Media RGB normalizzato
+    [0..1]. Se qualcosa manca, fallback a grigio medio."""
+    sat_png = ROOT / "output" / "satellite.png"
+    bbox_json = ROOT / "output" / "satellite_bbox.json"
+    road_json = ROOT / "road_data.json"
+    if not (sat_png.exists() and bbox_json.exists() and road_json.exists()):
+        return (0.35, 0.35, 0.35)
+    Image.MAX_IMAGE_PIXELS = None
+    meta = json.loads(bbox_json.read_text(encoding="utf-8"))
+    bbox = meta["bbox_geo"]
+    rd = json.loads(road_json.read_text(encoding="utf-8"))
+    cl = rd["centerline"]
+    im = Image.open(sat_png).convert("RGB")
+    W, H = im.size
+    arr = np.array(im)  # (H, W, 3)
+    samples = []
+    denom_lon = bbox["east"] - bbox["west"]
+    denom_lat = bbox["north"] - bbox["south"]
+    for p in cl:
+        u = (p["lon"] - bbox["west"]) / denom_lon
+        v = (bbox["north"] - p["lat"]) / denom_lat
+        px = int(u * W)
+        py = int(v * H)
+        if 0 <= px < W and 0 <= py < H:
+            samples.append(arr[py, px])
+    if not samples:
+        return (0.35, 0.35, 0.35)
+    avg = np.array(samples).mean(axis=0) / 255.0
+    # Leggero boost luminosita' (il satellite e' ombrato) + leggero desaturate
+    r, g, b = float(avg[0]), float(avg[1]), float(avg[2])
+    gray = (r + g + b) / 3.0
+    # mix 70% campione + 30% gray (evita tinte verdi da vegetazione ai bordi)
+    r = r * 0.7 + gray * 0.3
+    g = g * 0.7 + gray * 0.3
+    b = b * 0.7 + gray * 0.3
+    return (min(1.0, r), min(1.0, g), min(1.0, b))
+
+
+# ---------------------------------------------------------------------------
+# Filtro OBJ world: rimuove triangoli dentro il corridoio road
+# ---------------------------------------------------------------------------
+def filter_world_obj_near_road(obj_path: Path, radius_m: float) -> int:
+    """Rimuove dal .obj tutte le face i cui centroidi XY stanno entro
+    radius_m dalla centerline. Cosi' alberi/rocce/bushes spuri che finiscono
+    sull'asfalto non causano bump/muri al veicolo. Ritorna numero face
+    rimosse. In-place rewrite del file."""
+    import csv as _csv
+    cl_path = ROOT / "output" / "centerline.csv"
+    if not cl_path.exists():
+        return 0
+    r2 = radius_m * radius_m
+    # Spatial grid per dist check veloce
+    cell = 30.0
+    buckets: dict[tuple[int, int], list[tuple[float, float]]] = {}
+    with cl_path.open(newline="", encoding="utf-8") as f:
+        for r in _csv.DictReader(f):
+            x = float(r["x"]); y = float(r["y"])
+            buckets.setdefault((int(x // cell), int(y // cell)), []).append((x, y))
+
+    def near_road(cx: float, cy: float) -> bool:
+        ix = int(cx // cell); iy = int(cy // cell)
+        for di in (-1, 0, 1):
+            for dj in (-1, 0, 1):
+                for (px, py) in buckets.get((ix + di, iy + dj), []):
+                    if (px - cx) ** 2 + (py - cy) ** 2 <= r2:
+                        return True
+        return False
+
+    # 1. Leggi tutti i vertici (indici OBJ iniziano da 1)
+    verts: list[tuple[float, float, float]] = []
+    with obj_path.open("r", encoding="utf-8", errors="replace") as f:
+        for line in f:
+            if line.startswith("v "):
+                p = line.split()
+                verts.append((float(p[1]), float(p[2]), float(p[3])))
+
+    # 2. Riscrivi l'OBJ filtrando le faces
+    out_lines: list[str] = []
+    removed = 0
+    with obj_path.open("r", encoding="utf-8", errors="replace") as f:
+        for line in f:
+            if not line.startswith("f "):
+                out_lines.append(line)
+                continue
+            tokens = line.split()[1:]
+            # Triangoli o ngon. Per calcolare il centroide prendo la media
+            # dei vertici (XY).
+            coords = []
+            for tk in tokens:
+                try:
+                    vi = int(tk.split("/")[0]) - 1
+                except Exception:
+                    vi = -1
+                if 0 <= vi < len(verts):
+                    coords.append(verts[vi])
+            if not coords:
+                out_lines.append(line)
+                continue
+            cx = sum(c[0] for c in coords) / len(coords)
+            cy = sum(c[1] for c in coords) / len(coords)
+            if near_road(cx, cy):
+                removed += 1
+                continue
+            out_lines.append(line)
+
+    obj_path.write_text("".join(out_lines), encoding="utf-8")
+    return removed
+
+
+# ---------------------------------------------------------------------------
 # Step 3: .ter binary dal heightmap DEM + terrain.json
 # ---------------------------------------------------------------------------
 def carve_heightmap_under_road(arr: np.ndarray, elev_min: float,
@@ -377,7 +497,7 @@ def write_dem_terrain(level_dir: Path, info: dict,
 # ---------------------------------------------------------------------------
 # Step 4: materiali (terrain con texture satellite + road/world generic)
 # ---------------------------------------------------------------------------
-def write_materials(level_dir: Path) -> None:
+def write_materials(level_dir: Path, asphalt_rgb: tuple[float, float, float]) -> None:
     # TerrainMaterial con diffuse = texture satellite.
     # BeamNG cerca il file provando estensioni .dds .png .jpg quindi il path
     # va scritto SENZA estensione. Il leading "/" e' consigliato (path
@@ -403,14 +523,18 @@ def write_materials(level_dir: Path) -> None:
     # Materiali generici per Road + World. L'obj_to_dae mette solo diffuseColor
     # per ogni material del .mtl; qui creiamo entries compatibili con i nomi
     # che compaiono tipicamente nei .mtl di Blender.
+    a_r, a_g, a_b = asphalt_rgb
+    asphalt_dark = [a_r * 0.7, a_g * 0.7, a_b * 0.7]
+    asphalt_light = [min(1.0, a_r * 1.25), min(1.0, a_g * 1.25), min(1.0, a_b * 1.25)]
+    shoulder_rgb = [min(1.0, a_r * 1.05), min(1.0, a_g * 1.02), min(1.0, a_b * 0.95)]
     entries = [
-        # Road
-        ("Asphalt", [0.10, 0.10, 0.10]),
-        ("AsphaltPatch_Dark", [0.06, 0.06, 0.06]),
-        ("AsphaltPatch_Light", [0.14, 0.14, 0.14]),
-        ("Shoulder", [0.35, 0.32, 0.28]),
-        ("Shoulder_L", [0.35, 0.32, 0.28]),
-        ("Shoulder_R", [0.35, 0.32, 0.28]),
+        # Road: colori campionati dal satellite ESRI lungo la centerline
+        ("Asphalt", [a_r, a_g, a_b]),
+        ("AsphaltPatch_Dark", asphalt_dark),
+        ("AsphaltPatch_Light", asphalt_light),
+        ("Shoulder", shoulder_rgb),
+        ("Shoulder_L", shoulder_rgb),
+        ("Shoulder_R", shoulder_rgb),
         ("LineWhite", [0.92, 0.92, 0.92]),
         ("LineYellow", [0.88, 0.78, 0.20]),
         ("Catarifrangente", [0.85, 0.80, 0.15]),
@@ -715,6 +839,11 @@ def main() -> None:
     world_has_content = world_obj.exists() and world_obj.stat().st_size > 200
     world_rel = None
     if world_has_content:
+        # Filtro oggetti world che invadono il corridoio strada (alberi/rocce
+        # procedurali finiti per sbaglio sull'asfalto, causa bump fisici).
+        removed = filter_world_obj_near_road(world_obj, ROAD_CORRIDOR_FILTER_M)
+        print(f"  filter corridoio {ROAD_CORRIDOR_FILTER_M}m: "
+              f"rimosse {removed} face dal world mesh")
         world_dae = convert_to_dae(world_obj)
         world_rel = world_dae.relative_to(LEVEL_DIR).as_posix()
 
@@ -724,7 +853,10 @@ def main() -> None:
     )
 
     # 5. Materiali + satellite texture
-    write_materials(LEVEL_DIR)
+    asphalt_rgb = sample_asphalt_color_from_satellite()
+    print(f"asfalto RGB campionato: "
+          f"({asphalt_rgb[0]:.3f}, {asphalt_rgb[1]:.3f}, {asphalt_rgb[2]:.3f})")
+    write_materials(LEVEL_DIR, asphalt_rgb)
     copy_satellite_texture(LEVEL_DIR)
 
     # 6. Spawn con tuning offset (forward/up/turn_right dai parametri globali)
