@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+
+# Blender backup files
+*.blend1
+*.blend2
+
+# Claude Code locale
+.claude/
+
+# OS
+Thumbs.db
+.DS_Store
+desktop.ini

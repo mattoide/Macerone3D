@@ -1,0 +1,22 @@
+{
+  "zoom": 17,
+  "tiles_x": [
+    70684,
+    70717
+  ],
+  "tiles_y": [
+    48797,
+    48839
+  ],
+  "bbox_geo": {
+    "north": 41.711879781934556,
+    "west": 14.139404296875,
+    "south": 41.623655390686395,
+    "east": 14.2327880859375
+  },
+  "size_px": [
+    8704,
+    11008
+  ],
+  "attribution": "Source: Esri, Maxar, Earthstar Geographics"
+}
