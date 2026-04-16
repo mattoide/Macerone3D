@@ -1198,15 +1198,14 @@ def _project_factory_from_road_data():
 
 
 def generate_roadside_clutter(level_dir: Path) -> Path | None:
-    """Genera OBJ con sassi/cespugli al bordo strada, condizionato su tag
-    OSM del road_data.json:
-    - bridge=true: skip clutter (parapetti aggiunti separati)
-    - dist building < 60m: zona abitata, densita' alta cespugli (siepi)
-    - punto dentro foresta OSM: aggiunge ciuffi bassi extra
-    Oltre al clutter naturale ogni 18m alternato sx/dx.
-
-    Aggiunge inoltre parapetti semplici sui segmenti di ponte e paletti
-    singoli nei 6 node_barriers OSM.
+    """Clutter bordo strada condizionato su OSM + classificazione satellite:
+    - bridge/tunnel: skip clutter (parapetti aggiunti separati)
+    - Dist building < 30m: zona abitata, siepi regolari
+    - Dentro poligono foresta OSM: alberi bassi extra
+    - Satellite class "paved" (guardrail/muretto visibile): NO bush/rock,
+      eventualmente un piccolo muretto procedurale
+    - Satellite class "tree" (bosco): alberi procedurali extra
+    - Satellite class "grass": clutter leggero standard
     """
     import csv as _csv
     cl_path = ROOT / "output" / "centerline.csv"
@@ -1261,6 +1260,15 @@ def generate_roadside_clutter(level_dir: Path) -> Path | None:
             if x0 - margin <= x <= x1 + margin and y0 - margin <= y <= y1 + margin:
                 return True
         return False
+
+    # Carica classificazione satellite (road_conditions.json) se disponibile
+    conditions_path = ROOT / "output" / "road_conditions.json"
+    cond_by_idx: dict[int, dict] = {}
+    if conditions_path.exists():
+        payload = json.loads(conditions_path.read_text(encoding="utf-8"))
+        for p in payload.get("points", []):
+            cond_by_idx[p["index"]] = p
+        print(f"  road_conditions.json: {len(cond_by_idx)} points classificati")
 
     rng = np.random.default_rng(1234)
     shapes_dir = level_dir / "art" / "shapes"
@@ -1399,7 +1407,9 @@ def generate_roadside_clutter(level_dir: Path) -> Path | None:
     if i_start is not None:
         bridge_segments.append((i_start, len(cl) - 1))
 
+    cl_idx = 0
     for (x, y, z, br, tu) in cl[1:]:
+        cl_idx += 1
         dx = x - last_x; dy = y - last_y
         d = math.hypot(dx, dy)
         acc += d
@@ -1414,49 +1424,53 @@ def generate_roadside_clutter(level_dir: Path) -> Path | None:
             continue
         nx, ny = -dy / d, dx / d
 
-        # Condizionamento su vicinanza building/foresta
         dist_b = dist_to_nearest_building(x, y)
         is_forested = in_forest(x, y)
-        if dist_b < 30.0:
-            # Zona abitata: siepi/cespugli regolari (no sassi selvaggi)
-            density = 4  # quattro oggetti per step
-            for _ in range(density):
-                offset = rng.uniform(3.5, 5.0) * side
-                ox = x + nx * offset + rng.normal(0, 0.2)
-                oy = y + ny * offset + rng.normal(0, 0.2)
-                oz = z - 0.05
+        cond = cond_by_idx.get(cl_idx, {})
+        sat_left = cond.get("left_near", "grass")
+        sat_right = cond.get("right_near", "grass")
+
+        def place_for_side(side_sign: int, sat_class: str):
+            """Piazza clutter su un lato (+1 sx, -1 dx) in base alla classe
+            satellite e al contesto (zona abitata/forestata)."""
+            nonlocal count_rock, count_bush
+            # Se satellite vede "paved" -> skip clutter naturale (gia' c'e'
+            # guardrail/muretto/banchina). Niente cespugli selvaggi.
+            if sat_class == "paved":
+                return
+            offset_abs = rng.uniform(3.5, 6.0)
+            ox = x + nx * offset_abs * side_sign + rng.normal(0, 0.3)
+            oy = y + ny * offset_abs * side_sign + rng.normal(0, 0.3)
+            oz = z - 0.1
+            if dist_b < 30.0:
+                # Zona abitata: siepi
                 add_bush(ox, oy, oz, rng.uniform(0.35, 0.60))
                 count_bush += 1
-                side *= -1
-        elif is_forested:
-            # Zona foresta: piu' cespugli, pietre grandi
-            density = 3
-            for _ in range(density):
-                offset = rng.uniform(3.5, 6.5) * side
-                ox = x + nx * offset + rng.normal(0, 0.3)
-                oy = y + ny * offset + rng.normal(0, 0.3)
-                oz = z - 0.1
-                if rng.random() < 0.7:
-                    add_bush(ox, oy, oz, rng.uniform(0.40, 0.75))
+            elif sat_class == "tree" or is_forested:
+                # Bosco: alberi/cespugli grandi
+                if rng.random() < 0.70:
+                    add_bush(ox, oy, oz, rng.uniform(0.50, 0.90))
                     count_bush += 1
                 else:
                     add_rock(ox, oy, oz, rng.uniform(0.30, 0.60))
                     count_rock += 1
-                side *= -1
-        else:
-            # Zona aperta: clutter leggero originale
-            for _ in range(2):
-                offset = rng.uniform(3.5, 6.0) * side
-                ox = x + nx * offset + rng.normal(0, 0.3)
-                oy = y + ny * offset + rng.normal(0, 0.3)
-                oz = z - 0.1
+            else:
+                # Grass/open: leggero misto
                 if rng.random() < 0.55:
                     add_rock(ox, oy, oz, rng.uniform(0.25, 0.55))
                     count_rock += 1
                 else:
                     add_bush(ox, oy, oz, rng.uniform(0.30, 0.60))
                     count_bush += 1
-                side *= -1
+
+        # Densita': 2 oggetti per side in zone normali, 3 in foresta/tree, 1 in paved skip
+        for _ in range(2):
+            place_for_side(+1, sat_left)
+            place_for_side(-1, sat_right)
+        if sat_left == "tree" or is_forested:
+            place_for_side(+1, sat_left)
+        if sat_right == "tree" or is_forested:
+            place_for_side(-1, sat_right)
 
     # Parapetti sui ponti: segui la centerline punto per punto (evita
     # muri dritti che tagliano la strada nei ponti in curva).
