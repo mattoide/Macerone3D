@@ -6,9 +6,9 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.47322797456857413,
-          0.4780908621395879,
-          0.4418445976028922,
+          0.4839216089248657,
+          0.4985882544517517,
+          0.45592159032821655,
           1.0
         ],
         "colorMap": "levels/macerone/art/road/asphalt_base.png"
@@ -26,9 +26,9 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.3312595821980019,
-          0.3346636034977115,
-          0.3092912183220245,
+          0.33874512624740594,
+          0.3490117781162262,
+          0.3191451132297516,
           1.0
         ],
         "colorMap": "levels/macerone/art/road/asphalt_base.png"
@@ -46,9 +46,9 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.5915349682107176,
-          0.5976135776744849,
-          0.5523057470036152,
+          0.6049020111560821,
+          0.6232353180646897,
+          0.5699019879102707,
           1.0
         ],
         "colorMap": "levels/macerone/art/road/asphalt_base.png"
@@ -66,9 +66,9 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.5442121707538602,
-          0.5354617655963385,
-          0.46393682748303683,
+          0.5565098502635955,
+          0.558418844985962,
+          0.4787176698446274,
           1.0
         ]
       },
@@ -294,9 +294,9 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.42,
-          0.5,
-          0.32,
+          0.7,
+          0.72,
+          0.6,
           1.0
         ],
         "colorMap": "levels/macerone/art/terrains/satellite_diffuse.png"
@@ -314,9 +314,9 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.42,
-          0.5,
-          0.32,
+          0.7,
+          0.72,
+          0.6,
           1.0
         ],
         "colorMap": "levels/macerone/art/terrains/satellite_diffuse.png"
@@ -334,9 +334,9 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.42,
-          0.5,
-          0.32,
+          0.7,
+          0.72,
+          0.6,
           1.0
         ],
         "colorMap": "levels/macerone/art/terrains/satellite_diffuse.png"
@@ -354,9 +354,9 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.42,
-          0.5,
-          0.32,
+          0.7,
+          0.72,
+          0.6,
           1.0
         ],
         "colorMap": "levels/macerone/art/terrains/satellite_diffuse.png"

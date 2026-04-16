@@ -279,13 +279,43 @@ def convert_to_dae(obj_path: Path) -> Path:
     return obj_path.with_suffix(".dae")
 
 
+def shift_marking_vertices(obj_path: Path, shift_z: float = 0.03) -> int:
+    """Alza di shift_z i vertex degli oggetti Marking*/StopLines nel road OBJ
+    per evitare Z-fighting con la superficie Road (stesso z base). 3cm
+    sufficiente a renderle sempre visibili davanti al mesh Road."""
+    MARK_NAMES = ("MarkingCenter", "MarkingEdge_L", "MarkingEdge_R",
+                  "StopLines", "RoadStuds_W", "RoadStuds_Y")
+    lines = obj_path.read_text(encoding="utf-8", errors="replace").splitlines(keepends=True)
+    out = []
+    current = None
+    shift_active = False
+    shifted = 0
+    for line in lines:
+        if line.startswith("o ") or line.startswith("g "):
+            current = line.split(maxsplit=1)[1].strip()
+            shift_active = any(m in current for m in MARK_NAMES)
+            out.append(line)
+            continue
+        if shift_active and line.startswith("v "):
+            p = line.split()
+            x, y, z = float(p[1]), float(p[2]), float(p[3])
+            z += shift_z
+            out.append(f"v {x:.6f} {y:.6f} {z:.6f}\n")
+            shifted += 1
+            continue
+        out.append(line)
+    obj_path.write_text("".join(out), encoding="utf-8")
+    return shifted
+
+
 # ---------------------------------------------------------------------------
 # Colore asfalto medio campionato dall'immagine satellite sulla centerline
 # ---------------------------------------------------------------------------
 def sample_asphalt_color_from_satellite() -> tuple[float, float, float]:
-    """Apre output/satellite.png e campiona il colore dei pixel che cadono
-    sulla centerline (lat/lon in road_data.json). Media RGB normalizzato
-    [0..1]. Se qualcosa manca, fallback a grigio medio."""
+    """Campiona la satellite ESRI sopra la centerline, filtra solo i pixel
+    'asfalto' (bassa saturazione = grigi, no verdi/rossi laterali), usa
+    mediana invece di media per essere robusto a outlier. Campiona anche
+    un intorno 3x3 pixel per avere piu' samples."""
     sat_png = ROOT / "output" / "satellite.png"
     bbox_json = ROOT / "output" / "satellite_bbox.json"
     road_json = ROOT / "road_data.json"
@@ -298,27 +328,39 @@ def sample_asphalt_color_from_satellite() -> tuple[float, float, float]:
     cl = rd["centerline"]
     im = Image.open(sat_png).convert("RGB")
     W, H = im.size
-    arr = np.array(im)  # (H, W, 3)
-    samples = []
+    arr = np.array(im).astype(np.float32) / 255.0
     denom_lon = bbox["east"] - bbox["west"]
     denom_lat = bbox["north"] - bbox["south"]
+    collected_rgb = []
     for p in cl:
         u = (p["lon"] - bbox["west"]) / denom_lon
         v = (bbox["north"] - p["lat"]) / denom_lat
         px = int(u * W)
         py = int(v * H)
-        if 0 <= px < W and 0 <= py < H:
-            samples.append(arr[py, px])
-    if not samples:
+        if not (1 <= px < W - 1 and 1 <= py < H - 1):
+            continue
+        patch = arr[py-1:py+2, px-1:px+2].reshape(-1, 3)  # 9 pixels
+        for rgb in patch:
+            r, g, b = rgb
+            mx, mn = max(r, g, b), min(r, g, b)
+            sat = (mx - mn) / (mx + 1e-6)
+            lum = (r + g + b) / 3.0
+            # Asfalto: saturazione bassa (grigio) + luminosita' medio-bassa
+            if sat < 0.12 and 0.20 < lum < 0.70:
+                collected_rgb.append((r, g, b))
+    if len(collected_rgb) < 10:
         return (0.35, 0.35, 0.35)
-    avg = np.array(samples).mean(axis=0) / 255.0
-    # Leggero boost luminosita' (il satellite e' ombrato) + leggero desaturate
-    r, g, b = float(avg[0]), float(avg[1]), float(avg[2])
+    a = np.array(collected_rgb)
+    r = float(np.median(a[:, 0]))
+    g = float(np.median(a[:, 1]))
+    b = float(np.median(a[:, 2]))
+    # Desatura leggermente verso gray neutro
     gray = (r + g + b) / 3.0
-    # mix 70% campione + 30% gray (evita tinte verdi da vegetazione ai bordi)
-    r = r * 0.7 + gray * 0.3
-    g = g * 0.7 + gray * 0.3
-    b = b * 0.7 + gray * 0.3
+    r = r * 0.85 + gray * 0.15
+    g = g * 0.85 + gray * 0.15
+    b = b * 0.85 + gray * 0.15
+    print(f"  asfalto sample filtrato: {len(collected_rgb)} px, "
+          f"mediana ({r:.3f}, {g:.3f}, {b:.3f})")
     return (min(1.0, r), min(1.0, g), min(1.0, b))
 
 
@@ -730,11 +772,12 @@ def write_materials(level_dir: Path, asphalt_rgb: tuple[float, float, float],
         ("Pole", [0.55, 0.55, 0.55]),         # metallo scuro
         ("Sign", [0.92, 0.92, 0.92]),         # bianco cartello
         # Terrain mesh Blender (collection "Terrain")
-        # Nome reale nel blend: "SatelliteTerrain" (ha UV satellite mappata)
-        ("SatelliteTerrain", [0.42, 0.50, 0.32]),
-        ("Terrain", [0.42, 0.50, 0.32]),
-        ("TerrainMat", [0.42, 0.50, 0.32]),
-        ("Ground", [0.42, 0.50, 0.32]),
+        # Nome reale nel blend: "SatelliteTerrain" (ha UV satellite mappata).
+        # Kd chiaro come fallback se la texture non carica (evita nero).
+        ("SatelliteTerrain", [0.70, 0.72, 0.60]),
+        ("Terrain", [0.70, 0.72, 0.60]),
+        ("TerrainMat", [0.70, 0.72, 0.60]),
+        ("Ground", [0.70, 0.72, 0.60]),
         # Roadside procedural clutter
         ("Rock", [0.55, 0.52, 0.46]),
         ("BushGreen", [0.26, 0.40, 0.20]),
@@ -815,13 +858,12 @@ def generate_asphalt_texture(level_dir: Path,
 
     delta = fine_grain + dark_grit + light_grit
 
-    # Colore base: grigio scuro uniforme tipico asfalto
+    # Colore base: usa il sample filtrato dal satellite (mediana dei pixel
+    # strada). Leggero scaling per adattare al lighting BeamNG.
     r, g, b = base_rgb
-    # Desatura e scurisci: asfalto e' grigio neutro, non verdino
-    gray = (r + g + b) / 3.0 * 0.70
-    r = gray
-    g = gray
-    b = gray
+    r = r * 0.90
+    g = g * 0.90
+    b = b * 0.90
 
     R = np.clip(r + delta, 0.10, 1.0)
     G = np.clip(g + delta, 0.10, 1.0)
@@ -1521,7 +1563,9 @@ def main() -> None:
     terrain_obj = shapes_dir / "macerone_terrain.obj"
     export_from_blender(road_obj, world_obj, terrain_obj)
 
-    # 3. OBJ -> DAE
+    # 3. OBJ -> DAE (prima alzo le linee di 3cm contro Z-fighting col Road)
+    shifted_markings = shift_marking_vertices(road_obj, shift_z=0.03)
+    print(f"  markings/roadstuds alzati di 3cm: {shifted_markings} vertici")
     road_dae = convert_to_dae(road_obj)
     road_rel = road_dae.relative_to(LEVEL_DIR).as_posix()
 
@@ -1531,6 +1575,24 @@ def main() -> None:
         removed = filter_world_obj_near_road(world_obj, ROAD_CORRIDOR_FILTER_M)
         print(f"  filter corridoio {ROAD_CORRIDOR_FILTER_M}m: "
               f"rimosse {removed} face dal world mesh")
+        # Stats: conto face per ogni oggetto world
+        obj_counts = {}
+        current = None
+        with world_obj.open() as f:
+            for line in f:
+                if line.startswith("o "):
+                    current = line.split(maxsplit=1)[1].strip()
+                    obj_counts[current] = 0
+                elif line.startswith("f ") and current:
+                    obj_counts[current] += 1
+        interesting = {"Guardrail_L", "Guardrail_R", "CurveSigns",
+                       "SpeedSigns_Disc", "SpeedSigns_Pole",
+                       "KmMarker_top", "KmMarker_base", "StoneWalls",
+                       "Delineators", "PowerPoles", "Chimneys"}
+        print("  world mesh elementi visibili:")
+        for name in sorted(obj_counts):
+            if name in interesting and obj_counts[name] > 0:
+                print(f"    {name}: {obj_counts[name]} face")
         world_dae = convert_to_dae(world_obj)
         world_rel = world_dae.relative_to(LEVEL_DIR).as_posix()
 
