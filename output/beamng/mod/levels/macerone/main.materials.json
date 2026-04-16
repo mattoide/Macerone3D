@@ -530,6 +530,30 @@
     ],
     "materialTag0": "Miscellaneous"
   },
+  "TreeBillboard": {
+    "name": "TreeBillboard",
+    "mapTo": "TreeBillboard",
+    "class": "Material",
+    "persistentId": "4335fc28-c547-6ad4-5c76-9e977ae8522d",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.9,
+          0.9,
+          0.9,
+          1.0
+        ],
+        "colorMap": "levels/macerone/art/nature/tree_billboard.png",
+        "alphaTest": true,
+        "alphaRef": 100,
+        "translucent": false
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "Miscellaneous"
+  },
   "AsphaltPatchDarkNew": {
     "name": "AsphaltPatchDarkNew",
     "mapTo": "AsphaltPatchDarkNew",

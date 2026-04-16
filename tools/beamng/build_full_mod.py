@@ -1126,6 +1126,7 @@ def write_materials(level_dir: Path, asphalt_rgb: tuple[float, float, float],
         ("TreeBark", [0.30, 0.21, 0.13]),      # corteccia marrone
         ("TreeFoliage", [0.18, 0.32, 0.14]),   # chioma verde scuro
         ("Embankment", [0.40, 0.45, 0.28]),    # scarpata verde-terriccio
+        ("TreeBillboard", [0.90, 0.90, 0.90]), # billboard PNG+alpha
         # Road details (generate_road_details)
         ("AsphaltPatchDarkNew", [0.06, 0.06, 0.07]),  # bitume nuovo nero
         ("AsphaltPatchLightNew", [0.35, 0.34, 0.32]),  # asfalto scolorito
@@ -1139,6 +1140,12 @@ def write_materials(level_dir: Path, asphalt_rgb: tuple[float, float, float],
     mats = {}
     for name, rgb in entries:
         stage0 = {"diffuseColor": [*rgb, 1.0]}
+        # TreeBillboard: texture PNG+alpha + alphaTest per mascherare bg
+        if name == "TreeBillboard":
+            stage0["colorMap"] = f"levels/{LEVEL_NAME}/art/nature/tree_billboard.png"
+            stage0["alphaTest"] = True
+            stage0["alphaRef"] = 100
+            stage0["translucent"] = False
         if asphalt_color_map and name in ("Asphalt", "AsphaltPatch_Dark",
                                              "AsphaltPatch_Light"):
             stage0["colorMap"] = asphalt_color_map
@@ -1849,6 +1856,7 @@ def write_level_json(level_dir: Path,
                       extra_buildings_shape_rel: str | None,
                       road_details_shape_rel: str | None,
                       embankments_shape_rel: str | None,
+                      vegetation_shape_rel: str | None,
                       spawn_xyz: tuple[float, float, float],
                       spawn_heading: float,
                       max_height: float,
@@ -1981,6 +1989,13 @@ def write_level_json(level_dir: Path,
             (
                 "macerone_embankments_mesh",
                 f"levels/{LEVEL_NAME}/{embankments_shape_rel}",
+            )
+        )
+    if vegetation_shape_rel is not None:
+        tsstatics.append(
+            (
+                "macerone_vegetation_mesh",
+                f"levels/{LEVEL_NAME}/{vegetation_shape_rel}",
             )
         )
 
@@ -2167,6 +2182,15 @@ def main() -> None:
         road_details_dae = convert_to_dae(road_details_obj)
         road_details_rel = road_details_dae.relative_to(LEVEL_DIR).as_posix()
 
+    # 5e0. Vegetazione map-wide da analisi satellite ESRI (crossed billboards)
+    vegetation_rel = None
+    run("generate_vegetation",
+        [sys.executable, str(TOOLS / "generate_vegetation.py")])
+    vegetation_obj = LEVEL_DIR / "art" / "shapes" / "macerone_vegetation.obj"
+    if vegetation_obj.exists() and vegetation_obj.stat().st_size > 200:
+        vegetation_dae = convert_to_dae(vegetation_obj)
+        vegetation_rel = vegetation_dae.relative_to(LEVEL_DIR).as_posix()
+
     # 5e. Scarpate procedurali (riempiono il gap strada-terreno rialzato)
     embankments_rel = None
     run("generate_embankments",
@@ -2198,7 +2222,7 @@ def main() -> None:
     # 7. main.level.json + info.json
     write_level_json(LEVEL_DIR, road_rel, world_rel, roadside_rel,
                       terrain_rel, extra_buildings_rel, road_details_rel,
-                      embankments_rel, spawn, heading,
+                      embankments_rel, vegetation_rel, spawn, heading,
                       max_height, elev_min, z_offset_blender)
     write_empty_jsons(LEVEL_DIR)
     write_preview(LEVEL_DIR)

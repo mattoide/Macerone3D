@@ -48,7 +48,7 @@
       </phong>
     </technique>
   </profile_COMMON>
-</effect><effect id="TreeFoliage_fx">
+</effect><effect id="default_fx">
   <profile_COMMON>
     <technique sid="common">
       <phong>
@@ -58,7 +58,7 @@
       </phong>
     </technique>
   </profile_COMMON>
-</effect><effect id="default_fx">
+</effect><effect id="TreeFoliage_fx">
   <profile_COMMON>
     <technique sid="common">
       <phong>
@@ -89,10 +89,10 @@
   <instance_effect url="#Parapet_fx"/>
 </material><material id="BollardMat" name="BollardMat">
   <instance_effect url="#BollardMat_fx"/>
-</material><material id="TreeFoliage" name="TreeFoliage">
-  <instance_effect url="#TreeFoliage_fx"/>
 </material><material id="default" name="default">
   <instance_effect url="#default_fx"/>
+</material><material id="TreeFoliage" name="TreeFoliage">
+  <instance_effect url="#TreeFoliage_fx"/>
 </material><material id="TreeBark" name="TreeBark">
   <instance_effect url="#TreeBark_fx"/>
 </material>
@@ -136,7 +136,7 @@
         <instance_geometry url="#macerone_roadside_geom">
           <bind_material>
             <technique_common>
-              <instance_material symbol="Rock" target="#Rock"/><instance_material symbol="BushGreen" target="#BushGreen"/><instance_material symbol="Parapet" target="#Parapet"/><instance_material symbol="BollardMat" target="#BollardMat"/><instance_material symbol="TreeFoliage" target="#TreeFoliage"/><instance_material symbol="default" target="#default"/><instance_material symbol="TreeBark" target="#TreeBark"/>
+              <instance_material symbol="Rock" target="#Rock"/><instance_material symbol="BushGreen" target="#BushGreen"/><instance_material symbol="Parapet" target="#Parapet"/><instance_material symbol="BollardMat" target="#BollardMat"/><instance_material symbol="default" target="#default"/><instance_material symbol="TreeFoliage" target="#TreeFoliage"/><instance_material symbol="TreeBark" target="#TreeBark"/>
             </technique_common>
           </bind_material>
         </instance_geometry>

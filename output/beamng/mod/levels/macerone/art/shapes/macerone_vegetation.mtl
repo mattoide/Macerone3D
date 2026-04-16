@@ -1,0 +1,6 @@
+newmtl TreeBillboard
+map_Kd art/nature/tree_billboard.png
+map_d art/nature/tree_billboard.png
+Kd 0.90 0.90 0.90
+d 1.0
+illum 1
