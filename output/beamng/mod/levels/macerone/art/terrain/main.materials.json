@@ -3,7 +3,13 @@
     "internalName": "macerone_ground",
     "class": "TerrainMaterial",
     "persistentId": "a1b2c3d4-9999-0000-0000-000000000099",
-    "diffuseMap": "levels/macerone/art/terrains/satellite_diffuse.png",
+    "diffuseMap": "/levels/macerone/art/terrains/satellite_diffuse",
+    "diffuseColor": [
+      0.45,
+      0.5,
+      0.38,
+      1.0
+    ],
     "diffuseSize": 12288,
     "groundmodelName": "GRASS"
   }

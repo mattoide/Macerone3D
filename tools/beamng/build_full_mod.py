@@ -180,6 +180,49 @@ def convert_to_dae(obj_path: Path) -> Path:
 # ---------------------------------------------------------------------------
 # Step 3: .ter binary dal heightmap DEM + terrain.json
 # ---------------------------------------------------------------------------
+def carve_heightmap_under_road(arr: np.ndarray, elev_min: float,
+                                 max_height: float, z_offset_blender: float) -> int:
+    """Abbassa il heightmap sotto il corridoio strada di 2m, cosi' il DEM
+    non crea muri invisibili dove la road passa in trincea. Opera in-place
+    sul `arr` uint16 (gia' flipato: row 0 = sud).
+
+    Per ogni punto della centerline.csv (coord Blender locali):
+      real_z = z_blender + z_offset_blender
+      target_z_uint16 = (real_z - elev_min - 2.0) / max_height * 65535
+    Abbassa la cella del centerline + 2 celle di raggio attorno (36m diametro,
+    copre la strada + scarpata).
+    """
+    import csv as _csv
+    cl_path = ROOT / "output" / "centerline.csv"
+    if not cl_path.exists():
+        return 0
+    H, W = arr.shape
+    half = TER_EXTENT / 2.0
+    cell = TER_SQUARESIZE
+    carved = 0
+    radius_cells = 2  # 2 cell = 24m raggio ~= carreggiata + scarpata
+    with cl_path.open(newline="", encoding="utf-8") as f:
+        for row in _csv.DictReader(f):
+            x = float(row["x"])
+            y = float(row["y"])
+            zb = float(row["z"])
+            real_z = zb + z_offset_blender
+            target = real_z - elev_min - 2.0
+            if target < 0:
+                target = 0.0
+            tgt_u16 = int(min(65535.0, target / max_height * 65535.0))
+            col = int((x + half) / cell)
+            ry = int((y + half) / cell)  # arr gia' flipped -> row 0 = sud
+            for dr in range(-radius_cells, radius_cells + 1):
+                for dc in range(-radius_cells, radius_cells + 1):
+                    rr, cc = ry + dr, col + dc
+                    if 0 <= rr < H and 0 <= cc < W:
+                        if arr[rr, cc] > tgt_u16:
+                            arr[rr, cc] = tgt_u16
+                            carved += 1
+    return carved
+
+
 def write_dem_terrain(level_dir: Path, info: dict) -> tuple[float, float, float]:
     """Scrive theTerrain.ter usando l'heightmap DEM reale. Ritorna
     (max_height, elev_min, z_offset_blender)."""
@@ -198,6 +241,11 @@ def write_dem_terrain(level_dir: Path, info: dict) -> tuple[float, float, float]
     arr = np.array(im, dtype=np.uint16)
     # Nel PNG row 0 = nord; in Torque3D terrain row 0 = sud.
     arr = np.flipud(arr)
+
+    # Carve sotto la strada: evita che il DEM (che a 12m/cell media tra pareti
+    # di trincea) faccia muro invisibile dove la strada e' scavata.
+    carved = carve_heightmap_under_road(arr, elev_min, max_height, z_offset_blender)
+    print(f"  heightmap carve: abbassate {carved} celle sotto la centerline")
 
     layer = np.zeros((TER_SIZE, TER_SIZE), dtype=np.uint8)
 
@@ -241,7 +289,11 @@ def write_dem_terrain(level_dir: Path, info: dict) -> tuple[float, float, float]
 # Step 4: materiali (terrain con texture satellite + road/world generic)
 # ---------------------------------------------------------------------------
 def write_materials(level_dir: Path) -> None:
-    # TerrainMaterial con diffuse = texture satellite
+    # TerrainMaterial con diffuse = texture satellite.
+    # BeamNG cerca il file provando estensioni .dds .png .jpg quindi il path
+    # va scritto SENZA estensione. Il leading "/" e' consigliato (path
+    # assoluto dalla root della mod). diffuseSize = metri di tiling in world
+    # space: 12288 = una sola ripetizione sul terrain intero.
     terrain_mat_dir = level_dir / "art" / "terrain"
     terrain_mat_dir.mkdir(parents=True, exist_ok=True)
     terrain_materials = {
@@ -249,7 +301,8 @@ def write_materials(level_dir: Path) -> None:
             "internalName": TERRAIN_MATERIAL_NAME,
             "class": "TerrainMaterial",
             "persistentId": TERRAIN_MATERIAL_UUID,
-            "diffuseMap": f"levels/{LEVEL_NAME}/art/terrains/satellite_diffuse.png",
+            "diffuseMap": f"/levels/{LEVEL_NAME}/art/terrains/satellite_diffuse",
+            "diffuseColor": [0.45, 0.50, 0.38, 1.0],
             "diffuseSize": 12288,
             "groundmodelName": "GRASS",
         }
