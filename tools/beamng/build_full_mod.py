@@ -428,9 +428,11 @@ def carve_heightmap_under_road(arr: np.ndarray, elev_min: float,
                 road_z = zb
             else:
                 road_z = zb + z_offset_blender
-            # Bounds in metri (sempre sotto road): carve a -1m, fill a -3m
-            upper_m = max(0.0, road_z - elev_min - 1.0)
-            lower_m = max(0.0, road_z - elev_min - 3.0)
+            # Bounds: terreno 10-40 cm sotto la centerline (appiccicato sotto
+            # la strada). Road_top = centerline + 0.35 (embankment), quindi
+            # gap visibile 45-75 cm, mai intersezione col Solidify 40cm.
+            upper_m = max(0.0, road_z - elev_min - 0.1)
+            lower_m = max(0.0, road_z - elev_min - 0.4)
             upper_u16 = min(65535.0, upper_m / max_height * 65535.0)
             lower_u16 = min(65535.0, lower_m / max_height * 65535.0)
 
