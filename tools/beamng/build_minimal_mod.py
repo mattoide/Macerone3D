@@ -259,8 +259,9 @@ def read_spawn_heading() -> float:
     """Heading (rad) dalla direzione P1->P_lookahead della centerline.
 
     Prende un punto ~15 m avanti per mediare curvature iniziali.
-    Convenzione BeamNG: heading 0 = +Y, ruota attorno +Z in senso antiorario.
-    heading = atan2(-dx, dy) per orientare il veicolo verso (dx, dy).
+    Convenzione BeamNG: muso veicolo = -Y locale, quindi per orientare
+    verso (dx, dy) serve ruotare -Y su (dx, dy) = ruotare +Y su (-dx,-dy),
+    cioe' heading = atan2(dx, -dy).
     """
     import csv as _csv
     import math
@@ -276,7 +277,7 @@ def read_spawn_heading() -> float:
             break
     dx = target[0] - p1[0]
     dy = target[1] - p1[1]
-    return math.atan2(-dx, dy)
+    return math.atan2(dx, -dy)
 
 
 def heading_to_quat(h: float) -> tuple[float, float, float, float]:
