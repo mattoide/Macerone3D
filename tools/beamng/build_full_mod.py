@@ -508,9 +508,18 @@ def drop_world_obj_to_terrain_mesh(world_obj_path: Path,
         groups.setdefault(find(i), []).append(i)
 
     # --- 4. Drop per isola ---
-    shifts = [0.0] * n  # per-vertex shift
+    # Regole conservative:
+    # - Oggetti ESTESI (extent > 30m) NON droppati: sono guardrail/walls/
+    #   wires/powercrosses che seguono la topografia lungo la strada; il
+    #   centroide non rappresenta bene la loro base.
+    # - Shift SOLO verso il BASSO (delta <= 0): gli oggetti nel blend sono
+    #   al DEM fine; il terrain mesh esportato e' al piu' uguale o piu'
+    #   basso (carvato). Delta positivo = errore di sampling -> skip.
+    # - |delta| <= 5m: cap conservativo per evitare salti enormi.
+    shifts = [0.0] * n
     n_isles = 0
     n_shifted_isles = 0
+    n_skip_extended = 0
     for root, vlist in groups.items():
         if len(vlist) < 3:
             continue
@@ -518,6 +527,11 @@ def drop_world_obj_to_terrain_mesh(world_obj_path: Path,
         xs = [wverts[i][0] for i in vlist]
         ys = [wverts[i][1] for i in vlist]
         zs = [wverts[i][2] for i in vlist]
+        x_range = max(xs) - min(xs)
+        y_range = max(ys) - min(ys)
+        if max(x_range, y_range) > 30.0:
+            n_skip_extended += 1
+            continue  # oggetto esteso, non droppare
         cx = sum(xs) / len(xs)
         cy = sum(ys) / len(ys)
         base_z = min(zs)
@@ -525,12 +539,11 @@ def drop_world_obj_to_terrain_mesh(world_obj_path: Path,
         if tz is None:
             continue
         delta = tz - base_z
-        # Shift solo se l'isola e' "quasi galleggiante" o "parzialmente sotto"
-        # (|delta| < 20m). Evita di muovere oggetti lontani da terrain.
-        if abs(delta) > 20.0:
-            continue
-        if abs(delta) < 0.1:
-            continue
+        # Solo abbassamento conservativo
+        if delta > -0.1:
+            continue  # base gia' a o sopra terrain, ok
+        if delta < -5.0:
+            continue  # troppo grande, errore sample
         for vi in vlist:
             shifts[vi] = delta
         n_shifted_isles += 1
@@ -548,7 +561,8 @@ def drop_world_obj_to_terrain_mesh(world_obj_path: Path,
         else:
             out_lines.append(line)
     world_obj_path.write_text("".join(out_lines), encoding="utf-8")
-    print(f"  drop-to-ground: {n_shifted_isles}/{n_isles} isole spostate")
+    print(f"  drop-to-ground: {n_shifted_isles}/{n_isles} isole spostate "
+          f"({n_skip_extended} skip extese guardrail/wires/walls)")
     return n_shifted_isles
 
 
