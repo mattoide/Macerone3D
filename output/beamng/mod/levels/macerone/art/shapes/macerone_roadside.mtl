@@ -15,6 +15,9 @@ Kd 0.10 0.10 0.10
 Ka 0 0 0
 Ks 0 0 0
 
+newmtl Guardrail
+Kd 0.72 0.74 0.78
+
 newmtl TreeBillboard_P0
 map_Kd levels/macerone/art/nature/tree_billboard.color.png
 map_d art/nature/tree_billboard.png

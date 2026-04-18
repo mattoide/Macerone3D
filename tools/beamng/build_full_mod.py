@@ -3411,13 +3411,20 @@ def generate_roadside_clutter(level_dir: Path,
         tree_positions.append((cx, cy, cz, height, angle, context,
                                  specific_species, scale_override))
 
-    def add_parapet_segment(x0, y0, z0, x1, y1, z1, side_normal):
-        """Muretto basso 80cm lungo il bordo, da (x0,y0,z0) a (x1,y1,z1)
-        con offset side_normal (3.5m dal centerline)."""
+    def add_parapet_segment(x0, y0, z0, x1, y1, z1, side_normal,
+                              off: float = 3.5, h: float = 0.8,
+                              thick: float = 0.15, cap: bool = False):
+        """Muretto in pietra lungo il bordo, da (x0,y0,z0) a (x1,y1,z1)
+        con offset side_normal dalla strada.
+
+        Parametri:
+          off    : offset laterale dal centro strada (m)
+          h      : altezza totale base->top (m)
+          thick  : semi-spessore (m); spessore totale = 2*thick
+          cap    : se True aggiunge una cimasa (cappello) 5cm piu' larga
+                   e 8cm piu' alta sopra il muretto (aspetto pietra SS17)
+        """
         nx, ny = side_normal
-        off = 3.5
-        h = 0.8
-        thick = 0.15
         # 4 vertici base + 4 top
         base = len(verts) + 1
         for (xa, ya, za) in ((x0, y0, z0), (x1, y1, z1)):
@@ -3448,6 +3455,96 @@ def generate_roadside_clutter(level_dir: Path,
         faces.append(([base + 0, base + 5, base + 4], "Parapet"))
         faces.append(([base + 2, base + 3, base + 7], "Parapet"))
         faces.append(([base + 2, base + 7, base + 6], "Parapet"))
+        # ---- Cimasa (cappello pietra sporgente) ----
+        if cap:
+            cap_t = thick + 0.05   # 5cm piu' largo
+            cap_h = 0.08           # 8cm alto
+            cb = len(verts) + 1
+            for (xa, ya, za) in ((x0, y0, z0), (x1, y1, z1)):
+                ox = xa + nx * off
+                oy = ya + ny * off
+                # bottom of cap (at h)
+                verts.append((ox + nx * cap_t, oy + ny * cap_t, za + h))
+                verts.append((ox - nx * cap_t, oy - ny * cap_t, za + h))
+            for (xa, ya, za) in ((x0, y0, z0), (x1, y1, z1)):
+                ox = xa + nx * off
+                oy = ya + ny * off
+                verts.append((ox + nx * cap_t, oy + ny * cap_t, za + h + cap_h))
+                verts.append((ox - nx * cap_t, oy - ny * cap_t, za + h + cap_h))
+            # 8 verts: cb..cb+7 (base0..3, top4..7)
+            faces.append(([cb + 0, cb + 2, cb + 6], "Parapet"))
+            faces.append(([cb + 0, cb + 6, cb + 4], "Parapet"))
+            faces.append(([cb + 1, cb + 5, cb + 7], "Parapet"))
+            faces.append(([cb + 1, cb + 7, cb + 3], "Parapet"))
+            faces.append(([cb + 4, cb + 5, cb + 7], "Parapet"))
+            faces.append(([cb + 4, cb + 7, cb + 6], "Parapet"))
+
+    def add_w_beam_guardrail(x0, y0, z0, x1, y1, z1, side_normal,
+                               off: float = 3.1, h_top: float = 0.85,
+                               post_every_m: float = 3.5):
+        """Guardrail W-beam italiano (tipo strade provinciali):
+        - 2 rail orizzontali (prismatici 14cm x 6cm): z+0.50 e z+0.75
+        - Posti verticali (8x8cm) ogni ~3m, altezza h_top
+        Segment drawn from (x0,y0,z0) to (x1,y1,z1) con offset side_normal.
+        Material: "Guardrail" (metallo chiaro gia' definito).
+        """
+        nx, ny = side_normal
+        # Linea offset
+        ax = x0 + nx * off; ay = y0 + ny * off
+        bx = x1 + nx * off; by = y1 + ny * off
+        seg_len = math.hypot(bx - ax, by - ay)
+        if seg_len < 0.3:
+            return
+        # Tangente lungo il segmento (lunga 1)
+        tx = (bx - ax) / seg_len; ty = (by - ay) / seg_len
+        # ---- 2 rail orizzontali (prismatici lungo il segmento) ----
+        rail_h = 0.12  # altezza (Z) del rail
+        rail_t = 0.03  # semi-spessore lateral
+        for z_rail_bottom in (0.45, 0.72):
+            # 4 vertici agli estremi (4 each end): combinazione ±tangent_side (thin), ±z
+            b = len(verts) + 1
+            for (xa, ya, za) in ((ax, ay, z0), (bx, by, z1)):
+                # outer edge
+                verts.append((xa + nx * rail_t, ya + ny * rail_t, za + z_rail_bottom))
+                # inner edge
+                verts.append((xa - nx * rail_t, ya - ny * rail_t, za + z_rail_bottom))
+            for (xa, ya, za) in ((ax, ay, z0), (bx, by, z1)):
+                verts.append((xa + nx * rail_t, ya + ny * rail_t, za + z_rail_bottom + rail_h))
+                verts.append((xa - nx * rail_t, ya - ny * rail_t, za + z_rail_bottom + rail_h))
+            # outer/inner/top/ends quads
+            faces.append(([b + 0, b + 2, b + 6], "Guardrail"))
+            faces.append(([b + 0, b + 6, b + 4], "Guardrail"))
+            faces.append(([b + 1, b + 5, b + 7], "Guardrail"))
+            faces.append(([b + 1, b + 7, b + 3], "Guardrail"))
+            faces.append(([b + 4, b + 5, b + 7], "Guardrail"))
+            faces.append(([b + 4, b + 7, b + 6], "Guardrail"))
+            faces.append(([b + 0, b + 1, b + 5], "Guardrail"))
+            faces.append(([b + 0, b + 5, b + 4], "Guardrail"))
+            faces.append(([b + 2, b + 3, b + 7], "Guardrail"))
+            faces.append(([b + 2, b + 7, b + 6], "Guardrail"))
+        # ---- Posti verticali ogni post_every_m ----
+        post_t = 0.04  # semi-spessore palo
+        n_posts = max(1, int(seg_len / post_every_m))
+        for k in range(n_posts + 1):
+            f_t = k / max(1, n_posts)
+            if f_t > 1.0:
+                continue
+            px = ax + tx * seg_len * f_t
+            py = ay + ty * seg_len * f_t
+            pz = z0 + (z1 - z0) * f_t
+            b = len(verts) + 1
+            # 8 vertici cubo palo
+            for dz in (0.0, h_top):
+                verts.append((px + nx * post_t + tx * post_t, py + ny * post_t + ty * post_t, pz + dz))
+                verts.append((px - nx * post_t + tx * post_t, py - ny * post_t + ty * post_t, pz + dz))
+                verts.append((px - nx * post_t - tx * post_t, py - ny * post_t - ty * post_t, pz + dz))
+                verts.append((px + nx * post_t - tx * post_t, py + ny * post_t - ty * post_t, pz + dz))
+            # 4 lati del cubo + top
+            for i0, i1 in ((0, 1), (1, 2), (2, 3), (3, 0)):
+                faces.append(([b + i0, b + i1, b + 4 + i1], "Guardrail"))
+                faces.append(([b + i0, b + 4 + i1, b + 4 + i0], "Guardrail"))
+            faces.append(([b + 4, b + 5, b + 6], "Guardrail"))
+            faces.append(([b + 4, b + 6, b + 7], "Guardrail"))
 
     def add_bollard(cx: float, cy: float, cz: float, height: float = 1.0):
         """Paletto cilindrico stilizzato: ottagono."""
@@ -4447,6 +4544,7 @@ def generate_roadside_clutter(level_dir: Path,
         return len(cl_cum) - 1
 
     count_curve_wall = 0
+    count_curve_guardrail = 0
     for i in range(1, len(cl) - 1):
         # skip su ponti/tunnel (gia' parapetti / no protezione)
         if cl[i][3] or cl[i][4]:
@@ -4477,8 +4575,20 @@ def generate_roadside_clutter(level_dir: Path,
         else:
             # curva a destra -> esterno e' SINISTRA
             nx, ny = -dy / dn, dx / dn
-        add_parapet_segment(x0, y0, z0, x1, y1, z1, (nx, ny))
+        # Muretto in pietra (visibile ~85cm sopra la strada) con cimasa.
+        # off=4.2 lascia posto al guardrail davanti. h=1.20 con base a cl_z.
+        # Il road top = cl_z + 0.35, quindi muretto visibile = 1.20-0.35 = 85cm
+        add_parapet_segment(x0, y0, z0, x1, y1, z1, (nx, ny),
+                              off=4.2, h=1.20, thick=0.30, cap=True)
         count_curve_wall += 1
+        # Su curve PIU' FORTI (>=10 deg) aggiungi anche il guardrail
+        # W-beam steel tra la strada e il muretto (tipico mountain SS17)
+        if abs(ang) >= 10.0:
+            # Base guardrail a road_top (= cl_z + 0.35)
+            add_w_beam_guardrail(x0, y0, z0 + 0.35, x1, y1, z1 + 0.35,
+                                    (nx, ny), off=3.1, h_top=0.80,
+                                    post_every_m=3.5)
+            count_curve_guardrail += 1
 
     # Node barriers (bollard/gate) OSM
     count_bollard = 0
@@ -4539,6 +4649,7 @@ def generate_roadside_clutter(level_dir: Path,
         "newmtl Parapet\nKd 0.62 0.58 0.52\n\n",
         "newmtl BollardMat\nKd 0.80 0.80 0.78\n\n",
         "newmtl CableWire\nKd 0.10 0.10 0.10\nKa 0 0 0\nKs 0 0 0\n\n",
+        "newmtl Guardrail\nKd 0.72 0.74 0.78\n\n",
     ]
     # 4 palette di tinta per i billboards (stessi valori di generate_vegetation.py)
     tint_palettes = [
@@ -4562,6 +4673,7 @@ def generate_roadside_clutter(level_dir: Path,
           f"{count_pole} pali (skip {count_skipped_bridge} ponti), "
           f"{count_cable} cavi, "
           f"{count_parapet} parapetti, {count_curve_wall} muretti curva, "
+          f"{count_curve_guardrail} guardrail curva, "
           f"{count_bollard} bollard -> "
           f"{obj_path.relative_to(MOD_DIR)}")
     print(f"  tree_positions accumulati: {len(tree_positions)} (per Forest system)")
