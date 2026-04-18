@@ -18,3 +18,9 @@ env/
 Thumbs.db
 .DS_Store
 desktop.ini
+
+# Reference frames estratti da video (local-only, pesanti)
+tools/beamng/asphalt_refs/
+tools/beamng/italy_extracted/
+tools/beamng/landscape_refs/
+tools/beamng/streetview_refs/

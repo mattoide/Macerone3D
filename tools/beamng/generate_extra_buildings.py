@@ -122,6 +122,30 @@ def triangulate_fan(poly_xy: list[tuple[float, float]]) -> list[tuple[int, int, 
     return tris
 
 
+def convex_hull_2d(pts: list[tuple[float, float]]) -> list[int]:
+    """Andrew's monotone chain. Ritorna indici dei punti del convex hull in
+    ordine CCW. Evita tetti 'bucati' su footprint concavi (L/U shape)."""
+    if len(pts) < 3:
+        return list(range(len(pts)))
+    idx = sorted(range(len(pts)), key=lambda i: (pts[i][0], pts[i][1]))
+
+    def cross(o, a, b):
+        return ((pts[a][0] - pts[o][0]) * (pts[b][1] - pts[o][1])
+                - (pts[a][1] - pts[o][1]) * (pts[b][0] - pts[o][0]))
+
+    lower = []
+    for i in idx:
+        while len(lower) >= 2 and cross(lower[-2], lower[-1], i) <= 0:
+            lower.pop()
+        lower.append(i)
+    upper = []
+    for i in reversed(idx):
+        while len(upper) >= 2 and cross(upper[-2], upper[-1], i) <= 0:
+            upper.pop()
+        upper.append(i)
+    return lower[:-1] + upper[:-1]
+
+
 def main():
     road_data = json.loads((ROOT / "road_data.json").read_text(encoding="utf-8"))
     buildings_osm = road_data.get("buildings", [])
@@ -242,10 +266,15 @@ def main():
             faces.append(([a, b, c], "Building"))
             faces.append(([a, c, d_], "Building"))
 
-        # Tetto: fan triangulation dai top verts
+        # Tetto: convex hull sui top verts (chiude l'edificio anche su
+        # footprint concavi a L/U; tetti semplici bastano a 250m).
         top_start = base_idx_start + n
-        for i in range(1, n - 1):
-            faces.append(([top_start, top_start + i, top_start + i + 1], "Roof"))
+        hull = convex_hull_2d(poly_xy)
+        for i in range(1, len(hull) - 1):
+            a_t = top_start + hull[0]
+            b_t = top_start + hull[i]
+            c_t = top_start + hull[i + 1]
+            faces.append(([a_t, b_t, c_t], "Roof"))
         added += 1
 
     print(f"\nEdifici OSM missing aggiunti: {added}")

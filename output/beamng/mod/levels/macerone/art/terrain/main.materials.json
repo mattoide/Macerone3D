@@ -1,19 +1,20 @@
 {
   "macerone_ground-a1b2c3d4-9999-0000-0000-000000000099": {
+    "name": "macerone_ground-a1b2c3d4-9999-0000-0000-000000000099",
     "internalName": "macerone_ground",
     "class": "TerrainMaterial",
     "persistentId": "a1b2c3d4-9999-0000-0000-000000000099",
-    "diffuseMap": "levels/macerone/art/terrains/satellite_diffuse.png",
-    "diffuseColor": [
-      0.38,
-      0.48,
-      0.3,
-      1.0
-    ],
+    "diffuseMap": "levels/macerone/art/terrains/satellite_diffuse.color",
     "diffuseSize": 12288,
-    "detailMap": "levels/macerone/art/terrains/detail_grass.png",
-    "detailSize": 60,
-    "detailStrength": 0.3,
+    "detailMap": "levels/macerone/art/terrains/detail_grass.color",
+    "detailSize": 6,
+    "detailStrength": 0.2,
+    "detailDistance": 50,
+    "macroMap": "levels/macerone/art/terrains/macro_grass.color",
+    "macroSize": 280,
+    "macroStrength": 0.35,
+    "macroDistance": 1200,
+    "normalMap": "levels/macerone/art/terrains/detail_grass_nrm.color",
     "groundmodelName": "GRASS"
   }
 }

@@ -1,0 +1,38 @@
+newmtl SignValico
+map_Kd levels/macerone/art/shapes/signs/sign_valico.color.png
+Kd 1.000 1.000 1.000
+Ka 0 0 0
+Ks 0 0 0
+Ns 1
+illum 1
+
+newmtl SignSS17
+map_Kd levels/macerone/art/shapes/signs/sign_ss17.color.png
+Kd 1.000 1.000 1.000
+Ka 0 0 0
+Ks 0 0 0
+Ns 1
+illum 1
+
+newmtl SignDirezionale
+map_Kd levels/macerone/art/shapes/signs/sign_direzionale.color.png
+Kd 1.000 1.000 1.000
+Ka 0 0 0
+Ks 0 0 0
+Ns 1
+illum 1
+
+newmtl SignPole
+Kd 0.420 0.420 0.440
+Ka 0 0 0
+Ks 0 0 0
+Ns 1
+illum 1
+
+newmtl EdicolaStone
+Kd 0.520 0.480 0.420
+Ka 0 0 0
+Ks 0 0 0
+Ns 1
+illum 1
+

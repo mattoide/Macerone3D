@@ -72,6 +72,7 @@ d 1.000000
 illum 2
 
 newmtl TreeCanopy
+map_Kd levels/macerone/art/nature/foliage.color.png
 Ns 0.000000
 Ka 1.000000 1.000000 1.000000
 Kd 0.100000 0.280000 0.080000
@@ -82,6 +83,7 @@ d 1.000000
 illum 2
 
 newmtl TreeTrunk
+map_Kd levels/macerone/art/nature/bark.color.png
 Ns 2.500001
 Ka 1.000000 1.000000 1.000000
 Kd 0.220000 0.140000 0.080000

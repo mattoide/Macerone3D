@@ -105,6 +105,9 @@ def parse_mtl(path: Path) -> dict:
                     float(parts[1]), float(parts[2]), float(parts[3]))
             elif current and line.startswith("Ns "):
                 mats[current]["Ns"] = float(line.split()[1])
+            elif current and line.startswith("map_Kd "):
+                # Texture path relative to MTL file
+                mats[current]["map_Kd"] = line.split(maxsplit=1)[1]
     return mats
 
 
@@ -219,14 +222,47 @@ def write_dae(obj_path: Path, dae_path: Path | None = None) -> Path:
   {"".join(triangle_blocks)}
 </mesh>'''
 
-    # library_effects + library_materials
+    # library_effects + library_materials + library_images (per map_Kd)
     effects_xml = []
     materials_xml = []
     instance_materials = []
+    images_xml = []
+    seen_images = {}
     for m_name, attrs in mats.items():
         msid = sid(m_name)
         kd = attrs.get("Kd", (0.8, 0.8, 0.8))
-        effects_xml.append(f'''<effect id="{msid}_fx">
+        tex_path = attrs.get("map_Kd")
+        if tex_path:
+            # Dedup per path
+            img_id = seen_images.get(tex_path)
+            if img_id is None:
+                img_id = f"img_{len(seen_images)}"
+                seen_images[tex_path] = img_id
+                images_xml.append(
+                    f'<image id="{img_id}" name="{img_id}">\n'
+                    f'  <init_from>{escape(tex_path)}</init_from>\n'
+                    f'</image>'
+                )
+            # Effect con texture + param surface/sampler
+            effects_xml.append(f'''<effect id="{msid}_fx">
+  <profile_COMMON>
+    <newparam sid="{msid}_surface">
+      <surface type="2D"><init_from>{img_id}</init_from></surface>
+    </newparam>
+    <newparam sid="{msid}_sampler">
+      <sampler2D><source>{msid}_surface</source></sampler2D>
+    </newparam>
+    <technique sid="common">
+      <phong>
+        <diffuse><texture texture="{msid}_sampler" texcoord="TEX0"/></diffuse>
+        <specular><color sid="specular">0.1 0.1 0.1 1</color></specular>
+        <shininess><float sid="shininess">20</float></shininess>
+      </phong>
+    </technique>
+  </profile_COMMON>
+</effect>''')
+        else:
+            effects_xml.append(f'''<effect id="{msid}_fx">
   <profile_COMMON>
     <technique sid="common">
       <phong>
@@ -256,6 +292,9 @@ def write_dae(obj_path: Path, dae_path: Path | None = None) -> Path:
     <unit name="meter" meter="1"/>
     <up_axis>Z_UP</up_axis>
   </asset>
+  <library_images>
+    {"".join(images_xml)}
+  </library_images>
   <library_effects>
     {"".join(effects_xml)}
   </library_effects>

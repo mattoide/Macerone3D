@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
+  <asset>
+    <contributor><authoring_tool>macerone3d obj_to_dae.py</authoring_tool></contributor>
+    <created>2026-04-16T10:00:00</created>
+    <modified>2026-04-16T10:00:00</modified>
+    <unit name="meter" meter="1"/>
+    <up_axis>Z_UP</up_axis>
+  </asset>
+  <library_images>
+    <image id="img_0" name="img_0">
+  <init_from>levels/macerone/art/shapes/signs/sign_valico.color.png</init_from>
+</image><image id="img_1" name="img_1">
+  <init_from>levels/macerone/art/shapes/signs/sign_ss17.color.png</init_from>
+</image><image id="img_2" name="img_2">
+  <init_from>levels/macerone/art/shapes/signs/sign_direzionale.color.png</init_from>
+</image>
+  </library_images>
+  <library_effects>
+    <effect id="SignValico_fx">
+  <profile_COMMON>
+    <newparam sid="SignValico_surface">
+      <surface type="2D"><init_from>img_0</init_from></surface>
+    </newparam>
+    <newparam sid="SignValico_sampler">
+      <sampler2D><source>SignValico_surface</source></sampler2D>
+    </newparam>
+    <technique sid="common">
+      <phong>
+        <diffuse><texture texture="SignValico_sampler" texcoord="TEX0"/></diffuse>
+        <specular><color sid="specular">0.1 0.1 0.1 1</color></specular>
+        <shininess><float sid="shininess">20</float></shininess>
+      </phong>
+    </technique>
+  </profile_COMMON>
+</effect><effect id="SignSS17_fx">
+  <profile_COMMON>
+    <newparam sid="SignSS17_surface">
+      <surface type="2D"><init_from>img_1</init_from></surface>
+    </newparam>
+    <newparam sid="SignSS17_sampler">
+      <sampler2D><source>SignSS17_surface</source></sampler2D>
+    </newparam>
+    <technique sid="common">
+      <phong>
+        <diffuse><texture texture="SignSS17_sampler" texcoord="TEX0"/></diffuse>
+        <specular><color sid="specular">0.1 0.1 0.1 1</color></specular>
+        <shininess><float sid="shininess">20</float></shininess>
+      </phong>
+    </technique>
+  </profile_COMMON>
+</effect><effect id="SignDirezionale_fx">
+  <profile_COMMON>
+    <newparam sid="SignDirezionale_surface">
+      <surface type="2D"><init_from>img_2</init_from></surface>
+    </newparam>
+    <newparam sid="SignDirezionale_sampler">
+      <sampler2D><source>SignDirezionale_surface</source></sampler2D>
+    </newparam>
+    <technique sid="common">
+      <phong>
+        <diffuse><texture texture="SignDirezionale_sampler" texcoord="TEX0"/></diffuse>
+        <specular><color sid="specular">0.1 0.1 0.1 1</color></specular>
+        <shininess><float sid="shininess">20</float></shininess>
+      </phong>
+    </technique>
+  </profile_COMMON>
+</effect><effect id="SignPole_fx">
+  <profile_COMMON>
+    <technique sid="common">
+      <phong>
+        <diffuse><color sid="diffuse">0.4200 0.4200 0.4400 1</color></diffuse>
+        <specular><color sid="specular">0.1 0.1 0.1 1</color></specular>
+        <shininess><float sid="shininess">20</float></shininess>
+      </phong>
+    </technique>
+  </profile_COMMON>
+</effect><effect id="EdicolaStone_fx">
+  <profile_COMMON>
+    <technique sid="common">
+      <phong>
+        <diffuse><color sid="diffuse">0.5200 0.4800 0.4200 1</color></diffuse>
+        <specular><color sid="specular">0.1 0.1 0.1 1</color></specular>
+        <shininess><float sid="shininess">20</float></shininess>
+      </phong>
+    </technique>
+  </profile_COMMON>
+</effect><effect id="default_fx">
+  <profile_COMMON>
+    <technique sid="common">
+      <phong>
+        <diffuse><color sid="diffuse">0.8000 0.8000 0.8000 1</color></diffuse>
+        <specular><color sid="specular">0.1 0.1 0.1 1</color></specular>
+        <shininess><float sid="shininess">20</float></shininess>
+      </phong>
+    </technique>
+  </profile_COMMON>
+</effect>
+  </library_effects>
+  <library_materials>
+    <material id="SignValico" name="SignValico">
+  <instance_effect url="#SignValico_fx"/>
+</material><material id="SignSS17" name="SignSS17">
+  <instance_effect url="#SignSS17_fx"/>
+</material><material id="SignDirezionale" name="SignDirezionale">
+  <instance_effect url="#SignDirezionale_fx"/>
+</material><material id="SignPole" name="SignPole">
+  <instance_effect url="#SignPole_fx"/>
+</material><material id="EdicolaStone" name="EdicolaStone">
+  <instance_effect url="#EdicolaStone_fx"/>
+</material><material id="default" name="default">
+  <instance_effect url="#default_fx"/>
+</material>
+  </library_materials>
+  <library_geometries>
+    <geometry id="macerone_signs_geom" name="macerone_signs">
+      <mesh>
+  <source id="macerone_signs_geom_positions">
+  <float_array id="macerone_signs_geom_positions_arr" count="216">-3498.475800 4557.510100 598.181000 -3498.475800 4557.510100 601.781000 -3498.510800 4557.570700 598.181000 -3498.510800 4557.570700 601.781000 -3498.580800 4557.570700 598.181000 -3498.580800 4557.570700 601.781000 -3498.615800 4557.510100 598.181000 -3498.615800 4557.510100 601.781000 -3498.580800 4557.449500 598.181000 -3498.580800 4557.449500 601.781000 -3498.510800 4557.449500 598.181000 -3498.510800 4557.449500 601.781000 -3499.187800 4558.523900 600.581000 -3497.903800 4556.496300 600.581000 -3497.903800 4556.496300 601.781000 -3499.187800 4558.523900 601.781000 -3511.040600 4573.229200 597.206300 -3510.490600 4573.229200 597.206300 -3510.490600 4573.679200 597.206300 -3511.040600 4573.679200 597.206300 -3511.040600 4573.229200 598.806300 -3510.490600 4573.229200 598.806300 -3510.490600 4573.679200 598.806300 -3511.040600 4573.679200 598.806300 -3510.805600 4573.414200 598.806300 -3510.725600 4573.414200 598.806300 -3510.725600 4573.494200 598.806300 -3510.805600 4573.494200 598.806300 -3510.805600 4573.414200 599.256300 -3510.725600 4573.414200 599.256300 -3510.725600 4573.494200 599.256300 -3510.805600 4573.494200 599.256300 -3510.915600 4573.414200 599.053800 -3510.615600 4573.414200 599.053800 -3510.615600 4573.494200 599.053800 -3510.915600 4573.494200 599.053800 -3510.915600 4573.414200 599.133800 -3510.615600 4573.414200 599.133800 -3510.615600 4573.494200 599.133800 -3510.915600 4573.494200 599.133800 3476.929100 -4339.426800 74.359000 3476.929100 -4339.426800 78.159000 3476.894100 -4339.366200 74.359000 3476.894100 -4339.366200 78.159000 3476.824100 -4339.366200 74.359000 3476.824100 -4339.366200 78.159000 3476.789100 -4339.426800 74.359000 3476.789100 -4339.426800 78.159000 3476.824100 -4339.487400 74.359000 3476.824100 -4339.487400 78.159000 3476.894100 -4339.487400 74.359000 3476.894100 -4339.487400 78.159000 3476.444400 -4338.862900 76.759000 3477.273800 -4339.990800 76.759000 3477.273800 -4339.990800 78.159000 3476.444400 -4338.862900 78.159000 3366.662300 -4193.558500 78.106200 3366.662300 -4193.558500 81.906200 3366.622300 -4193.489200 78.106200 3366.622300 -4193.489200 81.906200 3366.542300 -4193.489200 78.106200 3366.542300 -4193.489200 81.906200 3366.502300 -4193.558500 78.106200 3366.502300 -4193.558500 81.906200 3366.542300 -4193.627800 78.106200 3366.542300 -4193.627800 81.906200 3366.622300 -4193.627800 78.106200 3366.622300 -4193.627800 81.906200 3365.483100 -4192.133200 80.506200 3367.681600 -4194.983900 80.506200 3367.681600 -4194.983900 82.006200 3365.483100 -4192.133200 82.006200</float_array>
+  <technique_common>
+    <accessor source="#macerone_signs_geom_positions_arr" count="72" stride="3">
+      <param name="X" type="float"/><param name="Y" type="float"/><param name="Z" type="float"/>
+    </accessor>
+  </technique_common>
+</source><source id="macerone_signs_geom_uvs">
+  <float_array id="macerone_signs_geom_uvs_arr" count="60">0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 1.000000 0.000000 1.000000 1.000000 0.000000 1.000000 0.000000 0.000000 1.000000 0.000000 1.000000 1.000000 0.000000 1.000000 0.000000 0.000000 1.000000 0.000000 1.000000 1.000000 0.000000 1.000000 0.000000 0.000000 1.000000 0.000000 1.000000 1.000000 0.000000 1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 1.000000 0.000000 1.000000 1.000000 0.000000 1.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 1.000000 0.000000 1.000000 1.000000 0.000000 1.000000</float_array>
+  <technique_common>
+    <accessor source="#macerone_signs_geom_uvs_arr" count="30" stride="2">
+      <param name="S" type="float"/><param name="T" type="float"/>
+    </accessor>
+  </technique_common>
+</source>
+  <vertices id="macerone_signs_geom_vertices">
+    <input semantic="POSITION" source="#macerone_signs_geom_positions"/>
+  </vertices>
+  <triangles material="SignPole" count="12">
+<input semantic="VERTEX" source="#macerone_signs_geom_vertices" offset="0"/>
+<input semantic="TEXCOORD" source="#macerone_signs_geom_uvs" offset="1" set="0"/>
+<p>0 0 2 0 3 0 0 0 3 0 1 0 2 0 4 0 5 0 2 0 5 0 3 0 4 0 6 0 7 0 4 0 7 0 5 0 6 0 8 0 9 0 6 0 9 0 7 0 8 0 10 0 11 0 8 0 11 0 9 0 10 0 0 0 1 0 10 0 1 0 11 0</p>
+</triangles><triangles material="SignValico" count="4">
+<input semantic="VERTEX" source="#macerone_signs_geom_vertices" offset="0"/>
+<input semantic="TEXCOORD" source="#macerone_signs_geom_uvs" offset="1" set="0"/>
+<p>12 0 13 0 14 0 12 0 14 0 15 0 12 0 14 0 13 0 12 0 15 0 14 0</p>
+</triangles><triangles material="EdicolaStone" count="10">
+<input semantic="VERTEX" source="#macerone_signs_geom_vertices" offset="0"/>
+<input semantic="TEXCOORD" source="#macerone_signs_geom_uvs" offset="1" set="0"/>
+<p>16 0 17 0 21 0 16 0 21 0 20 0 17 0 18 0 22 0 17 0 22 0 21 0 18 0 19 0 23 0 18 0 23 0 22 0 19 0 16 0 20 0 19 0 20 0 23 0 20 0 21 0 22 0 20 0 22 0 23 0</p>
+</triangles><triangles material="EdicolaStone" count="20">
+<input semantic="VERTEX" source="#macerone_signs_geom_vertices" offset="0"/>
+<input semantic="TEXCOORD" source="#macerone_signs_geom_uvs" offset="1" set="0"/>
+<p>24 0 25 0 29 0 24 0 29 0 28 0 25 0 26 0 30 0 25 0 30 0 29 0 26 0 27 0 31 0 26 0 31 0 30 0 27 0 24 0 28 0 27 0 28 0 31 0 28 0 29 0 30 0 28 0 30 0 31 0 32 0 33 0 37 0 32 0 37 0 36 0 33 0 34 0 38 0 33 0 38 0 37 0 34 0 35 0 39 0 34 0 39 0 38 0 35 0 32 0 36 0 35 0 36 0 39 0 36 0 37 0 38 0 36 0 38 0 39 0</p>
+</triangles><triangles material="SignPole" count="12">
+<input semantic="VERTEX" source="#macerone_signs_geom_vertices" offset="0"/>
+<input semantic="TEXCOORD" source="#macerone_signs_geom_uvs" offset="1" set="0"/>
+<p>40 0 42 0 43 0 40 0 43 0 41 0 42 0 44 0 45 0 42 0 45 0 43 0 44 0 46 0 47 0 44 0 47 0 45 0 46 0 48 0 49 0 46 0 49 0 47 0 48 0 50 0 51 0 48 0 51 0 49 0 50 0 40 0 41 0 50 0 41 0 51 0</p>
+</triangles><triangles material="SignSS17" count="4">
+<input semantic="VERTEX" source="#macerone_signs_geom_vertices" offset="0"/>
+<input semantic="TEXCOORD" source="#macerone_signs_geom_uvs" offset="1" set="0"/>
+<p>52 0 53 0 54 0 52 0 54 0 55 0 52 0 54 0 53 0 52 0 55 0 54 0</p>
+</triangles><triangles material="SignPole" count="12">
+<input semantic="VERTEX" source="#macerone_signs_geom_vertices" offset="0"/>
+<input semantic="TEXCOORD" source="#macerone_signs_geom_uvs" offset="1" set="0"/>
+<p>56 0 58 0 59 0 56 0 59 0 57 0 58 0 60 0 61 0 58 0 61 0 59 0 60 0 62 0 63 0 60 0 63 0 61 0 62 0 64 0 65 0 62 0 65 0 63 0 64 0 66 0 67 0 64 0 67 0 65 0 66 0 56 0 57 0 66 0 57 0 67 0</p>
+</triangles><triangles material="SignDirezionale" count="4">
+<input semantic="VERTEX" source="#macerone_signs_geom_vertices" offset="0"/>
+<input semantic="TEXCOORD" source="#macerone_signs_geom_uvs" offset="1" set="0"/>
+<p>68 0 69 0 70 0 68 0 70 0 71 0 68 0 70 0 69 0 68 0 71 0 70 0</p>
+</triangles>
+</mesh>
+    </geometry>
+  </library_geometries>
+  <library_visual_scenes>
+    <visual_scene id="scene1" name="scene1">
+      <node id="node1" name="macerone_signs">
+        <instance_geometry url="#macerone_signs_geom">
+          <bind_material>
+            <technique_common>
+              <instance_material symbol="SignValico" target="#SignValico"/><instance_material symbol="SignSS17" target="#SignSS17"/><instance_material symbol="SignDirezionale" target="#SignDirezionale"/><instance_material symbol="SignPole" target="#SignPole"/><instance_material symbol="EdicolaStone" target="#EdicolaStone"/><instance_material symbol="default" target="#default"/>
+            </technique_common>
+          </bind_material>
+        </instance_geometry>
+      </node>
+    </visual_scene>
+  </library_visual_scenes>
+  <scene>
+    <instance_visual_scene url="#scene1"/>
+  </scene>
+</COLLADA>

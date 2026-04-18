@@ -2,6 +2,7 @@
 # www.blender.org
 
 newmtl Asphalt
+map_Kd levels/macerone/art/road/asphalt_base.color.png
 Ns 22.499992
 Ka 1.000000 1.000000 1.000000
 Kd 0.050000 0.050000 0.055000
@@ -12,6 +13,7 @@ d 1.000000
 illum 2
 
 newmtl AsphaltPatch_Dark
+map_Kd levels/macerone/art/road/asphalt_base.color.png
 Ns 6.399997
 Ka 1.000000 1.000000 1.000000
 Kd 0.020000 0.020000 0.024000
@@ -22,6 +24,7 @@ d 1.000000
 illum 2
 
 newmtl AsphaltPatch_Light
+map_Kd levels/macerone/art/road/asphalt_base.color.png
 Ns 22.499992
 Ka 1.000000 1.000000 1.000000
 Kd 0.085000 0.085000 0.092000

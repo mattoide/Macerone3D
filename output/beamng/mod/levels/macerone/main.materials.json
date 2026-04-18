@@ -7,18 +7,22 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.4839216089248657,
-          0.4985882544517517,
-          0.45592159032821655,
+          1.0,
+          1.0,
+          1.0,
           1.0
         ],
-        "colorMap": "levels/macerone/art/road/asphalt_base.png"
+        "specularPower": 1,
+        "useAnisotropic": true,
+        "colorMap": "levels/macerone/art/road/asphalt_base.color.png"
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "AsphaltPatch_Dark": {
     "name": "AsphaltPatch_Dark",
@@ -28,18 +32,22 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.33874512624740594,
-          0.3490117781162262,
-          0.3191451132297516,
+          1.0,
+          1.0,
+          1.0,
           1.0
         ],
-        "colorMap": "levels/macerone/art/road/asphalt_base.png"
+        "specularPower": 1,
+        "useAnisotropic": true,
+        "colorMap": "levels/macerone/art/road/asphalt_base.color.png"
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "AsphaltPatch_Light": {
     "name": "AsphaltPatch_Light",
@@ -49,18 +57,47 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.6049020111560821,
-          0.6232353180646897,
-          0.5699019879102707,
+          1.0,
+          1.0,
+          1.0,
           1.0
         ],
-        "colorMap": "levels/macerone/art/road/asphalt_base.png"
+        "specularPower": 1,
+        "useAnisotropic": true,
+        "colorMap": "levels/macerone/art/road/asphalt_base.color.png"
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
+  },
+  "AsphaltWear": {
+    "name": "AsphaltWear",
+    "mapTo": "AsphaltWear",
+    "class": "Material",
+    "persistentId": "261f1979-a072-6508-8dde-1f11b2aba74f",
+    "Stages": [
+      {
+        "diffuseColor": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "specularPower": 1,
+        "useAnisotropic": true,
+        "colorMap": "levels/macerone/art/road/asphalt_base.color.png"
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "Shoulder": {
     "name": "Shoulder",
@@ -70,17 +107,21 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.5565098502635955,
-          0.558418844985962,
-          0.4787176698446274,
+          0.4508,
+          0.44800000000000006,
+          0.4368000000000001,
           1.0
-        ]
+        ],
+        "specularPower": 1,
+        "useAnisotropic": true
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "LineWhite": {
     "name": "LineWhite",
@@ -94,13 +135,17 @@
           0.93,
           0.92,
           1.0
-        ]
+        ],
+        "specularPower": 1,
+        "useAnisotropic": true
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "LineYellow": {
     "name": "LineYellow",
@@ -114,13 +159,17 @@
           0.8,
           0.18,
           1.0
-        ]
+        ],
+        "specularPower": 1,
+        "useAnisotropic": true
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "Manhole": {
     "name": "Manhole",
@@ -134,13 +183,17 @@
           0.13,
           0.12,
           1.0
-        ]
+        ],
+        "specularPower": 1,
+        "useAnisotropic": true
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "Building": {
     "name": "Building",
@@ -150,17 +203,21 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.82,
-          0.76,
-          0.62,
+          0.58,
+          0.52,
+          0.42,
           1.0
-        ]
+        ],
+        "specularPower": 1,
+        "useAnisotropic": true
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "Roof": {
     "name": "Roof",
@@ -170,17 +227,21 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.62,
-          0.32,
+          0.48,
           0.22,
+          0.15,
           1.0
-        ]
+        ],
+        "specularPower": 1,
+        "useAnisotropic": true
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "StoneWall": {
     "name": "StoneWall",
@@ -190,17 +251,21 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.55,
-          0.5,
           0.42,
+          0.38,
+          0.32,
           1.0
-        ]
+        ],
+        "specularPower": 1,
+        "useAnisotropic": true
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "TreeCanopy": {
     "name": "TreeCanopy",
@@ -210,18 +275,22 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.2,
-          0.35,
-          0.16,
+          1.0,
+          1.0,
+          1.0,
           1.0
         ],
-        "colorMap": "levels/macerone/art/nature/foliage.png"
+        "specularPower": 1,
+        "useAnisotropic": true,
+        "colorMap": "levels/macerone/art/nature/foliage.color.png"
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "TreeTrunk": {
     "name": "TreeTrunk",
@@ -231,18 +300,22 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.32,
-          0.22,
-          0.14,
+          1.0,
+          1.0,
+          1.0,
           1.0
         ],
-        "colorMap": "levels/macerone/art/nature/bark.png"
+        "specularPower": 1,
+        "useAnisotropic": true,
+        "colorMap": "levels/macerone/art/nature/bark.color.png"
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "Guardrail": {
     "name": "Guardrail",
@@ -256,13 +329,17 @@
           0.74,
           0.78,
           1.0
-        ]
+        ],
+        "specularPower": 1,
+        "useAnisotropic": true
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "Pole": {
     "name": "Pole",
@@ -276,13 +353,17 @@
           0.55,
           0.55,
           1.0
-        ]
+        ],
+        "specularPower": 1,
+        "useAnisotropic": true
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "Sign": {
     "name": "Sign",
@@ -296,13 +377,17 @@
           0.92,
           0.92,
           1.0
-        ]
+        ],
+        "specularPower": 1,
+        "useAnisotropic": true
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "SatelliteTerrain": {
     "name": "SatelliteTerrain",
@@ -312,18 +397,22 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.7,
-          0.72,
-          0.6,
+          1.0,
+          1.0,
+          1.0,
           1.0
         ],
-        "colorMap": "levels/macerone/art/terrains/satellite_diffuse.png"
+        "specularPower": 1,
+        "useAnisotropic": true,
+        "colorMap": "levels/macerone/art/terrains/satellite_diffuse.color.png"
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "Terrain": {
     "name": "Terrain",
@@ -333,18 +422,22 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.7,
-          0.72,
-          0.6,
+          1.0,
+          1.0,
+          1.0,
           1.0
         ],
-        "colorMap": "levels/macerone/art/terrains/satellite_diffuse.png"
+        "specularPower": 1,
+        "useAnisotropic": true,
+        "colorMap": "levels/macerone/art/terrains/satellite_diffuse.color.png"
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "TerrainMat": {
     "name": "TerrainMat",
@@ -354,18 +447,22 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.7,
-          0.72,
-          0.6,
+          1.0,
+          1.0,
+          1.0,
           1.0
         ],
-        "colorMap": "levels/macerone/art/terrains/satellite_diffuse.png"
+        "specularPower": 1,
+        "useAnisotropic": true,
+        "colorMap": "levels/macerone/art/terrains/satellite_diffuse.color.png"
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "Ground": {
     "name": "Ground",
@@ -375,18 +472,22 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.7,
-          0.72,
-          0.6,
+          1.0,
+          1.0,
+          1.0,
           1.0
         ],
-        "colorMap": "levels/macerone/art/terrains/satellite_diffuse.png"
+        "specularPower": 1,
+        "useAnisotropic": true,
+        "colorMap": "levels/macerone/art/terrains/satellite_diffuse.color.png"
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "Rock": {
     "name": "Rock",
@@ -400,13 +501,17 @@
           0.52,
           0.46,
           1.0
-        ]
+        ],
+        "specularPower": 1,
+        "useAnisotropic": true
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "BushGreen": {
     "name": "BushGreen",
@@ -420,13 +525,17 @@
           0.4,
           0.2,
           1.0
-        ]
+        ],
+        "specularPower": 1,
+        "useAnisotropic": true
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "Parapet": {
     "name": "Parapet",
@@ -440,13 +549,17 @@
           0.58,
           0.52,
           1.0
-        ]
+        ],
+        "specularPower": 1,
+        "useAnisotropic": true
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "BollardMat": {
     "name": "BollardMat",
@@ -460,13 +573,41 @@
           0.82,
           0.8,
           1.0
-        ]
+        ],
+        "specularPower": 1,
+        "useAnisotropic": true
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
+  },
+  "CableWire": {
+    "name": "CableWire",
+    "mapTo": "CableWire",
+    "class": "Material",
+    "persistentId": "1d21b4cb-eb0a-c299-82ac-f0e109b1b819",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.08,
+          0.08,
+          0.08,
+          1.0
+        ],
+        "specularPower": 1,
+        "useAnisotropic": true
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "TreeBark": {
     "name": "TreeBark",
@@ -476,18 +617,22 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.3,
-          0.21,
-          0.13,
+          1.0,
+          1.0,
+          1.0,
           1.0
         ],
-        "colorMap": "levels/macerone/art/nature/bark.png"
+        "specularPower": 1,
+        "useAnisotropic": true,
+        "colorMap": "levels/macerone/art/nature/bark.color.png"
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "TreeFoliage": {
     "name": "TreeFoliage",
@@ -497,18 +642,22 @@
     "Stages": [
       {
         "diffuseColor": [
-          0.18,
-          0.32,
-          0.14,
+          1.0,
+          1.0,
+          1.0,
           1.0
         ],
-        "colorMap": "levels/macerone/art/nature/foliage.png"
+        "specularPower": 1,
+        "useAnisotropic": true,
+        "colorMap": "levels/macerone/art/nature/foliage.color.png"
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "Embankment": {
     "name": "Embankment",
@@ -522,13 +671,17 @@
           0.45,
           0.28,
           1.0
-        ]
+        ],
+        "specularPower": 1,
+        "useAnisotropic": true
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "TreeBillboard": {
     "name": "TreeBillboard",
@@ -537,22 +690,138 @@
     "persistentId": "4335fc28-c547-6ad4-5c76-9e977ae8522d",
     "Stages": [
       {
-        "diffuseColor": [
+        "baseColorMap": "levels/macerone/art/nature/tree_billboard.color.png",
+        "opacityMap": "levels/macerone/art/nature/tree_billboard_opacity.data.png",
+        "baseColorFactor": [
           0.9,
           0.9,
           0.9,
           1.0
-        ],
-        "colorMap": "levels/macerone/art/nature/tree_billboard.png",
-        "alphaTest": true,
-        "alphaRef": 100,
-        "translucent": false
+        ]
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "vegetation",
+    "version": 1.5,
+    "alphaTest": true,
+    "alphaRef": 68,
+    "doubleSided": true,
+    "annotation": "NATURE"
+  },
+  "TreeBillboard_P0": {
+    "name": "TreeBillboard_P0",
+    "mapTo": "TreeBillboard_P0",
+    "class": "Material",
+    "persistentId": "d25e591e-92b7-8800-4864-2ce2206512a9",
+    "Stages": [
+      {
+        "baseColorMap": "levels/macerone/art/nature/tree_billboard.color.png",
+        "opacityMap": "levels/macerone/art/nature/tree_billboard_opacity.data.png",
+        "baseColorFactor": [
+          0.95,
+          1.0,
+          0.92,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "beamng",
+    "materialTag1": "vegetation",
+    "version": 1.5,
+    "alphaTest": true,
+    "alphaRef": 68,
+    "doubleSided": true,
+    "annotation": "NATURE"
+  },
+  "TreeBillboard_P1": {
+    "name": "TreeBillboard_P1",
+    "mapTo": "TreeBillboard_P1",
+    "class": "Material",
+    "persistentId": "18205407-71fc-1637-370c-348a371a0ccc",
+    "Stages": [
+      {
+        "baseColorMap": "levels/macerone/art/nature/tree_billboard.color.png",
+        "opacityMap": "levels/macerone/art/nature/tree_billboard_opacity.data.png",
+        "baseColorFactor": [
+          0.82,
+          0.92,
+          0.8,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "beamng",
+    "materialTag1": "vegetation",
+    "version": 1.5,
+    "alphaTest": true,
+    "alphaRef": 68,
+    "doubleSided": true,
+    "annotation": "NATURE"
+  },
+  "TreeBillboard_P2": {
+    "name": "TreeBillboard_P2",
+    "mapTo": "TreeBillboard_P2",
+    "class": "Material",
+    "persistentId": "c8bf6958-e263-5f76-c0f9-11cfe19723d7",
+    "Stages": [
+      {
+        "baseColorMap": "levels/macerone/art/nature/tree_billboard.color.png",
+        "opacityMap": "levels/macerone/art/nature/tree_billboard_opacity.data.png",
+        "baseColorFactor": [
+          1.05,
+          1.08,
+          0.95,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "beamng",
+    "materialTag1": "vegetation",
+    "version": 1.5,
+    "alphaTest": true,
+    "alphaRef": 68,
+    "doubleSided": true,
+    "annotation": "NATURE"
+  },
+  "TreeBillboard_P3": {
+    "name": "TreeBillboard_P3",
+    "mapTo": "TreeBillboard_P3",
+    "class": "Material",
+    "persistentId": "596ee75b-9a13-a007-be4c-7736e25cf3c0",
+    "Stages": [
+      {
+        "baseColorMap": "levels/macerone/art/nature/tree_billboard.color.png",
+        "opacityMap": "levels/macerone/art/nature/tree_billboard_opacity.data.png",
+        "baseColorFactor": [
+          0.92,
+          1.02,
+          1.0,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "beamng",
+    "materialTag1": "vegetation",
+    "version": 1.5,
+    "alphaTest": true,
+    "alphaRef": 68,
+    "doubleSided": true,
+    "annotation": "NATURE"
   },
   "AsphaltPatchDarkNew": {
     "name": "AsphaltPatchDarkNew",
@@ -566,13 +835,17 @@
           0.06,
           0.07,
           1.0
-        ]
+        ],
+        "specularPower": 1,
+        "useAnisotropic": true
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "AsphaltPatchLightNew": {
     "name": "AsphaltPatchLightNew",
@@ -586,13 +859,17 @@
           0.34,
           0.32,
           1.0
-        ]
+        ],
+        "specularPower": 1,
+        "useAnisotropic": true
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "ChevronPole": {
     "name": "ChevronPole",
@@ -606,13 +883,17 @@
           0.85,
           0.85,
           1.0
-        ]
+        ],
+        "specularPower": 1,
+        "useAnisotropic": true
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "ChevronSign": {
     "name": "ChevronSign",
@@ -626,13 +907,417 @@
           0.82,
           0.1,
           1.0
+        ],
+        "specularPower": 1,
+        "useAnisotropic": true
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
+  },
+  "SignValico": {
+    "name": "SignValico",
+    "mapTo": "SignValico",
+    "class": "Material",
+    "persistentId": "ce0aee2e-c34a-e5d4-7864-bbbbed7d9380",
+    "Stages": [
+      {
+        "specularPower": 1,
+        "useAnisotropic": true,
+        "baseColorMap": "levels/macerone/art/shapes/signs/sign_valico.color.png",
+        "baseColorFactor": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
         ]
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "structures",
+    "translucentBlendOp": "None",
+    "version": 1.5,
+    "alphaTest": false,
+    "doubleSided": true
+  },
+  "SignSS17": {
+    "name": "SignSS17",
+    "mapTo": "SignSS17",
+    "class": "Material",
+    "persistentId": "f5f97374-837d-1ca0-cf38-db051f3fadbc",
+    "Stages": [
+      {
+        "specularPower": 1,
+        "useAnisotropic": true,
+        "baseColorMap": "levels/macerone/art/shapes/signs/sign_ss17.color.png",
+        "baseColorFactor": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "beamng",
+    "materialTag1": "structures",
+    "translucentBlendOp": "None",
+    "version": 1.5,
+    "alphaTest": false,
+    "doubleSided": true
+  },
+  "SignDirezionale": {
+    "name": "SignDirezionale",
+    "mapTo": "SignDirezionale",
+    "class": "Material",
+    "persistentId": "976bc555-012a-4a36-8539-d9ea2b7d7557",
+    "Stages": [
+      {
+        "specularPower": 1,
+        "useAnisotropic": true,
+        "baseColorMap": "levels/macerone/art/shapes/signs/sign_direzionale.color.png",
+        "baseColorFactor": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "beamng",
+    "materialTag1": "structures",
+    "translucentBlendOp": "None",
+    "version": 1.5,
+    "alphaTest": false,
+    "doubleSided": true
+  },
+  "SignPole": {
+    "name": "SignPole",
+    "mapTo": "SignPole",
+    "class": "Material",
+    "persistentId": "a0ee9e03-22a6-f1cf-243a-a83a113928f2",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.42,
+          0.42,
+          0.44,
+          1.0
+        ],
+        "specularPower": 1,
+        "useAnisotropic": true
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
+  },
+  "EdicolaStone": {
+    "name": "EdicolaStone",
+    "mapTo": "EdicolaStone",
+    "class": "Material",
+    "persistentId": "cbc2c6e3-0f03-1cbe-f377-fc1ee212f21a",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.52,
+          0.48,
+          0.42,
+          1.0
+        ],
+        "specularPower": 1,
+        "useAnisotropic": true
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
+  },
+  "VidSignLimit50": {
+    "name": "VidSignLimit50",
+    "mapTo": "VidSignLimit50",
+    "class": "Material",
+    "persistentId": "ca4fc266-88cc-d195-7402-97bb7e5ef741",
+    "Stages": [
+      {
+        "specularPower": 1,
+        "useAnisotropic": true,
+        "baseColorMap": "levels/macerone/art/shapes/video_landmarks/sign_limit50.color.png",
+        "baseColorFactor": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "beamng",
+    "materialTag1": "structures",
+    "translucentBlendOp": "None",
+    "version": 1.5,
+    "alphaTest": false,
+    "doubleSided": true
+  },
+  "VidSignLimit30": {
+    "name": "VidSignLimit30",
+    "mapTo": "VidSignLimit30",
+    "class": "Material",
+    "persistentId": "1dc907b7-e553-6a1f-9a64-ff75a4fe2b87",
+    "Stages": [
+      {
+        "specularPower": 1,
+        "useAnisotropic": true,
+        "baseColorMap": "levels/macerone/art/shapes/video_landmarks/sign_limit30.color.png",
+        "baseColorFactor": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "beamng",
+    "materialTag1": "structures",
+    "translucentBlendOp": "None",
+    "version": 1.5,
+    "alphaTest": false,
+    "doubleSided": true
+  },
+  "VidSignWinter": {
+    "name": "VidSignWinter",
+    "mapTo": "VidSignWinter",
+    "class": "Material",
+    "persistentId": "e981eb02-8365-29d2-563d-6d6b4f1684ac",
+    "Stages": [
+      {
+        "specularPower": 1,
+        "useAnisotropic": true,
+        "baseColorMap": "levels/macerone/art/shapes/video_landmarks/sign_winter_tires.color.png",
+        "baseColorFactor": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "beamng",
+    "materialTag1": "structures",
+    "translucentBlendOp": "None",
+    "version": 1.5,
+    "alphaTest": false,
+    "doubleSided": true
+  },
+  "VidSignCurveSx": {
+    "name": "VidSignCurveSx",
+    "mapTo": "VidSignCurveSx",
+    "class": "Material",
+    "persistentId": "4abeac6a-9fc7-2b89-6bc4-46a3f9dda901",
+    "Stages": [
+      {
+        "specularPower": 1,
+        "useAnisotropic": true,
+        "baseColorMap": "levels/macerone/art/shapes/video_landmarks/sign_curve_left.color.png",
+        "baseColorFactor": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "beamng",
+    "materialTag1": "structures",
+    "translucentBlendOp": "None",
+    "version": 1.5,
+    "alphaTest": false,
+    "doubleSided": true
+  },
+  "VidSignPole": {
+    "name": "VidSignPole",
+    "mapTo": "VidSignPole",
+    "class": "Material",
+    "persistentId": "8daa8ee0-0dc0-bb5b-20dd-b287e045d214",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.42,
+          0.42,
+          0.44,
+          1.0
+        ],
+        "specularPower": 1,
+        "useAnisotropic": true
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
+  },
+  "VidBldgRudere": {
+    "name": "VidBldgRudere",
+    "mapTo": "VidBldgRudere",
+    "class": "Material",
+    "persistentId": "f61d6769-1dac-dfe5-1fc8-f7e080102fe7",
+    "Stages": [
+      {
+        "specularPower": 1,
+        "useAnisotropic": true,
+        "baseColorMap": "levels/macerone/art/shapes/video_landmarks/bldg_rudere.color.png",
+        "baseColorFactor": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "beamng",
+    "materialTag1": "structures",
+    "translucentBlendOp": "None",
+    "version": 1.5,
+    "alphaTest": false,
+    "doubleSided": true
+  },
+  "VidBldgTorretta": {
+    "name": "VidBldgTorretta",
+    "mapTo": "VidBldgTorretta",
+    "class": "Material",
+    "persistentId": "c5c6b381-f7fa-5b87-31be-fd59f3a5188b",
+    "Stages": [
+      {
+        "specularPower": 1,
+        "useAnisotropic": true,
+        "baseColorMap": "levels/macerone/art/shapes/video_landmarks/bldg_torretta.color.png",
+        "baseColorFactor": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "beamng",
+    "materialTag1": "structures",
+    "translucentBlendOp": "None",
+    "version": 1.5,
+    "alphaTest": false,
+    "doubleSided": true
+  },
+  "VidBldgCasale": {
+    "name": "VidBldgCasale",
+    "mapTo": "VidBldgCasale",
+    "class": "Material",
+    "persistentId": "6fb6ea23-05e0-1224-dd8c-a57c778bab18",
+    "Stages": [
+      {
+        "specularPower": 1,
+        "useAnisotropic": true,
+        "baseColorMap": "levels/macerone/art/shapes/video_landmarks/bldg_casale.color.png",
+        "baseColorFactor": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "beamng",
+    "materialTag1": "structures",
+    "translucentBlendOp": "None",
+    "version": 1.5,
+    "alphaTest": false,
+    "doubleSided": true
+  },
+  "VidHay": {
+    "name": "VidHay",
+    "mapTo": "VidHay",
+    "class": "Material",
+    "persistentId": "c03b8ce0-5619-10b8-45b2-955300b8112e",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.78,
+          0.68,
+          0.42,
+          1.0
+        ],
+        "specularPower": 1,
+        "useAnisotropic": true
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
+  },
+  "VidDelineator": {
+    "name": "VidDelineator",
+    "mapTo": "VidDelineator",
+    "class": "Material",
+    "persistentId": "c1420974-d8ba-2a20-528f-faadfe148582",
+    "Stages": [
+      {
+        "diffuseColor": [
+          0.92,
+          0.92,
+          0.88,
+          1.0
+        ],
+        "specularPower": 1,
+        "useAnisotropic": true
+      },
+      {},
+      {},
+      {}
+    ],
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "default": {
     "name": "default",
@@ -646,13 +1331,17 @@
           0.55,
           0.55,
           1.0
-        ]
+        ],
+        "specularPower": 1,
+        "useAnisotropic": true
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   },
   "DefaultMat": {
     "name": "DefaultMat",
@@ -666,12 +1355,16 @@
           0.55,
           0.55,
           1.0
-        ]
+        ],
+        "specularPower": 1,
+        "useAnisotropic": true
       },
       {},
       {},
       {}
     ],
-    "materialTag0": "Miscellaneous"
+    "materialTag0": "beamng",
+    "materialTag1": "environment",
+    "translucentBlendOp": "None"
   }
 }

@@ -1,8 +1,45 @@
 newmtl Rock
 Kd 0.52 0.50 0.45
+
 newmtl BushGreen
-Kd 0.28 0.40 0.22
+Kd 0.38 0.42 0.28
+
 newmtl Parapet
 Kd 0.62 0.58 0.52
+
 newmtl BollardMat
 Kd 0.80 0.80 0.78
+
+newmtl CableWire
+Kd 0.10 0.10 0.10
+Ka 0 0 0
+Ks 0 0 0
+
+newmtl TreeBillboard_P0
+map_Kd levels/macerone/art/nature/tree_billboard.color.png
+map_d art/nature/tree_billboard.png
+Kd 0.950 1.000 0.920
+d 1.0
+illum 1
+
+newmtl TreeBillboard_P1
+map_Kd levels/macerone/art/nature/tree_billboard.color.png
+map_d art/nature/tree_billboard.png
+Kd 0.820 0.920 0.800
+d 1.0
+illum 1
+
+newmtl TreeBillboard_P2
+map_Kd levels/macerone/art/nature/tree_billboard.color.png
+map_d art/nature/tree_billboard.png
+Kd 1.050 1.080 0.950
+d 1.0
+illum 1
+
+newmtl TreeBillboard_P3
+map_Kd levels/macerone/art/nature/tree_billboard.color.png
+map_d art/nature/tree_billboard.png
+Kd 0.920 1.020 1.000
+d 1.0
+illum 1
+

@@ -7,6 +7,9 @@
     <unit name="meter" meter="1"/>
     <up_axis>Z_UP</up_axis>
   </asset>
+  <library_images>
+    
+  </library_images>
   <library_effects>
     <effect id="AsphaltPatchDarkNew_fx">
   <profile_COMMON>

@@ -1,0 +1,325 @@
+{
+  "italy_rocksface": {
+    "name": "italy_rocksface",
+    "mapTo": "italy_rocksface",
+    "class": "Material",
+    "persistentId": "b0060c1a-6687-4bf1-8e8f-860ab174aeac",
+    "Stages": [
+      {
+        "ambientOcclusionMap": "/levels/italy/art/shapes/rocks/t_italy_rocksface_ao.data.png",
+        "baseColorFactor": [
+          0.933333397,
+          0.933333397,
+          0.933333397,
+          0.00800000038
+        ],
+        "baseColorMap": "/levels/italy/art/shapes/rocks/t_italy_rocksface_b.color.png",
+        "detailBaseColorMapStrength": 0.25,
+        "detailMap": "/levels/italy/art/shapes/rocks/t_italy_rocksface_detail_b.data.png",
+        "detailNormalMap": "/levels/italy/art/shapes/rocks/t_italy_rocksface_detail_nm.normal.png",
+        "detailNormalMapStrength": 1.5,
+        "detailScale": [
+          22,
+          22
+        ],
+        "normalMap": "/levels/italy/art/shapes/rocks/t_italy_rocksface_nm.normal.png",
+        "roughnessMap": "/levels/italy/art/shapes/rocks/t_italy_rocksface_r.data.png",
+        "vertColor": true
+      },
+      {
+        "baseColorFactor": null,
+        "detailBaseColorMapStrength": null,
+        "detailNormalMapStrength": null,
+        "detailScale": null,
+        "vertColor": null
+      },
+      {
+        "baseColorFactor": null,
+        "detailBaseColorMapStrength": null,
+        "detailNormalMapStrength": null,
+        "detailScale": null,
+        "vertColor": null
+      },
+      {
+        "baseColorFactor": null,
+        "detailBaseColorMapStrength": null,
+        "detailNormalMapStrength": null,
+        "detailScale": null,
+        "vertColor": null
+      }
+    ],
+    "annotation": "ROCK",
+    "groundType": "ROCK",
+    "materialTag0": "beamng",
+    "materialTag1": "Natural",
+    "translucentBlendOp": "None",
+    "version": 1.5
+  },
+  "italy_rocksface_white": {
+    "name": "italy_rocksface_white",
+    "mapTo": "italy_rocksface_white",
+    "class": "Material",
+    "persistentId": "b0060c1a-6687-4bf1-8e8f-860ab174aeac",
+    "Stages": [
+      {
+        "ambientOcclusionMap": "/levels/italy/art/shapes/rocks/t_italy_rocksface_ao.data.png",
+        "baseColorFactor": [
+          0.933333397,
+          0.933333397,
+          0.933333397,
+          0.00800000038
+        ],
+        "baseColorMap": "/levels/italy/art/shapes/rocks/t_marble_cut_b.color.png",
+        "detailBaseColorMapStrength": 0.25,
+        "detailMap": "/levels/italy/art/shapes/rocks/t_italy_rocksface_detail_b.data.png",
+        "detailNormalMap": "/levels/italy/art/shapes/rocks/t_italy_rocksface_detail_nm.normal.png",
+        "detailNormalMapStrength": 1.5,
+        "detailScale": [
+          22,
+          22
+        ],
+        "normalMap": "/levels/italy/art/shapes/rocks/t_italy_rocksface_nm.normal.png",
+        "normalMapStrength": 0.5,
+        "roughnessMap": "/levels/italy/art/shapes/rocks/t_italy_rocksface_r.data.png",
+        "vertColor": true
+      },
+      {
+        "baseColorFactor": null,
+        "detailBaseColorMapStrength": null,
+        "detailNormalMapStrength": null,
+        "detailScale": null,
+        "normalMapStrength": null,
+        "vertColor": null
+      },
+      {
+        "baseColorFactor": null,
+        "detailBaseColorMapStrength": null,
+        "detailNormalMapStrength": null,
+        "detailScale": null,
+        "normalMapStrength": null,
+        "vertColor": null
+      },
+      {
+        "baseColorFactor": null,
+        "detailBaseColorMapStrength": null,
+        "detailNormalMapStrength": null,
+        "detailScale": null,
+        "normalMapStrength": null,
+        "vertColor": null
+      }
+    ],
+    "annotation": "ROCK",
+    "groundType": "ROCK",
+    "materialTag0": "beamng",
+    "materialTag1": "Natural",
+    "translucentBlendOp": "None",
+    "version": 1.5
+  },
+  "m_marble_cut": {
+    "name": "m_marble_cut",
+    "mapTo": "m_marble_cut",
+    "class": "Material",
+    "persistentId": "b0060c1a-6687-4bf1-8e8f-860ab174aeac",
+    "Stages": [
+      {
+        "ambientOcclusionMap": "/assets/materials/tileable/stone/m_marble_cut/t_marble_cut_ao.data.png",
+        "ambientOcclusionMapUseUV": null,
+        "baseColorMap": "/assets/materials/tileable/stone/m_marble_cut/t_marble_cut_b.color.png",
+        "detailMap": "/assets/materials/breakup/t_marble_cut_detail/t_marble_cut_detail_detail.data.png",
+        "detailMapUseUV": null,
+        "detailNormalMap": "/assets/materials/breakup/t_marble_cut_detail/t_marble_cut_detail_nm.normal.png",
+        "detailNormalMapStrength": 0.5,
+        "detailScale": [
+          4,
+          4
+        ],
+        "diffuseMapUseUV": null,
+        "metallicMapUseUV": null,
+        "normalDetailMapUseUV": null,
+        "normalMap": "/assets/materials/tileable/stone/m_marble_cut/t_marble_cut_nm.normal.png",
+        "normalMapUseUV": null,
+        "opacityMapUseUV": null,
+        "roughnessMap": "/assets/materials/tileable/stone/m_marble_cut/t_marble_cut_r.data.png",
+        "roughnessMapUseUV": null,
+        "vertColor": true
+      },
+      {
+        "ambientOcclusionMapUseUV": 1,
+        "baseColorMap": "/assets/materials/breakup/t_marble_breakup/t_marble_breakup_b.color.png",
+        "detailMapUseUV": 1,
+        "detailNormalMapStrength": 0,
+        "detailScale": [
+          0.300000012,
+          0.600000024
+        ],
+        "diffuseMapUseUV": 1,
+        "metallicMapUseUV": 1,
+        "normalDetailMapUseUV": 1,
+        "normalMapUseUV": 1,
+        "opacityMap": "/assets/materials/breakup/t_marble_breakup/t_marble_breakup_o.data.png",
+        "opacityMapUseUV": 1,
+        "roughnessMapUseUV": 1,
+        "vertColor": null
+      },
+      {
+        "ambientOcclusionMapUseUV": null,
+        "detailMapUseUV": null,
+        "detailNormalMapStrength": null,
+        "detailScale": null,
+        "diffuseMapUseUV": null,
+        "metallicMapUseUV": null,
+        "normalDetailMapUseUV": null,
+        "normalMapUseUV": null,
+        "opacityMapUseUV": null,
+        "roughnessMapUseUV": null,
+        "vertColor": null
+      },
+      {
+        "ambientOcclusionMapUseUV": null,
+        "detailMapUseUV": null,
+        "detailNormalMapStrength": null,
+        "detailScale": null,
+        "diffuseMapUseUV": null,
+        "metallicMapUseUV": null,
+        "normalDetailMapUseUV": null,
+        "normalMapUseUV": null,
+        "opacityMapUseUV": null,
+        "roughnessMapUseUV": null,
+        "vertColor": null
+      }
+    ],
+    "activeLayers": 2,
+    "alphaRef": 0,
+    "annotation": "ROCK",
+    "cubemap": "cubemap_italy_reflection",
+    "groundType": "ROCK",
+    "materialTag0": "beamng",
+    "materialTag1": "Natural",
+    "translucentBlendOp": "None",
+    "version": 1.5
+  },
+  "m_marble_cut_trim": {
+    "name": "m_marble_cut_trim",
+    "mapTo": "m_marble_cut_trim",
+    "class": "Material",
+    "persistentId": "b0060c1a-6687-4bf1-8e8f-860ab174aeac",
+    "Stages": [
+      {
+        "ambientOcclusionMap": "/assets/materials/trim/stone/m_marble_cut_trim/t_marble_cut_trim_cracks_ao.data.png",
+        "baseColorFactor": [
+          1,
+          1,
+          1,
+          0.00800000038
+        ],
+        "baseColorMap": "/assets/materials/trim/stone/m_marble_cut_trim/t_marble_cut_trim_cracks_b.color.png",
+        "detailMap": "/assets/materials/breakup/t_marble_cut_detail/t_marble_cut_detail_detail.data.png",
+        "detailNormalMap": "/assets/materials/breakup/t_marble_cut_detail/t_marble_cut_detail_nm.normal.png",
+        "detailNormalMapStrength": 2,
+        "detailScale": [
+          4,
+          4
+        ],
+        "normalMap": "/assets/materials/trim/stone/m_marble_cut_trim/t_marble_cut_trim_cracks_nm.normal.png",
+        "opacityMap": "/assets/materials/trim/stone/m_marble_cut_trim/t_marble_cut_trim_cracks_o.data.png",
+        "paletteBaseColor": false,
+        "paletteClearCoat": false,
+        "paletteClearCoatRoughness": false,
+        "paletteMetallic": false,
+        "paletteRoughness": false,
+        "roughnessMap": "/assets/materials/trim/stone/m_marble_cut_trim/t_marble_cut_trim_cracks_r.data.png",
+        "vertColor": true
+      },
+      {
+        "baseColorFactor": null,
+        "detailNormalMapStrength": null,
+        "detailScale": null,
+        "paletteBaseColor": null,
+        "paletteClearCoat": null,
+        "paletteClearCoatRoughness": null,
+        "paletteMetallic": null,
+        "paletteRoughness": null,
+        "vertColor": null
+      },
+      {
+        "baseColorFactor": null,
+        "detailNormalMapStrength": null,
+        "detailScale": null,
+        "paletteBaseColor": null,
+        "paletteClearCoat": null,
+        "paletteClearCoatRoughness": null,
+        "paletteMetallic": null,
+        "paletteRoughness": null,
+        "vertColor": null
+      },
+      {
+        "baseColorFactor": null,
+        "detailNormalMapStrength": null,
+        "detailScale": null,
+        "paletteBaseColor": null,
+        "paletteClearCoat": null,
+        "paletteClearCoatRoughness": null,
+        "paletteMetallic": null,
+        "paletteRoughness": null,
+        "vertColor": null
+      }
+    ],
+    "annotation": "ROCK",
+    "castShadows": false,
+    "groundType": "ROCK",
+    "materialTag0": "beamng",
+    "materialTag1": "Natural",
+    "translucent": true,
+    "translucentRecvShadows": true,
+    "translucentZWrite": true,
+    "version": 1.5
+  },
+  "photogrammetry_rock": {
+    "name": "photogrammetry_rock",
+    "mapTo": "photogrammetry_rock",
+    "class": "Material",
+    "persistentId": "560006e8-24d4-4e09-8f9d-82b3e3531d2a",
+    "Stages": [
+      {
+        "colorMap": "levels/italy/art/shapes/rocks/photogrammetry_rock_d",
+        "detailMap": "levels/italy/art/shapes/rocks/photogrammetry_rock_overlay.dds",
+        "detailNormalMap": "levels/italy/art/shapes/rocks/photogrammetry_rock_overlay_n.dds",
+        "detailScale": [
+          6,
+          6
+        ],
+        "normalMap": "levels/italy/art/shapes/rocks/photogrammetry_rock_n",
+        "specularMap": "levels/italy/art/shapes/rocks/photogrammetry_rock_s.dds"
+      },
+      {},
+      {},
+      {}
+    ],
+    "doubleSided": true,
+    "groundType": "ROCK",
+    "materialTag0": "beamng",
+    "materialTag1": "Natural",
+    "translucentBlendOp": "None"
+  },
+  "rock_01_a": {
+    "name": "rock_01_a",
+    "mapTo": "rocks_01_a",
+    "class": "Material",
+    "persistentId": "db6de66e-9f23-4d5b-8754-7092d3593919",
+    "Stages": [
+      {
+        "colorMap": "/levels/italy/art/shapes/rocks/rocks_01_a_d",
+        "normalMap": "/levels/italy/art/shapes/rocks/rocks_01_a_n",
+        "specularMap": "/levels/italy/art/shapes/rocks/rocks_01_a_s.dds"
+      },
+      {},
+      {},
+      {}
+    ],
+    "doubleSided": true,
+    "groundType": "ROCK",
+    "materialTag0": "beamng",
+    "materialTag1": "Natural",
+    "translucentBlendOp": "None"
+  }
+}

@@ -1,0 +1,77 @@
+newmtl VidSignLimit50
+map_Kd levels/macerone/art/shapes/video_landmarks/sign_limit50.color.png
+Kd 1.000 1.000 1.000
+Ka 0 0 0
+Ks 0 0 0
+Ns 1
+illum 1
+
+newmtl VidSignLimit30
+map_Kd levels/macerone/art/shapes/video_landmarks/sign_limit30.color.png
+Kd 1.000 1.000 1.000
+Ka 0 0 0
+Ks 0 0 0
+Ns 1
+illum 1
+
+newmtl VidSignWinter
+map_Kd levels/macerone/art/shapes/video_landmarks/sign_winter_tires.color.png
+Kd 1.000 1.000 1.000
+Ka 0 0 0
+Ks 0 0 0
+Ns 1
+illum 1
+
+newmtl VidSignCurveSx
+map_Kd levels/macerone/art/shapes/video_landmarks/sign_curve_left.color.png
+Kd 1.000 1.000 1.000
+Ka 0 0 0
+Ks 0 0 0
+Ns 1
+illum 1
+
+newmtl VidSignPole
+Kd 0.420 0.420 0.440
+Ka 0 0 0
+Ks 0 0 0
+Ns 1
+illum 1
+
+newmtl VidBldgRudere
+map_Kd levels/macerone/art/shapes/video_landmarks/bldg_rudere.color.png
+Kd 1.000 1.000 1.000
+Ka 0 0 0
+Ks 0 0 0
+Ns 1
+illum 1
+
+newmtl VidBldgTorretta
+map_Kd levels/macerone/art/shapes/video_landmarks/bldg_torretta.color.png
+Kd 1.000 1.000 1.000
+Ka 0 0 0
+Ks 0 0 0
+Ns 1
+illum 1
+
+newmtl VidBldgCasale
+map_Kd levels/macerone/art/shapes/video_landmarks/bldg_casale.color.png
+Kd 1.000 1.000 1.000
+Ka 0 0 0
+Ks 0 0 0
+Ns 1
+illum 1
+
+newmtl VidHay
+Kd 0.780 0.680 0.420
+Ka 0 0 0
+Ks 0 0 0
+Ns 1
+illum 1
+
+newmtl VidDelineator
+Kd 0.920 0.920 0.880
+Ka 0 0 0
+Ks 0 0 0
+Ns 1
+illum 1
+
